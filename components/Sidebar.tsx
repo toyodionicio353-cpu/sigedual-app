@@ -6,23 +6,27 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import type { Rol } from "@/types";
+import {
+  LayoutDashboard, Users, Building2, GraduationCap,
+  FileText, MessageSquare, Settings, LogOut, BookOpen,
+} from "lucide-react";
 
 interface NavItem {
   href: string;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   roles: Rol[];
 }
 
 const NAV: NavItem[] = [
-  { href: "/dashboard", label: "Inicio", icon: "⊞", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-  { href: "/dashboard/estudiantes", label: "Estudiantes", icon: "👤", roles: ["administrador", "coordinador", "director", "profesor"] },
-  { href: "/dashboard/centros", label: "Centros Duales", icon: "🏢", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] },
-  { href: "/dashboard/profesores", label: "Profesores", icon: "📋", roles: ["administrador", "coordinador", "director"] },
-  { href: "/dashboard/especialidades", label: "Especialidades", icon: "🎓", roles: ["administrador", "coordinador", "director"] },
-  { href: "/dashboard/documentos", label: "Documentos", icon: "📄", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-  { href: "/dashboard/mensajes", label: "Mensajes", icon: "💬", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-  { href: "/dashboard/usuarios", label: "Usuarios", icon: "⚙️", roles: ["administrador"] },
+  { href: "/dashboard", label: "Inicio", icon: <LayoutDashboard size={18} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+  { href: "/dashboard/estudiantes", label: "Estudiantes", icon: <Users size={18} />, roles: ["administrador", "coordinador", "director", "profesor"] },
+  { href: "/dashboard/centros", label: "Centros Duales", icon: <Building2 size={18} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] },
+  { href: "/dashboard/profesores", label: "Profesores", icon: <BookOpen size={18} />, roles: ["administrador", "coordinador", "director"] },
+  { href: "/dashboard/especialidades", label: "Especialidades", icon: <GraduationCap size={18} />, roles: ["administrador", "coordinador", "director"] },
+  { href: "/dashboard/documentos", label: "Documentos", icon: <FileText size={18} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+  { href: "/dashboard/mensajes", label: "Mensajes", icon: <MessageSquare size={18} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+  { href: "/dashboard/usuarios", label: "Usuarios", icon: <Settings size={18} />, roles: ["administrador"] },
 ];
 
 const ROL_LABEL: Record<Rol, string> = {
@@ -32,6 +36,15 @@ const ROL_LABEL: Record<Rol, string> = {
   profesor: "Profesor Supervisor",
   centro_dual: "Centro Dual",
   estudiante: "Estudiante",
+};
+
+const ROL_COLOR: Record<Rol, string> = {
+  administrador: "#ef4444",
+  coordinador: "#f59e0b",
+  director: "#8b5cf6",
+  profesor: "#2563eb",
+  centro_dual: "#22c55e",
+  estudiante: "#06b6d4",
 };
 
 export default function Sidebar() {
@@ -46,39 +59,47 @@ export default function Sidebar() {
     router.replace("/login");
   }
 
+  const inicial = usuario?.nombre?.charAt(0).toUpperCase() ?? "?";
+  const rolColor = usuario ? ROL_COLOR[usuario.rol] : "#2563eb";
+
   return (
     <aside
       style={{ background: "var(--bg-card)", borderRight: "1px solid var(--border)" }}
       className="w-64 min-h-screen flex flex-col"
     >
       {/* Logo */}
-      <div style={{ borderBottom: "1px solid var(--border)" }} className="px-6 py-5">
-        <h1 style={{ color: "#fff" }} className="text-xl font-bold tracking-tight">SIGEDUAL</h1>
-        <p style={{ color: "var(--text-muted)" }} className="text-xs mt-1">Gestión Dual</p>
+      <div className="px-6 py-5" style={{ borderBottom: "1px solid var(--border)" }}>
+        <div className="flex items-center gap-3">
+          <div style={{ background: "var(--accent-blue)", borderRadius: 10 }} className="w-9 h-9 flex items-center justify-center">
+            <span className="text-white font-black text-sm">SG</span>
+          </div>
+          <div>
+            <h1 style={{ color: "#fff" }} className="text-base font-bold tracking-tight leading-none">SIGEDUAL</h1>
+            <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">Gestión Dual</p>
+          </div>
+        </div>
       </div>
 
       {/* Usuario */}
-      <div style={{ borderBottom: "1px solid var(--border)" }} className="px-6 py-4">
-        <div
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)" }}
-          className="rounded-xl px-4 py-3"
-        >
-          <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">
-            {usuario?.nombre ?? "..."}
-          </p>
-          <p style={{ color: "var(--accent-blue-light)" }} className="text-xs mt-0.5">
-            {usuario ? ROL_LABEL[usuario.rol] : ""}
-          </p>
-          {usuario?.especialidad && (
-            <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5 truncate">
-              {usuario.especialidad}
+      <div className="px-4 py-4" style={{ borderBottom: "1px solid var(--border)" }}>
+        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", borderRadius: 12 }} className="px-3 py-3 flex items-center gap-3">
+          <div style={{ background: rolColor, borderRadius: 8, minWidth: 36, height: 36 }} className="flex items-center justify-center">
+            <span className="text-white font-bold text-sm">{inicial}</span>
+          </div>
+          <div className="min-w-0">
+            <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate leading-tight">
+              {usuario?.nombre ?? "..."}
             </p>
-          )}
+            <p style={{ color: rolColor }} className="text-xs mt-0.5 font-medium">
+              {usuario ? ROL_LABEL[usuario.rol] : ""}
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Navegación */}
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+      <nav className="flex-1 px-3 py-3 flex flex-col gap-0.5">
+        <p style={{ color: "var(--text-muted)" }} className="text-xs font-semibold uppercase tracking-wider px-3 mb-2">Menú</p>
         {visibleNav.map((item) => {
           const active = pathname === item.href;
           return (
@@ -88,24 +109,26 @@ export default function Sidebar() {
               style={{
                 background: active ? "var(--accent-blue)" : "transparent",
                 color: active ? "#fff" : "var(--text-secondary)",
+                borderRadius: 10,
               }}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-white/5 transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-white/5 transition-all"
             >
-              <span className="text-base">{item.icon}</span>
+              <span style={{ opacity: active ? 1 : 0.7 }}>{item.icon}</span>
               {item.label}
+              {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/60" />}
             </Link>
           );
         })}
       </nav>
 
       {/* Cerrar sesión */}
-      <div style={{ borderTop: "1px solid var(--border)" }} className="px-3 py-4">
+      <div className="px-3 py-4" style={{ borderTop: "1px solid var(--border)" }}>
         <button
           onClick={handleLogout}
-          style={{ color: "var(--danger)" }}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-white/5 transition-colors"
+          style={{ color: "var(--text-muted)", borderRadius: 10 }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-red-500/10 hover:text-red-400 transition-all"
         >
-          <span>🚪</span>
+          <LogOut size={18} />
           Cerrar sesión
         </button>
       </div>

@@ -1,5 +1,10 @@
 "use client";
 import { useAuth } from "@/lib/auth-context";
+import { useEffect, useState } from "react";
+import { collection, query, where, getCountFromServer } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Users, Building2, FileText, MessageSquare, BookOpen, GraduationCap, Settings, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import type { Rol } from "@/types";
 
 const ROL_LABEL: Record<Rol, string> = {
@@ -11,52 +16,128 @@ const ROL_LABEL: Record<Rol, string> = {
   estudiante: "Estudiante",
 };
 
-const TARJETAS = [
-  { label: "Estudiantes", icon: "👤", href: "/dashboard/estudiantes", roles: ["administrador", "coordinador", "director", "profesor"] },
-  { label: "Centros Duales", icon: "🏢", href: "/dashboard/centros", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] },
-  { label: "Documentos", icon: "📄", href: "/dashboard/documentos", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-  { label: "Mensajes", icon: "💬", href: "/dashboard/mensajes", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-  { label: "Profesores", icon: "📋", href: "/dashboard/profesores", roles: ["administrador", "coordinador", "director"] },
-  { label: "Especialidades", icon: "🎓", href: "/dashboard/especialidades", roles: ["administrador", "coordinador", "director"] },
-  { label: "Usuarios", icon: "⚙️", href: "/dashboard/usuarios", roles: ["administrador"] },
-];
+interface Stat {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  color: string;
+  href: string;
+  roles: Rol[];
+}
 
 export default function DashboardPage() {
   const { usuario } = useAuth();
+  const [counts, setCounts] = useState({ estudiantes: 0, centros: 0, documentos: 0, mensajes: 0, profesores: 0, especialidades: 0 });
 
-  const tarjetas = TARJETAS.filter((t) => usuario && t.roles.includes(usuario.rol));
+  useEffect(() => {
+    if (!usuario) return;
+    async function cargar() {
+      const liceoId = usuario!.liceoId;
+      const [e, c, d, p, esp] = await Promise.all([
+        getCountFromServer(query(collection(db, "estudiantes"), where("liceoId", "==", liceoId))),
+        getCountFromServer(query(collection(db, "centros_duales"), where("liceoId", "==", liceoId))),
+        getCountFromServer(query(collection(db, "documentos"), where("liceoId", "==", liceoId))),
+        getCountFromServer(query(collection(db, "usuarios"), where("liceoId", "==", liceoId), where("rol", "==", "profesor"))),
+        getCountFromServer(query(collection(db, "especialidades"), where("liceoId", "==", liceoId))),
+      ]);
+      setCounts({
+        estudiantes: e.data().count,
+        centros: c.data().count,
+        documentos: d.data().count,
+        mensajes: 0,
+        profesores: p.data().count,
+        especialidades: esp.data().count,
+      });
+    }
+    cargar();
+  }, [usuario]);
+
+  const stats: Stat[] = [
+    { label: "Estudiantes", value: counts.estudiantes, icon: <Users size={22} />, color: "#2563eb", href: "/dashboard/estudiantes", roles: ["administrador", "coordinador", "director", "profesor"] },
+    { label: "Centros Duales", value: counts.centros, icon: <Building2 size={22} />, color: "#22c55e", href: "/dashboard/centros", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] },
+    { label: "Documentos", value: counts.documentos, icon: <FileText size={22} />, color: "#f59e0b", href: "/dashboard/documentos", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+    { label: "Profesores", value: counts.profesores, icon: <BookOpen size={22} />, color: "#8b5cf6", href: "/dashboard/profesores", roles: ["administrador", "coordinador", "director"] },
+    { label: "Especialidades", value: counts.especialidades, icon: <GraduationCap size={22} />, color: "#06b6d4", href: "/dashboard/especialidades", roles: ["administrador", "coordinador", "director"] },
+    { label: "Mensajes", value: 0, icon: <MessageSquare size={22} />, color: "#ec4899", href: "/dashboard/mensajes", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+  ];
+
+  const accesos = [
+    { label: "Gestionar Usuarios", icon: <Settings size={16} />, href: "/dashboard/usuarios", roles: ["administrador"] as Rol[] },
+    { label: "Ver Estudiantes", icon: <Users size={16} />, href: "/dashboard/estudiantes", roles: ["administrador", "coordinador", "director", "profesor"] as Rol[] },
+    { label: "Ver Centros", icon: <Building2 size={16} />, href: "/dashboard/centros", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] as Rol[] },
+    { label: "Subir Documento", icon: <FileText size={16} />, href: "/dashboard/documentos", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] as Rol[] },
+  ];
+
+  const visibleStats = stats.filter((s) => usuario && s.roles.includes(usuario.rol));
+  const visibleAccesos = accesos.filter((a) => usuario && a.roles.includes(usuario.rol));
+
+  const hora = new Date().getHours();
+  const saludo = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches";
 
   return (
-    <div className="p-8">
-      {/* Encabezado */}
+    <div className="p-8 max-w-6xl">
+
+      {/* Header */}
       <div className="mb-8">
-        <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">
-          Bienvenido, {usuario?.nombre?.split(" ")[0]} 👋
+        <p style={{ color: "var(--accent-blue-light)" }} className="text-sm font-medium mb-1">{saludo}</p>
+        <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold tracking-tight">
+          {usuario?.nombre?.split(" ")[0]} 👋
         </h1>
-        <p style={{ color: "var(--text-secondary)" }} className="mt-1 text-sm">
+        <p style={{ color: "var(--text-secondary)" }} className="mt-1.5 text-sm">
           {usuario ? ROL_LABEL[usuario.rol] : ""} — Panel principal de SIGEDUAL
         </p>
       </div>
 
-      {/* Tarjetas de acceso rápido */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {tarjetas.map((t) => (
-          <a
-            key={t.href}
-            href={t.href}
-            style={{
-              background: "var(--bg-card)",
-              border: "1px solid var(--border)",
-            }}
-            className="rounded-2xl p-6 flex flex-col gap-3 hover:border-blue-500 transition-colors group"
-          >
-            <span className="text-3xl">{t.icon}</span>
-            <span style={{ color: "var(--text-primary)" }} className="font-semibold text-sm group-hover:text-blue-400 transition-colors">
-              {t.label}
-            </span>
-          </a>
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+        {visibleStats.map((s) => (
+          <Link key={s.href} href={s.href}
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }}
+            className="p-5 flex flex-col gap-4 hover:border-blue-500/50 transition-all group">
+            <div className="flex items-center justify-between">
+              <div style={{ background: s.color + "22", borderRadius: 10 }} className="w-11 h-11 flex items-center justify-center">
+                <span style={{ color: s.color }}>{s.icon}</span>
+              </div>
+              <ArrowRight size={16} style={{ color: "var(--text-muted)" }} className="group-hover:text-blue-400 transition-colors" />
+            </div>
+            <div>
+              <p style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">{s.value}</p>
+              <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-0.5">{s.label}</p>
+            </div>
+          </Link>
         ))}
       </div>
+
+      {/* Accesos rápidos */}
+      {visibleAccesos.length > 0 && (
+        <div>
+          <h2 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold mb-3">Accesos rápidos</h2>
+          <div className="flex flex-wrap gap-3">
+            {visibleAccesos.map((a) => (
+              <Link key={a.href} href={a.href}
+                style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)", borderRadius: 10 }}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium hover:border-blue-500/50 hover:text-blue-400 transition-all">
+                {a.icon}
+                {a.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Info sistema */}
+      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="mt-8 p-5 flex items-center gap-4">
+        <div style={{ background: "#2563eb22", borderRadius: 10 }} className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+          <span style={{ color: "var(--accent-blue-light)" }} className="text-lg">ℹ️</span>
+        </div>
+        <div>
+          <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">SIGEDUAL — Sistema Integral de Gestión Dual</p>
+          <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">
+            Plataforma centralizada para la formación dual en liceos técnico-profesionales.
+          </p>
+        </div>
+      </div>
+
     </div>
   );
 }
