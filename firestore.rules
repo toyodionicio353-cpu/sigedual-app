@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Cualquier usuario autenticado puede leer/escribir sus datos básicos
+    match /usuarios/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Sesiones: cada usuario autenticado puede crear y eliminar sesiones
+    match /sesiones/{sesionId} {
+      allow read:   if request.auth != null;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null;
+      allow update: if request.auth != null;
+    }
+
+    // Auditoría: solo lectura para autenticados, escritura desde el sistema
+    match /auditoria/{docId} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Liceos: lectura pública (necesaria para registro sin sesión), escritura solo autenticados
+    match /liceos/{docId} {
+      allow read:  if true;
+      allow write: if request.auth != null;
+    }
+
+    // Resto de colecciones del sistema (nivel raíz)
+    match /{collection}/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Subcolecciones de conversaciones (mensajes, archivos, etc.)
+    match /conversaciones/{convId}/{subCollection}/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Notificaciones por usuario
+    match /notificaciones/{uid}/{subCollection}/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Crear Admin SIGEDUAL</title>
+  <style>
+    body { font-family: sans-serif; background: #0b1220; color: #e8eefc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+    .box { background: #111a2f; border: 1px solid #1f2c4d; border-radius: 16px; padding: 40px; max-width: 400px; width: 100%; text-align: center; }
+    h1 { color: #3b82f6; margin-bottom: 8px; }
+    p { color: #9aa8c7; font-size: 14px; margin-bottom: 24px; }
+    button { background: #2563eb; color: white; border: none; padding: 14px 32px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .resultado { margin-top: 20px; padding: 16px; border-radius: 10px; font-size: 13px; display: none; }
+    .ok { background: #22c55e22; color: #22c55e; border: 1px solid #22c55e44; }
+    .err { background: #ef444422; color: #ef4444; border: 1px solid #ef444444; }
+    code { display: block; margin-top: 12px; background: #0b1220; padding: 12px; border-radius: 8px; text-align: left; font-size: 12px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+<div class="box">
+  <h1>SIGEDUAL</h1>
+  <p>Haz clic en el botón para crear el usuario administrador del sistema.</p>
+  <button id="btn" onclick="crearAdmin()">Crear Administrador</button>
+  <div class="resultado" id="res"></div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyBKbB7x77RR0Rh6Wj87Eb-31eWqSbiRph8",
+    authDomain: "sigedualpeo.firebaseapp.com",
+    projectId: "sigedualpeo",
+    storageBucket: "sigedualpeo.firebasestorage.app",
+    messagingSenderId: "715252128995",
+    appId: "1:715252128995:web:1d9a6cd29a8840de3c39d6"
+  });
+
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  window.crearAdmin = async function() {
+    const btn = document.getElementById("btn");
+    const res = document.getElementById("res");
+    btn.disabled = true;
+    btn.textContent = "Creando...";
+    res.style.display = "none";
+
+    const EMAIL = "admin@sigedual.cl";
+    const PASSWORD = "Sigedual2024*";
+
+    try {
+      let uid;
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, EMAIL, PASSWORD);
+        uid = cred.user.uid;
+      } catch (e) {
+        if (e.code === "auth/email-already-in-use") {
+          const cred = await signInWithEmailAndPassword(auth, EMAIL, PASSWORD);
+          uid = cred.user.uid;
+        } else throw e;
+      }
+
+      await setDoc(doc(db, "usuarios", uid), {
+        uid, email: EMAIL,
+        nombre: "Administrador SIGEDUAL",
+        rol: "administrador",
+        especialidad: "",
+        liceoId: "liceo_principal",
+        activo: true,
+        creadoEn: new Date().toISOString(),
+      });
+
+      res.className = "resultado ok";
+      res.innerHTML = `✅ <strong>Administrador creado correctamente.</strong>
+        <code>Correo: ${EMAIL}\nContraseña: ${PASSWORD}</code>
+        <p style="margin-top:12px;color:#22c55e">Ya puedes cerrar esta pestaña e iniciar sesión en SIGEDUAL.</p>`;
+      res.style.display = "block";
+      btn.textContent = "✅ Listo";
+    } catch (e) {
+      res.className = "resultado err";
+      res.innerHTML = "❌ Error: " + e.message;
+      res.style.display = "block";
+      btn.disabled = false;
+      btn.textContent = "Reintentar";
+    }
+  };
+</script>
+</body>
+</html>
