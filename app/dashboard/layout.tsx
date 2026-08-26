@@ -34,6 +34,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  function toggleSidebar() {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setMobileOpen((v) => !v);
+    } else {
+      setCollapsed((v) => !v);
+    }
+  }
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -56,29 +65,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div style={{ background: "var(--bg-base)" }} className="flex min-h-screen">
-      <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+      <Sidebar
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        mobileOpen={mobileOpen}
+        onCloseMobile={() => setMobileOpen(false)}
+      />
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
         <header
           style={{ background: "var(--bg-card)", borderBottom: "1px solid var(--border)", height: 56 }}
-          className="px-6 flex items-center justify-between sticky top-0 z-10"
+          className="px-3 md:px-6 flex items-center justify-between sticky top-0 z-20"
         >
-          <div className="flex items-center gap-4 h-14">
+          <div className="flex items-center gap-2 md:gap-4 h-14 min-w-0">
             {/* Hamburguesa */}
             <button
-              onClick={() => setCollapsed((v) => !v)}
+              onClick={toggleSidebar}
               style={{ borderRadius: 8, color: "var(--text-secondary)" }}
-              className="p-2 hover:bg-white/5 transition-colors"
-              title={collapsed ? "Expandir menú" : "Colapsar menú"}
+              className="p-2 hover:bg-white/5 transition-colors flex-shrink-0"
+              title="Abrir/cerrar menú"
             >
               <Menu size={20} />
             </button>
 
             {/* Separador */}
-            <div style={{ width: 1, height: 24, background: "var(--border)" }} />
+            <div style={{ width: 1, height: 24, background: "var(--border)" }} className="flex-shrink-0" />
 
             {/* Título */}
-            <h2 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">{titulo}</h2>
+            <h2 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{titulo}</h2>
           </div>
 
           <div className="flex items-center gap-2">

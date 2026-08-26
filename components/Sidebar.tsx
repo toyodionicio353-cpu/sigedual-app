@@ -150,9 +150,11 @@ const ROL_COLOR: Record<Rol, string> = {
 interface SidebarProps {
   collapsed: boolean;
   setCollapsed: (v: boolean | ((prev: boolean) => boolean)) => void;
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
 }
 
-export default function Sidebar({ collapsed }: SidebarProps) {
+export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) {
   const { usuario } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
@@ -172,17 +174,24 @@ export default function Sidebar({ collapsed }: SidebarProps) {
   const rolColor = usuario ? ROL_COLOR[usuario.rol] : "#2563eb";
 
   return (
-    <aside
-      style={{
-        background: "var(--bg-card)",
-        borderRight: "1px solid var(--border)",
-        width: collapsed ? 64 : 256,
-        transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
-        flexShrink: 0,
-        overflow: "hidden",
-      }}
-      className="min-h-screen flex flex-col"
-    >
+    <>
+      {/* Fondo oscuro al abrir el menú en celular */}
+      {mobileOpen && (
+        <div
+          onClick={onCloseMobile}
+          className="fixed inset-0 bg-black/60 z-30 md:hidden"
+        />
+      )}
+      <aside
+        style={{
+          background: "var(--bg-card)",
+          borderRight: "1px solid var(--border)",
+          flexShrink: 0,
+        }}
+        className={`min-h-screen flex flex-col fixed md:static inset-y-0 left-0 z-40 overflow-hidden transition-all duration-200 ease-in-out w-64 ${
+          collapsed ? "md:w-16" : "md:w-64"
+        } ${mobileOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+      >
       {/* Logo */}
       <div className="flex items-center px-4" style={{ borderBottom: "1px solid var(--border)", height: 56, minHeight: 56 }}>
         <div style={{ background: "var(--accent-blue)", borderRadius: 8, minWidth: 32, height: 32 }} className="flex items-center justify-center">
@@ -280,6 +289,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
                         <Link
                           key={sub.href}
                           href={sub.href}
+                          onClick={onCloseMobile}
                           style={{
                             background: subActive ? menu.color + "20" : "transparent",
                             color: subActive ? menu.color : "var(--text-secondary)",
@@ -315,6 +325,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
           {!collapsed && <span className="whitespace-nowrap">Cerrar sesión</span>}
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
