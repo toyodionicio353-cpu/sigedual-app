@@ -48,6 +48,9 @@ export default function LoginPage() {
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-2">
             Sistema Integral de Gestión Dual
           </p>
+          <p style={{ color: "var(--accent-blue-light)" }} className="text-xs mt-1">
+            Prueba de despliegue ✔
+          </p>
         </div>
 
         <h2 style={{ color: "#fff" }} className="text-xl font-semibold mb-1">
