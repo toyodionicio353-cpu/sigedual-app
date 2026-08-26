@@ -38,7 +38,7 @@ export default function LoginPage() {
           background: "var(--bg-card)",
           border: "1px solid var(--border-light)",
         }}
-        className="w-full max-w-sm rounded-2xl p-10 shadow-2xl"
+        className="w-full max-w-sm rounded-2xl p-6 sm:p-10 shadow-2xl"
       >
         {/* Logo */}
         <div className="text-center mb-8">
@@ -47,6 +47,9 @@ export default function LoginPage() {
           </h1>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-2">
             Sistema Integral de Gestión Dual
+          </p>
+          <p style={{ color: "var(--accent-blue-light)" }} className="text-xs mt-1">
+            Prueba de despliegue ✔
           </p>
         </div>
 

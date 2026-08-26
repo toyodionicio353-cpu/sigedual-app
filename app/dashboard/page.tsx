@@ -75,7 +75,7 @@ export default function DashboardPage() {
   const saludo = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches";
 
   return (
-    <div className="p-8 max-w-6xl">
+    <div className="p-4 md:p-8 max-w-6xl">
 
       {/* Header */}
       <div className="mb-8">

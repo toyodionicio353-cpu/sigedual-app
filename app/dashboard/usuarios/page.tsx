@@ -59,7 +59,7 @@ export default function UsuariosPage() {
 
   if (usuario?.rol !== "administrador") {
     return (
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         <p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p>
       </div>
     );
@@ -71,8 +71,8 @@ export default function UsuariosPage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 md:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Usuarios</h1>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{usuarios.length} usuario(s) en el sistema</p>
@@ -85,8 +85,8 @@ export default function UsuariosPage() {
       {loading ? (
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
       ) : (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden overflow-x-auto">
+          <table className="w-full text-sm min-w-[720px]">
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-surface)" }}>
                 {["Nombre", "Correo", "Rol", "Especialidad", "Estado", "Acción"].map((h) => (
@@ -119,8 +119,8 @@ export default function UsuariosPage() {
       )}
 
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.7)" }}>
-          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="w-full max-w-md rounded-2xl p-8 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="w-full max-w-md rounded-2xl p-5 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-6">Crear usuario</h2>
             <div className="flex flex-col gap-4">
               {[

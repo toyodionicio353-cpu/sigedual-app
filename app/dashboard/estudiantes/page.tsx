@@ -90,9 +90,9 @@ export default function EstudiantesPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Estudiantes</h1>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{filtrados.length} estudiante(s) encontrado(s)</p>
@@ -126,8 +126,8 @@ export default function EstudiantesPage() {
           {puedeEditar && <p style={{ color: "var(--text-muted)" }} className="text-xs mt-2">Haz clic en "Agregar estudiante" para comenzar.</p>}
         </div>
       ) : (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-surface)" }}>
                 {["RUN", "Nombre completo", "Curso", "Estado", "Acciones"].map((h) => (
@@ -163,12 +163,12 @@ export default function EstudiantesPage() {
 
       {/* Modal */}
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.7)" }}>
-          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="w-full max-w-lg rounded-2xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="w-full max-w-lg rounded-2xl p-5 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-6">
               {editId ? "Editar estudiante" : "Agregar estudiante"}
             </h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 { key: "run", label: "RUN", placeholder: "12.345.678-9" },
                 { key: "nombres", label: "Nombres", placeholder: "Juan Andrés" },

@@ -41,23 +41,23 @@ export default function EspecialidadesPage() {
   }
 
   if (!["administrador", "coordinador", "director"].includes(usuario?.rol ?? "")) {
-    return <div className="p-8"><p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p></div>;
+    return <div className="p-4 md:p-8"><p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p></div>;
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-6">
         <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Especialidades</h1>
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Carreras técnico-profesionales del establecimiento</p>
       </div>
 
       {puedeEditar && (
-        <form onSubmit={agregar} className="flex gap-3 mb-6">
+        <form onSubmit={agregar} className="flex flex-col sm:flex-row gap-3 mb-6">
           <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre de la especialidad (ej: Contabilidad)"
             style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
             className="flex-1 px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors" />
           <button type="submit" disabled={guardando || !nombre.trim()} style={{ background: "var(--accent-blue)" }}
-            className="px-5 py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-50">
+            className="px-5 py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-50 sm:w-auto w-full">
             {guardando ? "Agregando..." : "Agregar"}
           </button>
         </form>
