@@ -38,7 +38,7 @@ export default function LoginPage() {
           background: "var(--bg-card)",
           border: "1px solid var(--border-light)",
         }}
-        className="w-full max-w-sm rounded-2xl p-10 shadow-2xl"
+        className="w-full max-w-sm rounded-2xl p-6 sm:p-10 shadow-2xl"
       >
         {/* Logo */}
         <div className="text-center mb-8">

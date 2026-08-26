@@ -62,7 +62,7 @@ export default function MensajesPage() {
   let lastFecha = "";
 
   return (
-    <div className="flex flex-col h-screen p-8 gap-0">
+    <div className="flex flex-col h-[calc(100dvh-56px)] p-4 md:p-8 gap-0">
       <div className="mb-4">
         <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Mensajes</h1>
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Canal general del establecimiento</p>

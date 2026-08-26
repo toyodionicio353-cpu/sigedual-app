@@ -64,8 +64,8 @@ export default function CentrosPage() {
   );
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 md:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Centros Duales</h1>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{filtrados.length} centro(s) registrado(s)</p>
@@ -118,10 +118,10 @@ export default function CentrosPage() {
       )}
 
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.7)" }}>
-          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="w-full max-w-lg rounded-2xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="w-full max-w-lg rounded-2xl p-5 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-6">{editId ? "Editar centro" : "Agregar centro dual"}</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 { key: "nombre", label: "Nombre del centro", placeholder: "Empresa S.A." },
                 { key: "rut", label: "RUT", placeholder: "76.123.456-7" },
