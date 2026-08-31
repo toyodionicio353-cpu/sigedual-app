@@ -152,15 +152,15 @@ export default function LoginPage() {
             style={{ borderTop: "1px solid var(--border)" }}
             className="flex items-center justify-center gap-2 mt-8 pt-5"
           >
+            <p style={{ color: "var(--text-muted)" }} className="text-label text-[9px]">
+              Plataforma verificada y protegida
+            </p>
             <div
-              style={{ border: "1.5px solid var(--text-muted)", color: "var(--text-muted)" }}
-              className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
+              style={{ border: "1px solid var(--text-muted)", color: "var(--text-muted)" }}
+              className="w-3 h-3 rounded-full flex items-center justify-center text-[7px] font-bold flex-shrink-0"
             >
               C
             </div>
-            <p style={{ color: "var(--text-muted)" }} className="text-label text-[11px]">
-              Sitio web certificado
-            </p>
           </div>
         </div>
       </div>
