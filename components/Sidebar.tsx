@@ -13,7 +13,7 @@ import {
   FileText, MessageSquare, Settings, LogOut, BookOpen,
   ChevronDown, UserPlus, ClipboardList, FilePlus,
   FolderOpen, Send, UsersRound, Building, ShieldCheck,
-  CalendarCheck, FileSearch, MessagesSquare,
+  CalendarCheck, MessagesSquare,
   UserCog, School,
 } from "lucide-react";
 
@@ -54,7 +54,6 @@ const MENUS: NavGroup[] = [
       { href: "/dashboard/estudiantes", label: "Lista de estudiantes", icon: <ClipboardList size={13} />, roles: ["administrador", "coordinador", "director", "profesor"] },
       { href: "/dashboard/estudiantes/nuevo", label: "Agregar estudiante", icon: <UserPlus size={13} />, roles: ["administrador", "profesor"] },
       { href: "/dashboard/estudiantes/asignaciones", label: "Asignaciones", icon: <CalendarCheck size={13} />, roles: ["administrador", "coordinador", "director", "profesor"] },
-      { href: "/dashboard/estudiantes/historial", label: "Historial", icon: <FileSearch size={13} />, roles: ["administrador", "coordinador", "director", "profesor"] },
     ],
   },
   {
