@@ -13,7 +13,7 @@ import {
   FileText, MessageSquare, Settings, LogOut, BookOpen,
   ChevronDown, UserPlus, ClipboardList, FilePlus,
   FolderOpen, Send, UsersRound, Building, ShieldCheck,
-  BarChart3, CalendarCheck, FileSearch, MessagesSquare,
+  CalendarCheck, FileSearch, MessagesSquare,
   UserCog, School,
 } from "lucide-react";
 
@@ -30,6 +30,7 @@ interface NavGroup {
   icon: React.ReactNode;
   color: string;
   roles: Rol[];
+  href?: string;
   sub: SubItem[];
 }
 
@@ -40,10 +41,8 @@ const MENUS: NavGroup[] = [
     icon: <LayoutDashboard size={17} />,
     color: "#2563eb",
     roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"],
-    sub: [
-      { href: "/dashboard", label: "Panel principal", icon: <LayoutDashboard size={13} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-      { href: "/dashboard/estadisticas", label: "Estadísticas", icon: <BarChart3 size={13} />, roles: ["administrador", "coordinador", "director"] },
-    ],
+    href: "/dashboard",
+    sub: [],
   },
   {
     id: "estudiantes",
@@ -191,7 +190,29 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
         {visibleMenus.map((menu) => {
           const isOpen = openMenu === menu.id && !collapsed;
           const visibleSub = menu.sub.filter((s) => usuario && s.roles.includes(usuario.rol));
-          const isActive = visibleSub.some((s) => s.href === pathname || (s.href !== "/dashboard" && pathname.startsWith(s.href)));
+          const isActive = menu.href
+            ? pathname === menu.href
+            : visibleSub.some((s) => s.href === pathname || (s.href !== "/dashboard" && pathname.startsWith(s.href)));
+
+          if (menu.href) {
+            return (
+              <Link
+                key={menu.id}
+                href={menu.href}
+                onClick={onCloseMobile}
+                title={collapsed ? menu.label : undefined}
+                style={{
+                  background: isActive ? menu.color + "22" : "transparent",
+                  borderRadius: 9,
+                  color: isActive ? menu.color : "var(--text-secondary)",
+                }}
+                className="flex items-center gap-2.5 px-2.5 py-2.5 text-sm font-medium hover:bg-white/5 transition-all"
+              >
+                <span style={{ color: isActive ? menu.color : "var(--text-muted)", flexShrink: 0 }}>{menu.icon}</span>
+                {!collapsed && <span className="flex-1 whitespace-nowrap">{menu.label}</span>}
+              </Link>
+            );
+          }
 
           return (
             <div key={menu.id}>
