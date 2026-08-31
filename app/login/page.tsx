@@ -1,9 +1,18 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { auth, db } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
+import { Newspaper, ImageIcon, Megaphone } from "lucide-react";
+
+const NOTICIAS_PLACEHOLDER = [
+  { icon: Newspaper, titulo: "Noticias del programa dual" },
+  { icon: ImageIcon, titulo: "Galería de actividades" },
+  { icon: Megaphone, titulo: "Avisos y comunicados" },
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,134 +38,154 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ background: "var(--bg-base)" }} className="min-h-screen lg:grid lg:grid-cols-2">
-      {/* Panel de marca (solo visible en pantallas grandes) */}
-      <div
-        style={{
-          background:
-            "radial-gradient(circle at 30% 20%, var(--bg-card-hover), var(--bg-base) 70%)",
-          borderRight: "1px solid var(--border)",
-        }}
-        className="hidden lg:flex flex-col justify-between p-12 relative overflow-hidden"
-      >
+    <div style={{ background: "var(--bg-base)" }} className="min-h-screen flex flex-col lg:flex-row">
+      {/* Tarjeta de login */}
+      <div className="w-full lg:w-auto flex justify-center lg:justify-start px-4 pt-10 pb-8 lg:p-16">
         <div
-          style={{ background: "var(--accent-blue)", opacity: 0.15 }}
-          className="absolute -top-24 -right-24 w-96 h-96 rounded-full blur-3xl"
-        />
-        <div
-          style={{ background: "var(--accent-blue-hover)", opacity: 0.1 }}
-          className="absolute bottom-0 left-0 w-72 h-72 rounded-full blur-3xl"
-        />
-
-        <div className="relative">
-          <div className="flex items-center gap-3">
-            <div
-              style={{ background: "var(--accent-blue)", borderRadius: 12 }}
-              className="w-11 h-11 flex items-center justify-center"
-            >
-              <span className="text-white font-black text-lg">SG</span>
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--border-light)",
+          }}
+          className="w-full max-w-sm rounded-2xl p-6 sm:p-10 shadow-2xl self-start lg:self-center"
+        >
+          {/* Logo + nombre */}
+          <div className="flex items-center gap-3 mb-6">
+            <Image
+              src="/logo-icon.png"
+              alt="Logo SIGEDUAL"
+              width={48}
+              height={48}
+              className="w-12 h-12 object-contain flex-shrink-0"
+            />
+            <div>
+              <h1 style={{ color: "#fff" }} className="text-2xl font-bold tracking-tight uppercase leading-none">
+                SIGEDUAL
+              </h1>
+              <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-1.5">
+                Sistema Integral de Gestión Dual
+              </p>
             </div>
-            <span style={{ color: "#fff" }} className="text-xl font-bold tracking-tight">
-              SIGEDUAL
-            </span>
           </div>
-        </div>
 
-        <div className="relative max-w-md">
-          <h2 style={{ color: "#fff" }} className="text-3xl font-bold leading-tight mb-4">
-            Gestiona la formación dual en un solo lugar
-          </h2>
-          <p style={{ color: "var(--text-secondary)" }} className="text-base">
-            Estudiantes, centros, profesores, especialidades y documentos, todo conectado y
-            disponible desde cualquier dispositivo.
-          </p>
-        </div>
+          <div style={{ borderTop: "1px solid var(--border)" }} className="pt-6">
+            <h2 style={{ color: "#fff" }} className="text-xl font-semibold mb-1">
+              Iniciar sesión
+            </h2>
+            <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-6">
+              Ingresa tus credenciales para continuar
+            </p>
 
-        <p style={{ color: "var(--text-muted)" }} className="relative text-xs">
-          Sistema Integral de Gestión Dual
-        </p>
-      </div>
+            <form onSubmit={handleLogin} className="flex flex-col gap-4">
+              <div>
+                <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
+                  Correo electrónico
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="correo@liceo.cl"
+                  required
+                  style={{
+                    background: "var(--bg-base)",
+                    border: "1px solid var(--border-light)",
+                    color: "var(--text-primary)",
+                  }}
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
 
-      {/* Formulario */}
-      <div className="flex min-h-screen lg:min-h-0 items-center justify-center px-4 py-10 sm:px-6">
-        <div className="w-full max-w-sm">
-          {/* Logo (solo visible en móvil/tablet) */}
-          <div className="text-center mb-8 lg:hidden">
-            <div
-              style={{ background: "var(--accent-blue)", borderRadius: 14 }}
-              className="w-14 h-14 flex items-center justify-center mx-auto mb-4"
-            >
-              <span className="text-white font-black text-xl">SG</span>
-            </div>
-            <h1 style={{ color: "#fff" }} className="text-2xl font-bold tracking-tight">
-              SIGEDUAL
-            </h1>
-            <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-              Sistema Integral de Gestión Dual
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label style={{ color: "var(--text-secondary)" }} className="block text-sm">
+                    Contraseña
+                  </label>
+                  <Link
+                    href="/recuperar-password"
+                    style={{ color: "var(--accent-blue-light)" }}
+                    className="text-xs hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  style={{
+                    background: "var(--bg-base)",
+                    border: "1px solid var(--border-light)",
+                    color: "var(--text-primary)",
+                  }}
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+
+              {error && (
+                <p style={{ color: "var(--danger)" }} className="text-sm text-center">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                style={{ background: "var(--accent-blue)" }}
+                className="w-full py-3 rounded-xl text-white font-semibold text-sm mt-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {loading ? "Ingresando..." : "Ingresar"}
+              </button>
+            </form>
+
+            <p style={{ color: "var(--text-secondary)" }} className="text-sm text-center mt-5">
+              ¿No tienes cuenta?{" "}
+              <Link href="/crear-cuenta" style={{ color: "var(--accent-blue-light)" }} className="font-medium hover:underline">
+                Crear cuenta
+              </Link>
             </p>
           </div>
 
-          <h2 style={{ color: "#fff" }} className="text-xl font-semibold mb-1">
-            Iniciar sesión
-          </h2>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-6">
-            Ingresa tus credenciales para continuar
-          </p>
-
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
-            <div>
-              <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
-                Correo electrónico
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="correo@liceo.cl"
-                required
-                style={{
-                  background: "var(--bg-card)",
-                  border: "1px solid var(--border-light)",
-                  color: "var(--text-primary)",
-                }}
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
-              />
-            </div>
-
-            <div>
-              <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
-                Contraseña
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                style={{
-                  background: "var(--bg-card)",
-                  border: "1px solid var(--border-light)",
-                  color: "var(--text-primary)",
-                }}
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
-              />
-            </div>
-
-            {error && (
-              <p style={{ color: "var(--danger)" }} className="text-sm text-center">
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{ background: "var(--accent-blue)" }}
-              className="w-full py-3 rounded-xl text-white font-semibold text-sm mt-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+          {/* Sello de confianza */}
+          <div
+            style={{ borderTop: "1px solid var(--border)" }}
+            className="flex items-center justify-center gap-2 mt-8 pt-5"
+          >
+            <div
+              style={{ border: "1.5px solid var(--text-muted)", color: "var(--text-muted)" }}
+              className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
             >
-              {loading ? "Ingresando..." : "Ingresar"}
-            </button>
-          </form>
+              C
+            </div>
+            <p style={{ color: "var(--text-muted)" }} className="text-[11px] tracking-wide">
+              Sitio web certificado
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Noticias e imágenes (debajo en móvil, a la derecha en escritorio) */}
+      <div className="flex-1 px-4 pb-10 lg:p-16 flex flex-col">
+        <h3 style={{ color: "var(--text-secondary)" }} className="text-xs font-semibold uppercase tracking-wider mb-4">
+          Noticias y novedades
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+          {NOTICIAS_PLACEHOLDER.map(({ icon: Icon, titulo }, i) => (
+            <div
+              key={i}
+              style={{ background: "var(--bg-card)", border: "1px dashed var(--border-light)" }}
+              className="rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-2 min-h-[140px]"
+            >
+              <Icon size={22} style={{ color: "var(--text-muted)" }} />
+              <p style={{ color: "var(--text-muted)" }} className="text-xs font-medium">
+                {titulo}
+              </p>
+              <p style={{ color: "var(--text-muted)" }} className="text-[11px] opacity-70">
+                Próximamente
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
