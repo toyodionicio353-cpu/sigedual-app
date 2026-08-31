@@ -12,8 +12,8 @@ import {
   LayoutDashboard, Users, Building2, GraduationCap,
   FileText, MessageSquare, Settings, LogOut, BookOpen,
   ChevronDown, UserPlus, ClipboardList,
-  FolderOpen, Send, UsersRound, Building, ShieldCheck,
-  CalendarCheck, MessagesSquare, Handshake, ClipboardCheck,
+  FolderOpen, UsersRound, Building, ShieldCheck,
+  CalendarCheck, Handshake, ClipboardCheck,
   UserCog, School,
 } from "lucide-react";
 
@@ -109,11 +109,8 @@ const MENUS: NavGroup[] = [
     icon: <MessageSquare size={17} />,
     color: "#ec4899",
     roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"],
-    sub: [
-      { href: "/dashboard/mensajes", label: "Canal general", icon: <MessagesSquare size={13} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-      { href: "/dashboard/mensajes/directos", label: "Mensajes directos", icon: <Send size={13} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-      { href: "/dashboard/mensajes/grupos", label: "Grupos", icon: <UsersRound size={13} />, roles: ["administrador", "coordinador", "director", "profesor"] },
-    ],
+    href: "/dashboard/mensajes",
+    sub: [],
   },
   {
     id: "administracion",
