@@ -105,11 +105,11 @@ export async function requireAdmin(request: Request): Promise<string> {
   return uid;
 }
 
-/** Todos los uid que existen actualmente en Firebase Authentication. */
-export async function listAuthUids(): Promise<Set<string>> {
+/** Todas las cuentas (uid + correo) que existen actualmente en Firebase Authentication. */
+export async function listAuthAccounts(): Promise<{ uid: string; email: string }[]> {
   const sa = getServiceAccount();
   const token = await getAccessToken();
-  const uids = new Set<string>();
+  const cuentas: { uid: string; email: string }[] = [];
   let nextPageToken: string | undefined;
   do {
     const url = new URL(`https://identitytoolkit.googleapis.com/v1/projects/${sa.project_id}/accounts:batchGet`);
@@ -117,11 +117,11 @@ export async function listAuthUids(): Promise<Set<string>> {
     if (nextPageToken) url.searchParams.set("nextPageToken", nextPageToken);
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) throw new Error(`No se pudo listar usuarios de Firebase Auth: ${await res.text()}`);
-    const data = (await res.json()) as { users?: { localId: string }[]; nextPageToken?: string };
-    (data.users ?? []).forEach((u) => uids.add(u.localId));
+    const data = (await res.json()) as { users?: { localId: string; email?: string }[]; nextPageToken?: string };
+    (data.users ?? []).forEach((u) => cuentas.push({ uid: u.localId, email: u.email ?? "" }));
     nextPageToken = data.nextPageToken;
   } while (nextPageToken);
-  return uids;
+  return cuentas;
 }
 
 /** Todos los uid que existen como documento en Firestore "usuarios". */
