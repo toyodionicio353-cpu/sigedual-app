@@ -54,6 +54,26 @@ export interface Estudiante {
   creadoEn: string;
 }
 
+export interface Conversacion {
+  id: string;
+  tipo: "privada" | "grupo";
+  nombre?: string;
+  participantes: string[];
+  liceoId: string;
+  ultimoMensaje?: string;
+  ultimaActividad: string;
+  creadoPor: string;
+  creadoEn: string;
+}
+
+export interface MensajeConversacion {
+  id: string;
+  texto: string;
+  uid: string;
+  nombre: string;
+  creadoEn: string;
+}
+
 export interface CentroDual {
   id: string;
   nombre: string;
