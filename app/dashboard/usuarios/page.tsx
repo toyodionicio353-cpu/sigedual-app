@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { collection, query, where, getDocs, doc, updateDoc, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, setDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -42,8 +42,10 @@ export default function UsuariosPage() {
   async function cargar() {
     if (!usuario) return;
     setLoading(true);
-    const q = query(collection(db, "usuarios"), where("liceoId", "==", usuario.liceoId));
-    const snap = await getDocs(q);
+    // El administrador ve a todos los usuarios de la plataforma, sin
+    // filtrar por liceo (a diferencia de otros roles, que solo verían
+    // el suyo si esta pantalla se habilitara para ellos).
+    const snap = await getDocs(collection(db, "usuarios"));
     setUsuarios(snap.docs.map((d) => ({ ...d.data() } as Usuario)));
     setLoading(false);
   }
