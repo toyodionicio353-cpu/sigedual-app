@@ -16,6 +16,12 @@ const ROLES: { value: Rol; label: string }[] = [
 ];
 
 const EMPTY = { email: "", password: "", nombre: "", rol: "profesor" as Rol, especialidad: "", liceoId: "" };
+const EMPTY_HUERFANO = { nombre: "", rol: "profesor" as Rol, especialidad: "", liceoId: "" };
+
+interface Huerfano {
+  uid: string;
+  email: string;
+}
 
 export default function UsuariosPage() {
   const { usuario } = useAuth();
@@ -28,6 +34,10 @@ export default function UsuariosPage() {
   const [sincronizando, setSincronizando] = useState(false);
   const [eliminandoUid, setEliminandoUid] = useState<string | null>(null);
   const [avisoSync, setAvisoSync] = useState("");
+  const [huerfanos, setHuerfanos] = useState<Huerfano[]>([]);
+  const [huerfanoActivo, setHuerfanoActivo] = useState<Huerfano | null>(null);
+  const [formHuerfano, setFormHuerfano] = useState(EMPTY_HUERFANO);
+  const [guardandoHuerfano, setGuardandoHuerfano] = useState(false);
 
   async function cargar() {
     if (!usuario) return;
@@ -50,7 +60,7 @@ export default function UsuariosPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const texto = await res.text();
-      let data: { error?: string; eliminados?: string[] } = {};
+      let data: { error?: string; eliminados?: string[]; huerfanos?: Huerfano[] } = {};
       try {
         data = JSON.parse(texto);
       } catch {
@@ -60,12 +70,12 @@ export default function UsuariosPage() {
         if (!silencioso) setAvisoSync(data.error || `Error del servidor (código ${res.status}).`);
         return;
       }
+      setHuerfanos(data.huerfanos ?? []);
       if (!silencioso) {
-        setAvisoSync(
-          (data.eliminados?.length ?? 0) > 0
-            ? `Se quitaron ${data.eliminados!.length} usuario(s) que ya no existían en Firebase.`
-            : "Todo estaba al día, no había usuarios fantasma."
-        );
+        const partes: string[] = [];
+        if ((data.eliminados?.length ?? 0) > 0) partes.push(`se quitaron ${data.eliminados!.length} usuario(s) que ya no existían en Firebase`);
+        if ((data.huerfanos?.length ?? 0) > 0) partes.push(`hay ${data.huerfanos!.length} cuenta(s) de Firebase sin completar en SIGEDUAL (ver abajo)`);
+        setAvisoSync(partes.length > 0 ? `Listo: ${partes.join(", ")}.` : "Todo estaba al día.");
       }
       await cargar();
     } catch (err) {
@@ -99,6 +109,25 @@ export default function UsuariosPage() {
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error al crear usuario");
     } finally { setGuardando(false); }
+  }
+
+  async function completarHuerfano() {
+    if (!huerfanoActivo || !usuario) return;
+    setGuardandoHuerfano(true);
+    try {
+      await setDoc(doc(db, "usuarios", huerfanoActivo.uid), {
+        uid: huerfanoActivo.uid, email: huerfanoActivo.email, nombre: formHuerfano.nombre,
+        rol: formHuerfano.rol, especialidad: formHuerfano.especialidad,
+        liceoId: formHuerfano.liceoId || usuario.liceoId,
+        activo: true, creadoEn: new Date().toISOString(),
+      });
+      setHuerfanos((prev) => prev.filter((h) => h.uid !== huerfanoActivo.uid));
+      setHuerfanoActivo(null);
+      setFormHuerfano(EMPTY_HUERFANO);
+      await cargar();
+    } finally {
+      setGuardandoHuerfano(false);
+    }
   }
 
   async function toggleActivo(u: Usuario) {
@@ -164,6 +193,28 @@ export default function UsuariosPage() {
       </div>
 
       {avisoSync && <p style={{ color: "var(--text-muted)" }} className="text-xs mb-4">{avisoSync}</p>}
+
+      {huerfanos.length > 0 && (
+        <div style={{ background: "var(--warning-bg)", border: "1px solid var(--warning)" }} className="rounded-2xl p-4 mb-4">
+          <p style={{ color: "var(--warning)" }} className="text-sm font-semibold mb-3">
+            Cuentas creadas directo en Firebase, sin ficha en SIGEDUAL todavía:
+          </p>
+          <div className="flex flex-col gap-2">
+            {huerfanos.map((h) => (
+              <div key={h.uid} className="flex items-center justify-between gap-3">
+                <span style={{ color: "var(--text-primary)" }} className="text-sm truncate">{h.email}</span>
+                <button
+                  onClick={() => { setHuerfanoActivo(h); setFormHuerfano(EMPTY_HUERFANO); }}
+                  style={{ background: "var(--warning)", color: "#1a1300" }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity flex-shrink-0"
+                >
+                  Completar
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-4">Cargando...</p>
@@ -245,6 +296,43 @@ export default function UsuariosPage() {
               <button onClick={() => setModal(false)} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex-1 py-2.5 rounded-xl text-sm font-medium">Cancelar</button>
               <button onClick={crearUsuario} disabled={guardando} style={{ background: "var(--accent-blue)" }} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50">
                 {guardando ? "Creando..." : "Crear usuario"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {huerfanoActivo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="w-full max-w-md rounded-2xl p-5 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-1">Completar ficha</h2>
+            <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-6">{huerfanoActivo.email}</p>
+            <div className="flex flex-col gap-4">
+              {[
+                { key: "nombre", label: "Nombre completo", placeholder: "María González" },
+                { key: "especialidad", label: "Especialidad (si aplica)", placeholder: "Contabilidad" },
+                { key: "liceoId", label: "ID del liceo", placeholder: usuario?.liceoId },
+              ].map(({ key, label, placeholder }) => (
+                <div key={key}>
+                  <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">{label}</label>
+                  <input type="text" value={(formHuerfano as Record<string, string>)[key]} onChange={(e) => setFormHuerfano((f) => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
+                    style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+                    className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors" />
+                </div>
+              ))}
+              <div>
+                <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Rol</label>
+                <select value={formHuerfano.rol} onChange={(e) => setFormHuerfano((f) => ({ ...f, rol: e.target.value as Rol }))}
+                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none">
+                  {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setHuerfanoActivo(null)} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex-1 py-2.5 rounded-xl text-sm font-medium">Cancelar</button>
+              <button onClick={completarHuerfano} disabled={guardandoHuerfano || !formHuerfano.nombre.trim()} style={{ background: "var(--accent-blue)" }} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50">
+                {guardandoHuerfano ? "Guardando..." : "Guardar"}
               </button>
             </div>
           </div>
