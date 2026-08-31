@@ -120,11 +120,11 @@ const MENUS: NavGroup[] = [
     label: "Administración",
     icon: <Settings size={17} />,
     color: "#ef4444",
-    roles: ["administrador"],
+    roles: ["administrador", "director"],
     sub: [
       { href: "/dashboard/usuarios", label: "Usuarios", icon: <UserCog size={13} />, roles: ["administrador"] },
       { href: "/dashboard/liceos", label: "Liceos", icon: <School size={13} />, roles: ["administrador"] },
-      { href: "/dashboard/administracion/seguridad", label: "Seguridad", icon: <ShieldCheck size={13} />, roles: ["administrador"] },
+      { href: "/dashboard/administracion/seguridad", label: "Seguridad", icon: <ShieldCheck size={13} />, roles: ["administrador", "director"] },
     ],
   },
 ];
