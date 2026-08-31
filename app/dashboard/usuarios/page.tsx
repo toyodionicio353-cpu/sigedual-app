@@ -60,7 +60,12 @@ export default function UsuariosPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const texto = await res.text();
-      let data: { error?: string; eliminados?: string[]; huerfanos?: Huerfano[] } = {};
+      let data: {
+        error?: string;
+        eliminados?: string[];
+        huerfanos?: Huerfano[];
+        diagnostico?: { totalCuentasAuth: number; correosAuth: string[]; totalFichasFirestore: number };
+      } = {};
       try {
         data = JSON.parse(texto);
       } catch {
@@ -75,7 +80,12 @@ export default function UsuariosPage() {
         const partes: string[] = [];
         if ((data.eliminados?.length ?? 0) > 0) partes.push(`se quitaron ${data.eliminados!.length} usuario(s) que ya no existían en Firebase`);
         if ((data.huerfanos?.length ?? 0) > 0) partes.push(`hay ${data.huerfanos!.length} cuenta(s) de Firebase sin completar en SIGEDUAL (ver abajo)`);
-        setAvisoSync(partes.length > 0 ? `Listo: ${partes.join(", ")}.` : "Todo estaba al día.");
+        const resumen = partes.length > 0 ? `Listo: ${partes.join(", ")}.` : "Todo estaba al día.";
+        const d = data.diagnostico;
+        const diag = d
+          ? ` [Diagnóstico: ${d.totalCuentasAuth} cuenta(s) en Firebase Auth (${d.correosAuth.join(", ") || "ninguna"}), ${d.totalFichasFirestore} ficha(s) en Firestore]`
+          : "";
+        setAvisoSync(resumen + diag);
       }
       await cargar();
     } catch (err) {
