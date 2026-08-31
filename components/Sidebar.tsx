@@ -130,24 +130,6 @@ const MENUS: NavGroup[] = [
   },
 ];
 
-const ROL_LABEL: Record<Rol, string> = {
-  administrador: "Administrador",
-  coordinador: "Coordinador",
-  director: "Director",
-  profesor: "Profesor Supervisor",
-  centro_dual: "Centro Dual",
-  estudiante: "Estudiante",
-};
-
-const ROL_COLOR: Record<Rol, string> = {
-  administrador: "#ef4444",
-  coordinador: "#f59e0b",
-  director: "#8b5cf6",
-  profesor: "#2563eb",
-  centro_dual: "#22c55e",
-  estudiante: "#06b6d4",
-};
-
 interface SidebarProps {
   collapsed: boolean;
   setCollapsed: (v: boolean | ((prev: boolean) => boolean)) => void;
@@ -171,9 +153,6 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
   }
 
   const visibleMenus = MENUS.filter((m) => usuario && m.roles.includes(usuario.rol));
-  const inicial = usuario?.nombre?.charAt(0).toUpperCase() ?? "?";
-  const rolColor = usuario ? ROL_COLOR[usuario.rol] : "#2563eb";
-
   return (
     <>
       {/* Fondo oscuro al abrir el menú en celular */}
@@ -201,21 +180,6 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
             SIGEDUAL
           </h2>
         )}
-      </div>
-
-      {/* Usuario */}
-      <div className="px-3 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
-        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", borderRadius: 10 }} className="px-2 py-2 flex items-center gap-2">
-          <div style={{ background: rolColor, borderRadius: 7, minWidth: 32, height: 32 }} className="flex items-center justify-center">
-            <span className="text-white font-bold text-xs">{inicial}</span>
-          </div>
-          {!collapsed && (
-            <div className="min-w-0 overflow-hidden">
-              <p style={{ color: "var(--text-primary)" }} className="text-xs font-semibold truncate whitespace-nowrap">{usuario?.nombre ?? "..."}</p>
-              <p style={{ color: rolColor }} className="text-xs font-medium whitespace-nowrap">{usuario ? ROL_LABEL[usuario.rol] : ""}</p>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Nav */}
