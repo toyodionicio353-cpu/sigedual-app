@@ -33,7 +33,15 @@
     min-height: 100vh;
   }
 
-  h1, h2, h3, h4 {
-    font-family: var(--font-heading), sans-serif;
+  /* Marca y títulos grandes: geométrica en negrita, estilo cartel */
+  h1, h2 {
+    font-family: var(--font-display), sans-serif;
   }
+}
+
+/* Etiquetas, eyebrows y textos pequeños en mayúscula: condensada */
+.text-label {
+  font-family: var(--font-label), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
