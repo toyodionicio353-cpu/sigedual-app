@@ -42,27 +42,37 @@ export default function UsuariosPage() {
     if (!auth.currentUser) return;
     setSincronizando(true);
     setAvisoSync("");
+    let res: Response | null = null;
     try {
       const token = await auth.currentUser.getIdToken();
-      const res = await fetch("/api/admin/usuarios/sincronizar", {
+      res = await fetch("/api/admin/usuarios/sincronizar", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const texto = await res.text();
+      let data: { error?: string; eliminados?: string[] } = {};
+      try {
+        data = JSON.parse(texto);
+      } catch {
+        throw new Error(`El servidor respondió con código ${res.status} y algo que no es JSON: "${texto.slice(0, 200)}"`);
+      }
       if (!res.ok) {
-        if (!silencioso) setAvisoSync(data.error || "No se pudo sincronizar con Firebase.");
+        if (!silencioso) setAvisoSync(data.error || `Error del servidor (código ${res.status}).`);
         return;
       }
       if (!silencioso) {
         setAvisoSync(
-          data.eliminados.length > 0
-            ? `Se quitaron ${data.eliminados.length} usuario(s) que ya no existían en Firebase.`
+          (data.eliminados?.length ?? 0) > 0
+            ? `Se quitaron ${data.eliminados!.length} usuario(s) que ya no existían en Firebase.`
             : "Todo estaba al día, no había usuarios fantasma."
         );
       }
       await cargar();
-    } catch {
-      if (!silencioso) setAvisoSync("No se pudo conectar con el servidor para sincronizar.");
+    } catch (err) {
+      if (!silencioso) {
+        const detalle = err instanceof Error ? err.message : String(err);
+        setAvisoSync(`No se pudo sincronizar: ${detalle}`);
+      }
     } finally {
       setSincronizando(false);
     }
