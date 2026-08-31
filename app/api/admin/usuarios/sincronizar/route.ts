@@ -25,7 +25,16 @@ export async function POST(request: Request) {
 
     await Promise.all(eliminados.map((id) => deleteFirestoreUsuario(id)));
 
-    return NextResponse.json({ ok: true, eliminados, huerfanos });
+    return NextResponse.json({
+      ok: true,
+      eliminados,
+      huerfanos,
+      diagnostico: {
+        totalCuentasAuth: cuentasAuth.length,
+        correosAuth: cuentasAuth.map((c) => c.email),
+        totalFichasFirestore: idsFirestore.length,
+      },
+    });
   } catch (err) {
     const mensaje = err instanceof Error ? err.message : "Error inesperado al sincronizar.";
     const noAutorizado = mensaje.startsWith("No autorizado");
