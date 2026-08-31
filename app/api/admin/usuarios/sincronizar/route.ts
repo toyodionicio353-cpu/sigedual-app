@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb, requireAdmin } from "@/lib/firebase-admin";
+import { requireAdmin, listAuthUids, listFirestoreUsuarioIds, deleteFirestoreUsuario } from "@/lib/firebase-admin";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 /**
  * Elimina de Firestore ("usuarios") a quienes ya no existen en
@@ -10,25 +13,10 @@ export async function POST(request: Request) {
   try {
     await requireAdmin(request);
 
-    const uidsValidos = new Set<string>();
-    let pageToken: string | undefined;
-    do {
-      const pagina = await adminAuth().listUsers(1000, pageToken);
-      pagina.users.forEach((u) => uidsValidos.add(u.uid));
-      pageToken = pagina.pageToken;
-    } while (pageToken);
+    const [uidsValidos, idsFirestore] = await Promise.all([listAuthUids(), listFirestoreUsuarioIds()]);
+    const eliminados = idsFirestore.filter((id) => !uidsValidos.has(id));
 
-    const snap = await adminDb().collection("usuarios").get();
-    const eliminados: string[] = [];
-
-    await Promise.all(
-      snap.docs.map(async (doc) => {
-        if (!uidsValidos.has(doc.id)) {
-          eliminados.push(doc.id);
-          await doc.ref.delete();
-        }
-      })
-    );
+    await Promise.all(eliminados.map((id) => deleteFirestoreUsuario(id)));
 
     return NextResponse.json({ ok: true, eliminados });
   } catch (err) {

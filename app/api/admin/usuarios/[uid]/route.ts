@@ -1,31 +1,20 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb, requireAdmin } from "@/lib/firebase-admin";
+import { requireAdmin, deleteFirestoreUsuario, deleteAuthUser } from "@/lib/firebase-admin";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ uid: string }> }) {
   const { uid } = await params;
 
   try {
     await requireAdmin(request);
+    await deleteFirestoreUsuario(uid);
+    await deleteAuthUser(uid);
+    return NextResponse.json({ ok: true });
   } catch (err) {
-    const mensaje = err instanceof Error ? err.message : "No autorizado";
-    return NextResponse.json({ error: mensaje }, { status: 403 });
+    const mensaje = err instanceof Error ? err.message : "Error inesperado al eliminar el usuario.";
+    const noAutorizado = mensaje.startsWith("No autorizado");
+    return NextResponse.json({ error: mensaje }, { status: noAutorizado ? 403 : 500 });
   }
-
-  try {
-    await adminDb().doc(`usuarios/${uid}`).delete();
-  } catch {
-    // Si el documento ya no existe en Firestore, no es un problema: seguimos.
-  }
-
-  try {
-    await adminAuth().deleteUser(uid);
-  } catch (err) {
-    const code = (err as { code?: string })?.code;
-    if (code !== "auth/user-not-found") {
-      const mensaje = err instanceof Error ? err.message : "Error al eliminar la cuenta en Firebase";
-      return NextResponse.json({ error: mensaje }, { status: 500 });
-    }
-  }
-
-  return NextResponse.json({ ok: true });
 }
