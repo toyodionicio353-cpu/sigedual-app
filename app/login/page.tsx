@@ -58,20 +58,20 @@ export default function LoginPage() {
               className="w-12 h-12 object-contain flex-shrink-0"
             />
             <div>
-              <h1 style={{ color: "#fff" }} className="text-2xl font-bold tracking-tight uppercase leading-none">
+              <h1 style={{ color: "#fff" }} className="text-3xl font-extrabold tracking-tight uppercase leading-none">
                 SIGEDUAL
               </h1>
-              <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-1.5">
+              <p style={{ color: "var(--text-muted)" }} className="text-[11px] mt-2 tracking-wide">
                 Sistema Integral de Gestión Dual
               </p>
             </div>
           </div>
 
           <div style={{ borderTop: "1px solid var(--border)" }} className="pt-6">
-            <h2 style={{ color: "#fff" }} className="text-xl font-semibold mb-1">
+            <h2 style={{ color: "#fff" }} className="text-base font-semibold mb-1">
               Iniciar sesión
             </h2>
-            <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-6">
+            <p style={{ color: "var(--text-secondary)" }} className="text-xs mb-6">
               Ingresa tus credenciales para continuar
             </p>
 
