@@ -20,6 +20,15 @@ export interface Liceo {
   direccion: string;
   telefono?: string;
   email?: string;
+  dominioCorreo?: string;
+}
+
+export interface CodigoAcceso {
+  liceoId: string;
+  codigo: string;
+  generadoPor: string;
+  expiraEn: string;
+  actualizadoEn: string;
 }
 
 export interface Especialidad {
