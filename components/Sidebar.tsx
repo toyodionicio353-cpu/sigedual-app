@@ -88,7 +88,7 @@ const MENUS: NavGroup[] = [
     roles: ["administrador", "coordinador", "director"],
     sub: [
       { href: "/dashboard/especialidades", label: "Lista de especialidades", icon: <GraduationCap size={13} />, roles: ["administrador", "coordinador", "director"] },
-      { href: "/dashboard/especialidades/cursos", label: "Cursos", icon: <School size={13} />, roles: ["administrador", "coordinador", "director"] },
+      { href: "/dashboard/especialidades/nueva", label: "Agregar especialidad", icon: <UserPlus size={13} />, roles: ["administrador", "coordinador", "director"] },
     ],
   },
   {
