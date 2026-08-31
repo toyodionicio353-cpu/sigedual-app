@@ -170,7 +170,7 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
       )}
       <aside
         style={{
-          background: "var(--bg-card)",
+          background: "linear-gradient(to bottom left, #3d4fc4, #0d1130)",
           borderRight: "1px solid var(--border)",
           flexShrink: 0,
         }}
