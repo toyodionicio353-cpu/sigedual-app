@@ -58,7 +58,7 @@ export default function LoginPage() {
               className="w-12 h-12 object-contain flex-shrink-0"
             />
             <div>
-              <h1 style={{ color: "#fff" }} className="text-3xl font-extrabold tracking-tight uppercase leading-none">
+              <h1 style={{ color: "#fff" }} className="text-4xl font-bold tracking-tight uppercase leading-none">
                 SIGEDUAL
               </h1>
               <p style={{ color: "var(--text-muted)" }} className="text-[11px] mt-2 tracking-wide">
@@ -158,7 +158,7 @@ export default function LoginPage() {
             >
               C
             </div>
-            <p style={{ color: "var(--text-muted)" }} className="text-[11px] tracking-wide">
+            <p style={{ color: "var(--text-muted)" }} className="text-label text-[11px]">
               Sitio web certificado
             </p>
           </div>
@@ -167,7 +167,7 @@ export default function LoginPage() {
 
       {/* Noticias e imágenes (debajo en móvil, a la derecha en escritorio) */}
       <div className="flex-1 px-4 pb-10 lg:p-16 flex flex-col">
-        <h3 style={{ color: "var(--text-secondary)" }} className="text-xs font-semibold uppercase tracking-wider mb-4">
+        <h3 style={{ color: "var(--text-secondary)" }} className="text-label text-xs mb-4">
           Noticias y novedades
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
@@ -181,7 +181,7 @@ export default function LoginPage() {
               <p style={{ color: "var(--text-muted)" }} className="text-xs font-medium">
                 {titulo}
               </p>
-              <p style={{ color: "var(--text-muted)" }} className="text-[11px] opacity-70">
+              <p style={{ color: "var(--text-muted)" }} className="text-label text-[10px] opacity-70">
                 Próximamente
               </p>
             </div>
