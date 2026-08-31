@@ -40,6 +40,14 @@ service cloud.firestore {
             || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.liceoId == liceoId);
     }
 
+    match /soporte/{liceoId} {
+      allow read: if request.auth != null;
+      // Solo el administrador (dueño de la plataforma) puede editar el
+      // contacto de soporte, ni siquiera el director.
+      allow write: if request.auth != null
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador';
+    }
+
     // Colecciones de nivel raíz
     match /{collection}/{docId} {
       allow read, write: if request.auth != null;
