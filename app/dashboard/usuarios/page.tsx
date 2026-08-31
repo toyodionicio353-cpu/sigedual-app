@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, setDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { RefreshCw, Trash2 } from "lucide-react";
 import type { Usuario, Rol } from "@/types";
 
 const ROLES: { value: Rol; label: string }[] = [
@@ -24,8 +25,9 @@ export default function UsuariosPage() {
   const [form, setForm] = useState(EMPTY);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => { if (usuario?.rol === "administrador") cargar(); }, [usuario]);
+  const [sincronizando, setSincronizando] = useState(false);
+  const [eliminandoUid, setEliminandoUid] = useState<string | null>(null);
+  const [avisoSync, setAvisoSync] = useState("");
 
   async function cargar() {
     if (!usuario) return;
@@ -35,6 +37,43 @@ export default function UsuariosPage() {
     setUsuarios(snap.docs.map((d) => ({ ...d.data() } as Usuario)));
     setLoading(false);
   }
+
+  async function sincronizar(silencioso = false) {
+    if (!auth.currentUser) return;
+    setSincronizando(true);
+    setAvisoSync("");
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch("/api/admin/usuarios/sincronizar", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (!silencioso) setAvisoSync(data.error || "No se pudo sincronizar con Firebase.");
+        return;
+      }
+      if (!silencioso) {
+        setAvisoSync(
+          data.eliminados.length > 0
+            ? `Se quitaron ${data.eliminados.length} usuario(s) que ya no existían en Firebase.`
+            : "Todo estaba al día, no había usuarios fantasma."
+        );
+      }
+      await cargar();
+    } catch {
+      if (!silencioso) setAvisoSync("No se pudo conectar con el servidor para sincronizar.");
+    } finally {
+      setSincronizando(false);
+    }
+  }
+
+  useEffect(() => {
+    if (usuario?.rol === "administrador") {
+      cargar().then(() => sincronizar(true));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario]);
 
   async function crearUsuario() {
     setError(""); setGuardando(true);
@@ -57,6 +96,27 @@ export default function UsuariosPage() {
     cargar();
   }
 
+  async function eliminarUsuario(u: Usuario) {
+    if (!auth.currentUser) return;
+    if (!confirm(`¿Eliminar a ${u.nombre}? Se borrará su cuenta de acceso y no podrá volver a iniciar sesión.`)) return;
+    setEliminandoUid(u.uid);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(`/api/admin/usuarios/${u.uid}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "No se pudo eliminar el usuario.");
+        return;
+      }
+      await cargar();
+    } finally {
+      setEliminandoUid(null);
+    }
+  }
+
   if (usuario?.rol !== "administrador") {
     return (
       <div className="p-4 md:p-8">
@@ -72,21 +132,34 @@ export default function UsuariosPage() {
 
   return (
     <div className="p-4 md:p-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
         <div>
           <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Usuarios</h1>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{usuarios.length} usuario(s) en el sistema</p>
         </div>
-        <button onClick={() => { setForm(EMPTY); setModal(true); }} style={{ background: "var(--accent-blue)" }} className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
-          + Crear usuario
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => sincronizar(false)}
+            disabled={sincronizando}
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 hover:border-blue-500/50 transition-colors"
+          >
+            <RefreshCw size={15} className={sincronizando ? "animate-spin" : ""} />
+            Sincronizar con Firebase
+          </button>
+          <button onClick={() => { setForm(EMPTY); setModal(true); }} style={{ background: "var(--accent-blue)" }} className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+            + Crear usuario
+          </button>
+        </div>
       </div>
 
+      {avisoSync && <p style={{ color: "var(--text-muted)" }} className="text-xs mb-4">{avisoSync}</p>}
+
       {loading ? (
-        <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
+        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-4">Cargando...</p>
       ) : (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden overflow-x-auto">
-          <table className="w-full text-sm min-w-[720px]">
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden overflow-x-auto mt-4">
+          <table className="w-full text-sm min-w-[780px]">
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-surface)" }}>
                 {["Nombre", "Correo", "Rol", "Especialidad", "Estado", "Acción"].map((h) => (
@@ -107,9 +180,20 @@ export default function UsuariosPage() {
                     </span>
                   </td>
                   <td className="px-5 py-4">
-                    <button onClick={() => toggleActivo(u)} style={{ color: u.activo ? "var(--danger)" : "var(--success)" }} className="text-xs hover:underline">
-                      {u.activo ? "Desactivar" : "Activar"}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => toggleActivo(u)} style={{ color: u.activo ? "var(--danger)" : "var(--success)" }} className="text-xs hover:underline">
+                        {u.activo ? "Desactivar" : "Activar"}
+                      </button>
+                      <button
+                        onClick={() => eliminarUsuario(u)}
+                        disabled={eliminandoUid === u.uid}
+                        style={{ color: "var(--danger)" }}
+                        className="disabled:opacity-40"
+                        title="Eliminar usuario"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
