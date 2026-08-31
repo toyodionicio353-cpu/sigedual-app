@@ -74,6 +74,17 @@ export interface MensajeConversacion {
   creadoEn: string;
 }
 
+export interface Soporte {
+  liceoId: string;
+  nombre: string;
+  cargo: string;
+  correo: string;
+  telefono: string;
+  direccion: string;
+  horario: string;
+  notas: string;
+}
+
 export interface CentroDual {
   id: string;
   nombre: string;
