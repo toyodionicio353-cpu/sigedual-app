@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -194,14 +195,11 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
       >
       {/* Logo */}
       <div className="flex items-center px-4" style={{ borderBottom: "1px solid var(--border)", height: 56, minHeight: 56 }}>
-        <div style={{ background: "var(--accent-blue)", borderRadius: 8, minWidth: 32, height: 32 }} className="flex items-center justify-center">
-          <span className="text-white font-black text-xs">SG</span>
-        </div>
+        <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={32} height={32} className="object-contain flex-shrink-0" style={{ minWidth: 32 }} />
         {!collapsed && (
-          <div className="ml-2.5 overflow-hidden">
-            <p style={{ color: "#fff" }} className="text-sm font-bold leading-none whitespace-nowrap">SIGEDUAL</p>
-            <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5 whitespace-nowrap">Gestión Dual</p>
-          </div>
+          <h2 style={{ color: "#fff" }} className="ml-2.5 text-base font-bold tracking-tight uppercase leading-none whitespace-nowrap overflow-hidden">
+            SIGEDUAL
+          </h2>
         )}
       </div>
 
