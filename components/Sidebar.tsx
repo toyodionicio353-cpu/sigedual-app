@@ -174,12 +174,12 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
           borderRight: "1px solid var(--border)",
           flexShrink: 0,
         }}
-        className={`min-h-screen flex flex-col fixed md:static inset-y-0 left-0 z-40 overflow-hidden transition-all duration-200 ease-in-out w-64 ${
+        className={`h-dvh md:h-screen flex flex-col fixed md:static inset-y-0 left-0 z-40 overflow-hidden transition-all duration-200 ease-in-out w-64 ${
           collapsed ? "md:w-16" : "md:w-64"
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
       {/* Logo */}
-      <div className="flex items-center px-4" style={{ borderBottom: "1px solid var(--border)", height: 56, minHeight: 56 }}>
+      <div className="flex items-center px-4 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", height: 56, minHeight: 56 }}>
         <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={32} height={32} className="object-contain flex-shrink-0" style={{ minWidth: 32 }} />
         {!collapsed && (
           <h2 style={{ color: "#fff" }} className="ml-2.5 text-base font-bold tracking-tight uppercase leading-none whitespace-nowrap overflow-hidden">
@@ -304,7 +304,7 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
       </nav>
 
       {/* Cerrar sesión */}
-      <div className="px-2 pb-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
+      <div className="px-2 pb-3 pt-2 flex-shrink-0" style={{ borderTop: "1px solid var(--border)" }}>
         <button
           onClick={handleLogout}
           title="Cerrar sesión"
