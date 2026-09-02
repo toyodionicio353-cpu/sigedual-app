@@ -170,7 +170,7 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
       )}
       <aside
         style={{
-          background: "linear-gradient(to top right, #140C30, #14253E, #153D4C, #15565B, #156F69, #168777, #16A085)",
+          background: "linear-gradient(to top right, #140C30 0%, #14253E 30%, #153D4C 55%, #15565B 70%, #156F69 82%, #168777 92%, #16A085 100%)",
           borderRight: "1px solid var(--border)",
           flexShrink: 0,
         }}
