@@ -155,7 +155,7 @@ export default function EditarEstudiantePage() {
     <div className="p-4 md:p-8 max-w-5xl">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Editar estudiante</h1>
+          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Editar estudiante</h1>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             Actualiza los datos de {estudianteOriginal?.nombres} {estudianteOriginal?.apellidos}.
           </p>

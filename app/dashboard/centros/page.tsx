@@ -67,7 +67,7 @@ export default function CentrosPage() {
     <div className="p-4 md:p-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Centros Duales</h1>
+          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Centros Duales</h1>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{filtrados.length} centro(s) registrado(s)</p>
         </div>
         {puedeEditar && (

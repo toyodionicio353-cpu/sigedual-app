@@ -152,7 +152,7 @@ export default function LiceosPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Liceos</h1>
+          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Liceos</h1>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Administra los establecimientos registrados en SIGEDUAL.</p>
         </div>
         <Link

@@ -104,7 +104,7 @@ export default function SeguridadPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-2xl">
-      <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold mb-1">Seguridad</h1>
+      <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold mb-1">Seguridad</h1>
       <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-8">
         Controla qué correos pueden crear una cuenta en tu institución y comparte el código de
         verificación con quienes deban registrarse.
