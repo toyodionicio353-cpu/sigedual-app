@@ -42,15 +42,32 @@ export interface Estudiante {
   run: string;
   nombres: string;
   apellidos: string;
+  apellidoPaterno?: string;
+  apellidoMaterno?: string;
+  fechaNacimiento?: string;
+  sexo?: string;
   email?: string;
   telefono?: string;
+  direccion?: string;
+  comuna?: string;
+  ciudad?: string;
+  anioAcademico?: string;
   curso: string;
   nivel: string;
   especialidadId: string;
+  jornada?: string;
   liceoId: string;
   centroDualId?: string;
   profesorId?: string;
-  estado: "activo" | "inactivo" | "egresado";
+  estado: "activo" | "inactivo" | "egresado" | "retirado";
+  fechaIncorporacionDual?: string;
+  estadoDual?: string;
+  apoderadoNombre?: string;
+  apoderadoRun?: string;
+  apoderadoParentesco?: string;
+  apoderadoTelefono?: string;
+  apoderadoEmail?: string;
+  observaciones?: string;
   creadoEn: string;
 }
 
