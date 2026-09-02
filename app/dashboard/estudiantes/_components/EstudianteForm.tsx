@@ -8,7 +8,7 @@ import type { Estudiante, Especialidad } from "@/types";
 
 const NIVELES = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
 const LETRAS_CURSO = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
-const JORNADAS = ["Diurna", "Vespertina"];
+const JORNADAS = ["Diurna", "Vespertina", "Jornada Completa", "Otro"];
 const ESTADOS: Estudiante["estado"][] = ["activo", "inactivo", "egresado", "retirado"];
 const PARENTESCOS = ["Padre", "Madre", "Tutor legal", "Otro"];
 const ANIO_ACTUAL = new Date().getFullYear();
