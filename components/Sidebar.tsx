@@ -254,7 +254,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 }}
                 className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:[background:var(--hover-overlay)] transition-all"
               >
-                <span style={{ color: isActive ? "var(--text-on-accent)" : menu.color, flexShrink: 0 }}>{menu.icon}</span>
+                <span style={{ color: isActive ? "var(--text-on-accent)" : "var(--accent)", flexShrink: 0 }}>{menu.icon}</span>
                 {!collapsed && <span className="flex-1 whitespace-nowrap">{menu.label}</span>}
               </Link>
             );
@@ -274,7 +274,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:[background:var(--hover-overlay)] transition-all text-left"
               >
                 {/* Icono coloreado */}
-                <span style={{ color: isActive ? "var(--text-on-accent)" : menu.color, flexShrink: 0 }}>{menu.icon}</span>
+                <span style={{ color: isActive ? "var(--text-on-accent)" : "var(--accent)", flexShrink: 0 }}>{menu.icon}</span>
 
                 {!collapsed && (
                   <>
@@ -312,7 +312,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                   overflow: "hidden",
                   transition: "max-height 0.22s cubic-bezier(0.4,0,0.2,1)",
                 }}>
-                  <div className="ml-4 pl-3 pt-0.5 pb-1 flex flex-col gap-0.5" style={{ borderLeft: `2px solid ${menu.color}33` }}>
+                  <div className="ml-4 pl-3 pt-0.5 pb-1 flex flex-col gap-0.5" style={{ borderLeft: "2px solid rgba(255, 209, 0, 0.25)" }}>
                     {visibleSub.map((sub) => {
                       const subActive = pathname === sub.href;
                       return (
@@ -327,7 +327,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                           }}
                           className="flex items-center gap-2 px-2.5 py-2 text-sm font-medium hover:[background:var(--hover-overlay)] transition-all"
                         >
-                          <span style={{ color: subActive ? "var(--text-on-accent)" : menu.color, opacity: subActive ? 1 : 0.85, flexShrink: 0 }}>{sub.icon}</span>
+                          <span style={{ color: subActive ? "var(--text-on-accent)" : "var(--accent)", opacity: subActive ? 1 : 0.85, flexShrink: 0 }}>{sub.icon}</span>
                           <span className="truncate">{sub.label}</span>
                         </Link>
                       );
