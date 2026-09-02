@@ -1,27 +1,78 @@
 "use client";
-import { useEffect, useState } from "react";
-import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import type { Estudiante } from "@/types";
+import type { Estudiante, Especialidad } from "@/types";
+import {
+  Search, SlidersHorizontal, X, LayoutList, LayoutGrid,
+  ChevronLeft, ChevronRight, Eye, UserPlus, Users2,
+} from "lucide-react";
 
-const EMPTY: Omit<Estudiante, "id" | "creadoEn"> = {
-  run: "", nombres: "", apellidos: "", email: "", telefono: "",
-  curso: "", nivel: "", especialidadId: "", liceoId: "",
-  centroDualId: "", profesorId: "", estado: "activo",
+const NIVELES = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
+const ESTADOS: Estudiante["estado"][] = ["activo", "inactivo", "egresado", "retirado"];
+const PAGE_SIZE = 12;
+
+const ESTADO_COLOR: Record<string, string> = {
+  activo: "var(--success)",
+  inactivo: "var(--danger)",
+  egresado: "var(--warning)",
+  retirado: "var(--text-muted)",
 };
+
+const ORDEN_OPCIONES = [
+  { value: "nombre-asc", label: "Nombre A-Z" },
+  { value: "nombre-desc", label: "Nombre Z-A" },
+  { value: "recientes", label: "Más recientes" },
+  { value: "antiguos", label: "Más antiguos" },
+  { value: "curso", label: "Curso" },
+  { value: "especialidad", label: "Especialidad" },
+];
+
+interface Filtros {
+  anio: string;
+  nivel: string;
+  curso: string;
+  especialidadId: string;
+  estado: string;
+  dual: string;
+}
+
+const FILTROS_VACIOS: Filtros = { anio: "", nivel: "", curso: "", especialidadId: "", estado: "", dual: "" };
+
+function normalizar(texto?: string): string {
+  return (texto || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function soloAlfanumerico(texto?: string): string {
+  return (texto || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function iniciales(nombres: string, apellidos: string): string {
+  return `${(nombres[0] || "").toUpperCase()}${(apellidos[0] || "").toUpperCase()}`;
+}
+
+const selectStyle = { background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" };
+const selectClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors disabled:opacity-50";
 
 export default function EstudiantesPage() {
   const { usuario } = useAuth();
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
-  const [busqueda, setBusqueda] = useState("");
-  const [modal, setModal] = useState(false);
-  const [form, setForm] = useState(EMPTY);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [guardando, setGuardando] = useState(false);
 
-  const puedeEditar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
+  const [busqueda, setBusqueda] = useState("");
+  const [filtros, setFiltros] = useState<Filtros>(FILTROS_VACIOS);
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
+  const [vista, setVista] = useState<"lista" | "tarjetas">("lista");
+  const [orden, setOrden] = useState("nombre-asc");
+  const [pagina, setPagina] = useState(1);
+
+  const puedeAgregar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
 
   useEffect(() => {
     if (!usuario) return;
@@ -39,190 +90,451 @@ export default function EstudiantesPage() {
     } else {
       q = query(collection(db, "estudiantes"), where("liceoId", "==", usuario.liceoId));
     }
-    const snap = await getDocs(q);
-    setEstudiantes(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
+    const [snapEst, snapEsp] = await Promise.all([
+      getDocs(q),
+      getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId))),
+    ]);
+    setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
+    setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
     setLoading(false);
   }
 
-  async function guardar() {
-    if (!usuario) return;
-    setGuardando(true);
-    try {
-      if (editId) {
-        await updateDoc(doc(db, "estudiantes", editId), { ...form });
-      } else {
-        await addDoc(collection(db, "estudiantes"), {
-          ...form,
-          liceoId: usuario.liceoId,
-          profesorId: usuario.uid,
-          creadoEn: new Date().toISOString(),
-        });
-      }
-      setModal(false);
-      setForm(EMPTY);
-      setEditId(null);
-      cargar();
-    } finally {
-      setGuardando(false);
+  function especialidadNombre(id: string): string {
+    return especialidades.find((e) => e.id === id)?.nombre || "";
+  }
+
+  const anioDe = (e: Estudiante) => e.anioAcademico || String(new Date(e.creadoEn).getFullYear());
+
+  const aniosDisponibles = useMemo(() => {
+    const set = new Set<string>();
+    estudiantes.forEach((e) => set.add(anioDe(e)));
+    return Array.from(set).sort((a, b) => Number(b) - Number(a));
+  }, [estudiantes]);
+
+  const nivelesDisponibles = useMemo(() => {
+    const set = new Set<string>();
+    estudiantes.forEach((e) => { if (e.nivel) set.add(e.nivel); });
+    return NIVELES.filter((n) => set.has(n));
+  }, [estudiantes]);
+
+  const cursosDisponibles = useMemo(() => {
+    const set = new Set<string>();
+    estudiantes
+      .filter((e) => !filtros.nivel || e.nivel === filtros.nivel)
+      .forEach((e) => { if (e.curso) set.add(e.curso); });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [estudiantes, filtros.nivel]);
+
+  function actualizarFiltro<K extends keyof Filtros>(key: K, value: string) {
+    setFiltros((f) => {
+      const next = { ...f, [key]: value };
+      if (key === "nivel" && f.curso && value !== f.nivel) next.curso = "";
+      return next;
+    });
+  }
+
+  function limpiarFiltros() {
+    setFiltros(FILTROS_VACIOS);
+    setBusqueda("");
+  }
+
+  const filtrosActivos = useMemo(() => {
+    const chips: { key: keyof Filtros; label: string }[] = [];
+    if (filtros.anio) chips.push({ key: "anio", label: filtros.anio });
+    if (filtros.nivel) chips.push({ key: "nivel", label: filtros.nivel });
+    if (filtros.curso) chips.push({ key: "curso", label: filtros.curso });
+    if (filtros.especialidadId) chips.push({ key: "especialidadId", label: especialidadNombre(filtros.especialidadId) });
+    if (filtros.estado) chips.push({ key: "estado", label: filtros.estado.charAt(0).toUpperCase() + filtros.estado.slice(1) });
+    if (filtros.dual) chips.push({ key: "dual", label: filtros.dual === "si" ? "En formación dual" : "Sin formación dual" });
+    return chips;
+  }, [filtros, especialidades]);
+
+  const filtrados = useMemo(() => {
+    let base = estudiantes;
+    if (busqueda.trim()) {
+      const q = normalizar(busqueda);
+      const qAlfanum = soloAlfanumerico(busqueda);
+      base = base.filter((e) => {
+        const campos = [e.nombres, e.apellidos, e.apellidoPaterno, e.apellidoMaterno, e.curso, especialidadNombre(e.especialidadId)];
+        const coincideTexto = campos.some((c) => normalizar(c).includes(q));
+        const coincideRun = soloAlfanumerico(e.run).includes(qAlfanum) && qAlfanum.length > 0;
+        return coincideTexto || coincideRun;
+      });
     }
-  }
+    if (filtros.anio) base = base.filter((e) => anioDe(e) === filtros.anio);
+    if (filtros.nivel) base = base.filter((e) => e.nivel === filtros.nivel);
+    if (filtros.curso) base = base.filter((e) => e.curso === filtros.curso);
+    if (filtros.especialidadId) base = base.filter((e) => e.especialidadId === filtros.especialidadId);
+    if (filtros.estado) base = base.filter((e) => e.estado === filtros.estado);
+    if (filtros.dual) base = base.filter((e) => (filtros.dual === "si") === Boolean(e.centroDualId));
+    return base;
+  }, [estudiantes, busqueda, filtros, especialidades]);
 
-  function abrirEditar(e: Estudiante) {
-    setForm({ run: e.run, nombres: e.nombres, apellidos: e.apellidos, email: e.email ?? "", telefono: e.telefono ?? "", curso: e.curso, nivel: e.nivel, especialidadId: e.especialidadId, liceoId: e.liceoId, centroDualId: e.centroDualId ?? "", profesorId: e.profesorId ?? "", estado: e.estado });
-    setEditId(e.id);
-    setModal(true);
-  }
+  const ordenados = useMemo(() => {
+    const arr = [...filtrados];
+    switch (orden) {
+      case "nombre-asc":
+        arr.sort((a, b) => `${a.nombres} ${a.apellidos}`.localeCompare(`${b.nombres} ${b.apellidos}`));
+        break;
+      case "nombre-desc":
+        arr.sort((a, b) => `${b.nombres} ${b.apellidos}`.localeCompare(`${a.nombres} ${a.apellidos}`));
+        break;
+      case "recientes":
+        arr.sort((a, b) => b.creadoEn.localeCompare(a.creadoEn));
+        break;
+      case "antiguos":
+        arr.sort((a, b) => a.creadoEn.localeCompare(b.creadoEn));
+        break;
+      case "curso":
+        arr.sort((a, b) => a.curso.localeCompare(b.curso));
+        break;
+      case "especialidad":
+        arr.sort((a, b) => especialidadNombre(a.especialidadId).localeCompare(especialidadNombre(b.especialidadId)));
+        break;
+    }
+    return arr;
+  }, [filtrados, orden, especialidades]);
 
-  async function eliminar(id: string) {
-    if (!confirm("¿Eliminar este estudiante?")) return;
-    await deleteDoc(doc(db, "estudiantes", id));
-    cargar();
-  }
+  useEffect(() => { setPagina(1); }, [busqueda, filtros, orden]);
 
-  const filtrados = estudiantes.filter((e) =>
-    `${e.nombres} ${e.apellidos} ${e.run}`.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const totalPaginas = Math.max(1, Math.ceil(ordenados.length / PAGE_SIZE));
+  const paginaActual = Math.min(pagina, totalPaginas);
+  const inicio = (paginaActual - 1) * PAGE_SIZE;
+  const paginaEstudiantes = ordenados.slice(inicio, inicio + PAGE_SIZE);
 
-  const estadoColor: Record<string, string> = {
-    activo: "var(--success)",
-    inactivo: "var(--danger)",
-    egresado: "var(--warning)",
-  };
+  const stats = useMemo(() => {
+    const anioActual = new Date().getFullYear();
+    return {
+      total: estudiantes.length,
+      activos: estudiantes.filter((e) => e.estado === "activo").length,
+      agregadosEsteAnio: estudiantes.filter((e) => new Date(e.creadoEn).getFullYear() === anioActual).length,
+      enFormacionDual: estudiantes.filter((e) => Boolean(e.centroDualId)).length,
+    };
+  }, [estudiantes]);
+
+  const hayFiltrosActivos = filtrosActivos.length > 0 || busqueda.trim().length > 0;
 
   return (
     <div className="p-4 md:p-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Estudiantes</h1>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{filtrados.length} estudiante(s) encontrado(s)</p>
+          <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Listado de estudiantes</h1>
+          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Consulta y revisa los estudiantes registrados en SIGEDUAL.</p>
         </div>
-        {puedeEditar && (
-          <button
-            onClick={() => { setForm(EMPTY); setEditId(null); setModal(true); }}
+        {puedeAgregar && (
+          <Link
+            href="/dashboard/estudiantes/nuevo"
             style={{ background: "var(--accent-blue)" }}
-            className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity flex-shrink-0"
           >
-            + Agregar estudiante
-          </button>
+            <UserPlus size={16} />
+            Agregar estudiante
+          </Link>
         )}
       </div>
 
-      {/* Buscador */}
-      <input
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-        placeholder="Buscar por nombre o RUN..."
-        style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-        className="w-full px-4 py-3 rounded-xl text-sm mb-6 outline-none focus:border-blue-500 transition-colors"
-      />
+      {/* Estadísticas */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {[
+          { label: "Total de estudiantes", value: stats.total, color: "#2563eb" },
+          { label: "Estudiantes activos", value: stats.activos, color: "#22c55e" },
+          { label: "Agregados este año", value: stats.agregadosEsteAnio, color: "#f59e0b" },
+          { label: "En formación dual", value: stats.enFormacionDual, color: "#06b6d4" },
+        ].map((s) => (
+          <div key={s.label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="p-4">
+            <p style={{ color: "var(--text-primary)" }} className="text-lg font-bold leading-tight">{loading ? "—" : s.value}</p>
+            <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-0.5">{s.label}</p>
+          </div>
+        ))}
+      </div>
 
-      {/* Tabla */}
-      {loading ? (
-        <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
-      ) : filtrados.length === 0 ? (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
-          <p style={{ color: "var(--text-muted)" }} className="text-sm">No hay estudiantes registrados aún.</p>
-          {puedeEditar && <p style={{ color: "var(--text-muted)" }} className="text-xs mt-2">Haz clic en "Agregar estudiante" para comenzar.</p>}
+      {/* Búsqueda + acciones */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-3">
+        <div className="relative flex-1">
+          <Search size={16} style={{ color: "var(--text-muted)" }} className="absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar estudiante por nombre, RUN o curso..."
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+            className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+          />
         </div>
-      ) : (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden overflow-x-auto">
-          <table className="w-full text-sm min-w-[640px]">
-            <thead>
-              <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-surface)" }}>
-                {["RUN", "Nombre completo", "Curso", "Estado", "Acciones"].map((h) => (
-                  <th key={h} style={{ color: "var(--text-muted)" }} className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wider">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map((e, i) => (
-                <tr key={e.id} style={{ borderBottom: i < filtrados.length - 1 ? "1px solid var(--border)" : "none" }} className="hover:bg-white/2 transition-colors">
-                  <td style={{ color: "var(--text-secondary)" }} className="px-5 py-4">{e.run}</td>
-                  <td style={{ color: "var(--text-primary)" }} className="px-5 py-4 font-medium">{e.nombres} {e.apellidos}</td>
-                  <td style={{ color: "var(--text-secondary)" }} className="px-5 py-4">{e.curso}</td>
-                  <td className="px-5 py-4">
-                    <span style={{ color: estadoColor[e.estado], background: estadoColor[e.estado] + "22" }} className="px-3 py-1 rounded-full text-xs font-medium capitalize">
-                      {e.estado}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4">
-                    {puedeEditar && (
-                      <div className="flex gap-2">
-                        <button onClick={() => abrirEditar(e)} style={{ color: "var(--accent-blue-light)" }} className="text-xs hover:underline">Editar</button>
-                        <button onClick={() => eliminar(e.id)} style={{ color: "var(--danger)" }} className="text-xs hover:underline">Eliminar</button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
 
-      {/* Modal */}
-      {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
-          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="w-full max-w-lg rounded-2xl p-5 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-6">
-              {editId ? "Editar estudiante" : "Agregar estudiante"}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { key: "run", label: "RUN", placeholder: "12.345.678-9" },
-                { key: "nombres", label: "Nombres", placeholder: "Juan Andrés" },
-                { key: "apellidos", label: "Apellidos", placeholder: "González Pérez" },
-                { key: "email", label: "Correo", placeholder: "juan@email.com" },
-                { key: "telefono", label: "Teléfono", placeholder: "+56 9 1234 5678" },
-                { key: "curso", label: "Curso", placeholder: "3° Medio A" },
-                { key: "nivel", label: "Nivel", placeholder: "3° Medio" },
-                { key: "especialidadId", label: "Especialidad", placeholder: "Contabilidad" },
-              ].map(({ key, label, placeholder }) => (
-                <div key={key}>
-                  <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">{label}</label>
-                  <input
-                    value={(form as unknown as Record<string, string>)[key]}
-                    onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                    placeholder={placeholder}
-                    style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                    className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors"
-                  />
-                </div>
-              ))}
-              <div>
-                <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Estado</label>
-                <select
-                  value={form.estado}
-                  onChange={(e) => setForm((f) => ({ ...f, estado: e.target.value as Estudiante["estado"] }))}
-                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                >
-                  <option value="activo">Activo</option>
-                  <option value="inactivo">Inactivo</option>
-                  <option value="egresado">Egresado</option>
-                </select>
-              </div>
+        <button
+          onClick={() => setFiltrosAbiertos((v) => !v)}
+          style={{
+            background: filtrosAbiertos ? "var(--accent-blue)" + "22" : "var(--bg-card)",
+            border: `1px solid ${filtrosAbiertos ? "var(--accent-blue)" : "var(--border-light)"}`,
+            color: filtrosAbiertos ? "var(--accent-blue-light)" : "var(--text-secondary)",
+          }}
+          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors flex-shrink-0"
+        >
+          <SlidersHorizontal size={16} />
+          Filtros
+          {filtrosActivos.length > 0 && (
+            <span style={{ background: "var(--accent-blue)" }} className="w-5 h-5 rounded-full text-white text-xs flex items-center justify-center">
+              {filtrosActivos.length}
+            </span>
+          )}
+        </button>
+
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <select
+            value={orden}
+            onChange={(e) => setOrden(e.target.value)}
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+            className="pl-3 pr-2 py-3 rounded-xl text-sm outline-none"
+            title="Ordenar"
+          >
+            {ORDEN_OPCIONES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
+
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="flex items-center gap-1 p-1 rounded-xl flex-shrink-0">
+          <button
+            onClick={() => setVista("lista")}
+            title="Vista de lista"
+            style={{ background: vista === "lista" ? "var(--accent-blue)" : "transparent", color: vista === "lista" ? "#fff" : "var(--text-muted)" }}
+            className="p-2 rounded-lg transition-colors"
+          >
+            <LayoutList size={16} />
+          </button>
+          <button
+            onClick={() => setVista("tarjetas")}
+            title="Vista de tarjetas"
+            style={{ background: vista === "tarjetas" ? "var(--accent-blue)" : "transparent", color: vista === "tarjetas" ? "#fff" : "var(--text-muted)" }}
+            className="p-2 rounded-lg transition-colors"
+          >
+            <LayoutGrid size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* Panel de filtros */}
+      {filtrosAbiertos && (
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-4 sm:p-5 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Año académico</label>
+              <select value={filtros.anio} onChange={(e) => actualizarFiltro("anio", e.target.value)} style={selectStyle} className={selectClass}>
+                <option value="">Todos los años</option>
+                {aniosDisponibles.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
             </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => { setModal(false); setEditId(null); }}
-                style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={guardar}
-                disabled={guardando}
-                style={{ background: "var(--accent-blue)" }}
-                className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
-              >
-                {guardando ? "Guardando..." : editId ? "Guardar cambios" : "Agregar"}
-              </button>
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Nivel</label>
+              <select value={filtros.nivel} onChange={(e) => actualizarFiltro("nivel", e.target.value)} style={selectStyle} className={selectClass}>
+                <option value="">Todos los niveles</option>
+                {nivelesDisponibles.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Curso</label>
+              <select value={filtros.curso} onChange={(e) => actualizarFiltro("curso", e.target.value)} disabled={cursosDisponibles.length === 0} style={selectStyle} className={selectClass}>
+                <option value="">{cursosDisponibles.length === 0 ? "Sin cursos registrados" : "Todos los cursos"}</option>
+                {cursosDisponibles.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Especialidad</label>
+              <select value={filtros.especialidadId} onChange={(e) => actualizarFiltro("especialidadId", e.target.value)} disabled={especialidades.length === 0} style={selectStyle} className={selectClass}>
+                <option value="">{especialidades.length === 0 ? "Sin especialidades" : "Todas las especialidades"}</option>
+                {especialidades.map((esp) => <option key={esp.id} value={esp.id}>{esp.nombre}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Estado</label>
+              <select value={filtros.estado} onChange={(e) => actualizarFiltro("estado", e.target.value)} style={selectStyle} className={selectClass}>
+                <option value="">Todos los estados</option>
+                {ESTADOS.map((es) => <option key={es} value={es}>{es.charAt(0).toUpperCase() + es.slice(1)}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Formación dual</label>
+              <select value={filtros.dual} onChange={(e) => actualizarFiltro("dual", e.target.value)} style={selectStyle} className={selectClass}>
+                <option value="">Todos</option>
+                <option value="si">En formación dual</option>
+                <option value="no">Sin formación dual</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Empresa asignada</label>
+              <select disabled value="" style={selectStyle} className={selectClass}>
+                <option value="">Disponible próximamente</option>
+              </select>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Chips de filtros activos */}
+      {hayFiltrosActivos && (
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          {busqueda.trim() && (
+            <span style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-xs font-medium">
+              "{busqueda.trim()}"
+              <button onClick={() => setBusqueda("")} style={{ color: "var(--text-muted)" }}><X size={13} /></button>
+            </span>
+          )}
+          {filtrosActivos.map((chip) => (
+            <span key={chip.key} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-xs font-medium">
+              {chip.label}
+              <button onClick={() => actualizarFiltro(chip.key, "")} style={{ color: "var(--text-muted)" }}><X size={13} /></button>
+            </span>
+          ))}
+          <button onClick={limpiarFiltros} style={{ color: "var(--accent-blue-light)" }} className="text-xs font-semibold hover:underline">
+            Limpiar filtros
+          </button>
+        </div>
+      )}
+
+      {!hayFiltrosActivos && <div className="mb-6" />}
+
+      {/* Contenido */}
+      {loading ? (
+        <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
+      ) : estudiantes.length === 0 ? (
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
+          <div style={{ background: "var(--accent-blue)22", borderRadius: "9999px" }} className="w-14 h-14 flex items-center justify-center mx-auto mb-4">
+            <Users2 size={24} style={{ color: "var(--accent-blue-light)" }} />
+          </div>
+          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Aún no hay estudiantes registrados</p>
+          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Comienza agregando el primer estudiante a SIGEDUAL.</p>
+          {puedeAgregar && (
+            <Link href="/dashboard/estudiantes/nuevo" style={{ background: "var(--accent-blue)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+              <UserPlus size={16} />
+              Agregar estudiante
+            </Link>
+          )}
+        </div>
+      ) : ordenados.length === 0 ? (
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
+          <div style={{ background: "var(--bg-surface)", borderRadius: "9999px" }} className="w-14 h-14 flex items-center justify-center mx-auto mb-4">
+            <Search size={22} style={{ color: "var(--text-muted)" }} />
+          </div>
+          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No encontramos estudiantes</p>
+          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Prueba modificando la búsqueda o eliminando algunos filtros.</p>
+          <button onClick={limpiarFiltros} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="px-5 py-2.5 rounded-xl text-sm font-medium">
+            Limpiar filtros
+          </button>
+        </div>
+      ) : (
+        <>
+          <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">
+            Mostrando {inicio + 1}–{Math.min(inicio + PAGE_SIZE, ordenados.length)} de {ordenados.length} estudiante(s)
+          </p>
+
+          {vista === "lista" ? (
+            <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden">
+              {paginaEstudiantes.map((e, i) => (
+                <div
+                  key={e.id}
+                  style={{ borderBottom: i < paginaEstudiantes.length - 1 ? "1px solid var(--border)" : "none" }}
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 sm:px-5 py-4 hover:bg-white/2 transition-colors"
+                >
+                  <div style={{ background: "var(--accent-blue)22", borderRadius: "9999px" }} className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                    <span style={{ color: "var(--accent-blue-light)" }} className="text-xs font-bold">{iniciales(e.nombres, e.apellidos)}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{e.nombres} {e.apellidos}</p>
+                    <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{e.run} · {e.curso || "Sin curso"} · {especialidadNombre(e.especialidadId) || "Sin especialidad"}</p>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span style={{ color: ESTADO_COLOR[e.estado], background: ESTADO_COLOR[e.estado] + "22" }} className="px-3 py-1 rounded-full text-xs font-medium capitalize">
+                      {e.estado}
+                    </span>
+                    <span style={{ color: "var(--text-secondary)" }} className="text-xs hidden md:block w-12">{anioDe(e)}</span>
+                    <Link
+                      href={`/dashboard/estudiantes/${e.id}`}
+                      style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--accent-blue-light)" }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:border-blue-500/50 transition-colors flex-shrink-0"
+                    >
+                      <Eye size={13} />
+                      Ver ficha
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {paginaEstudiantes.map((e) => (
+                <div key={e.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="p-4 flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div style={{ background: "var(--accent-blue)22", borderRadius: "9999px" }} className="w-11 h-11 flex items-center justify-center flex-shrink-0">
+                      <span style={{ color: "var(--accent-blue-light)" }} className="text-sm font-bold">{iniciales(e.nombres, e.apellidos)}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{e.nombres} {e.apellidos}</p>
+                      <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5 truncate">{e.run}</p>
+                    </div>
+                  </div>
+                  <div style={{ borderTop: "1px solid var(--border)" }} className="pt-3 flex flex-col gap-1">
+                    <p style={{ color: "var(--text-secondary)" }} className="text-xs">{e.curso || "Sin curso"} · {anioDe(e)}</p>
+                    <p style={{ color: "var(--text-secondary)" }} className="text-xs">{especialidadNombre(e.especialidadId) || "Sin especialidad"}</p>
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <span style={{ color: ESTADO_COLOR[e.estado], background: ESTADO_COLOR[e.estado] + "22" }} className="px-3 py-1 rounded-full text-xs font-medium capitalize">
+                      {e.estado}
+                    </span>
+                    <Link
+                      href={`/dashboard/estudiantes/${e.id}`}
+                      style={{ color: "var(--accent-blue-light)" }}
+                      className="flex items-center gap-1 text-xs font-semibold hover:underline"
+                    >
+                      <Eye size={13} />
+                      Ver ficha
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Paginación */}
+          {totalPaginas > 1 && (
+            <div className="flex items-center justify-center gap-1.5 mt-6">
+              <button
+                onClick={() => setPagina((p) => Math.max(1, p - 1))}
+                disabled={paginaActual === 1}
+                style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+                className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-40 transition-opacity"
+              >
+                <ChevronLeft size={14} />
+                Anterior
+              </button>
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                .filter((n) => n === 1 || n === totalPaginas || Math.abs(n - paginaActual) <= 1)
+                .map((n, idx, arr) => (
+                  <span key={n} className="flex items-center gap-1.5">
+                    {idx > 0 && arr[idx - 1] !== n - 1 && <span style={{ color: "var(--text-muted)" }} className="text-xs px-1">...</span>}
+                    <button
+                      onClick={() => setPagina(n)}
+                      style={{
+                        background: n === paginaActual ? "var(--accent-blue)" : "var(--bg-card)",
+                        border: `1px solid ${n === paginaActual ? "var(--accent-blue)" : "var(--border)"}`,
+                        color: n === paginaActual ? "#fff" : "var(--text-secondary)",
+                      }}
+                      className="w-8 h-8 rounded-lg text-xs font-medium transition-colors"
+                    >
+                      {n}
+                    </button>
+                  </span>
+                ))}
+              <button
+                onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+                disabled={paginaActual === totalPaginas}
+                style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+                className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-40 transition-opacity"
+              >
+                Siguiente
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
