@@ -8,14 +8,14 @@ import { useAuth } from "@/lib/auth-context";
 import type { Estudiante, Especialidad } from "@/types";
 import {
   ArrowLeft, BadgeCheck, Phone, GraduationCap, HeartPulse,
-  Sparkles, FileText, Users,
+  Sparkles, FileText, Users, Pencil,
 } from "lucide-react";
 
 const ESTADO_COLOR: Record<string, string> = {
   activo: "var(--success)",
   inactivo: "var(--danger)",
-  egresado: "var(--warning)",
-  retirado: "var(--text-muted)",
+  egresado: "var(--text-muted)",
+  retirado: "var(--warning)",
 };
 
 function iniciales(nombres: string, apellidos: string): string {
@@ -98,14 +98,26 @@ export default function FichaEstudiantePage() {
 
   return (
     <div className="p-4 md:p-8 max-w-5xl">
-      <Link
-        href="/dashboard/estudiantes"
-        style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity mb-6"
-      >
-        <ArrowLeft size={16} />
-        Volver al listado
-      </Link>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <Link
+          href="/dashboard/estudiantes"
+          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          <ArrowLeft size={16} />
+          Volver al listado
+        </Link>
+        {(usuario?.rol === "administrador" || usuario?.rol === "profesor") && (
+          <Link
+            href={`/dashboard/estudiantes/${estudiante.id}/editar`}
+            style={{ background: "var(--accent-blue)" }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            <Pencil size={15} />
+            Editar estudiante
+          </Link>
+        )}
+      </div>
 
       {/* Encabezado */}
       <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
