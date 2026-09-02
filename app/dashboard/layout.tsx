@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import Sidebar from "@/components/Sidebar";
-import { Bell, Menu } from "lucide-react";
+import { Bell } from "lucide-react";
 
 const TITULOS: Record<string, string> = {
   "/dashboard": "Inicio",
@@ -78,14 +79,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           className="px-3 md:px-6 flex items-center justify-between sticky top-0 z-20"
         >
           <div className="flex items-center gap-3 h-14 min-w-0">
-            {/* Hamburguesa */}
+            {/* Logo: abre el menú en móvil (el sidebar está oculto hasta abrirlo) */}
             <button
               onClick={toggleSidebar}
-              style={{ borderRadius: 8, color: "var(--text-secondary)" }}
-              className="p-2 hover:bg-white/5 transition-colors flex-shrink-0"
-              title="Abrir/cerrar menú"
+              style={{ borderRadius: 8 }}
+              className="p-1 hover:bg-white/5 transition-colors flex-shrink-0 md:hidden"
+              title="Abrir menú"
             >
-              <Menu size={20} />
+              <Image src="/logo-icon.png" alt="Abrir menú" width={24} height={24} className="object-contain" />
             </button>
 
             {/* Título */}
