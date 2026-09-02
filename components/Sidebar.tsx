@@ -200,11 +200,11 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
           onClick={alternarSidebar}
           title="Colapsar o expandir el menú"
           className={`flex items-center w-full hover:bg-white/5 transition-colors ${collapsed ? "justify-center px-4" : "px-4"}`}
-          style={{ height: 64, minHeight: 64 }}
+          style={{ height: 72, minHeight: 72 }}
         >
           <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={32} height={32} className="object-contain flex-shrink-0" style={{ minWidth: 32 }} />
           {!collapsed && (
-            <h2 style={{ color: "#fff" }} className="ml-2.5 flex-1 text-2xl font-bold tracking-wide uppercase leading-none whitespace-nowrap overflow-hidden">
+            <h2 style={{ color: "#fff" }} className="ml-3 text-left text-3xl font-bold tracking-wider uppercase leading-none whitespace-nowrap overflow-hidden">
               SIGEDUAL
             </h2>
           )}
