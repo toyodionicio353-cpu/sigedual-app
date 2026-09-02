@@ -167,3 +167,84 @@ export async function deleteAuthUser(uid: string): Promise<void> {
     }
   }
 }
+
+type FirestoreValue = Record<string, unknown>;
+
+function jsToFirestoreValue(v: unknown): FirestoreValue {
+  if (v === null || v === undefined) return { nullValue: null };
+  if (typeof v === "string") return { stringValue: v };
+  if (typeof v === "boolean") return { booleanValue: v };
+  if (typeof v === "number") return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
+  if (Array.isArray(v)) return { arrayValue: { values: v.map(jsToFirestoreValue) } };
+  if (typeof v === "object") {
+    const fields = Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, val]) => [k, jsToFirestoreValue(val)]));
+    return { mapValue: { fields } };
+  }
+  return { stringValue: String(v) };
+}
+
+function firestoreValueToJs(v: FirestoreValue | undefined): unknown {
+  if (!v) return null;
+  if ("stringValue" in v) return v.stringValue;
+  if ("integerValue" in v) return Number(v.integerValue);
+  if ("doubleValue" in v) return v.doubleValue;
+  if ("booleanValue" in v) return v.booleanValue;
+  if ("nullValue" in v) return null;
+  if ("timestampValue" in v) return v.timestampValue;
+  if ("arrayValue" in v) {
+    const values = (v.arrayValue as { values?: FirestoreValue[] })?.values ?? [];
+    return values.map(firestoreValueToJs);
+  }
+  if ("mapValue" in v) {
+    const fields = (v.mapValue as { fields?: Record<string, FirestoreValue> })?.fields ?? {};
+    return Object.fromEntries(Object.entries(fields).map(([k, val]) => [k, firestoreValueToJs(val)]));
+  }
+  return null;
+}
+
+/** Lee todos los documentos de una colección de nivel raíz, con todos sus campos. */
+export async function listCollectionDocs(collectionPath: string): Promise<{ id: string; data: Record<string, unknown> }[]> {
+  const sa = getServiceAccount();
+  const token = await getAccessToken();
+  const out: { id: string; data: Record<string, unknown> }[] = [];
+  let pageToken: string | undefined;
+  do {
+    const url = new URL(`https://firestore.googleapis.com/v1/projects/${sa.project_id}/databases/(default)/documents/${collectionPath}`);
+    url.searchParams.set("pageSize", "300");
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error(`No se pudo leer ${collectionPath}: ${await res.text()}`);
+    const data = (await res.json()) as { documents?: { name: string; fields?: Record<string, FirestoreValue> }[]; nextPageToken?: string };
+    (data.documents ?? []).forEach((d) => {
+      const id = d.name.split("/").pop() as string;
+      const fields = d.fields ?? {};
+      const obj = Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, firestoreValueToJs(v)]));
+      out.push({ id, data: obj });
+    });
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+  return out;
+}
+
+/** Crea o reemplaza por completo un documento en la ruta indicada (ej: "estudiantes_archivados/abc123"). */
+export async function setDocument(path: string, data: Record<string, unknown>): Promise<void> {
+  const sa = getServiceAccount();
+  const token = await getAccessToken();
+  const fields = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, jsToFirestoreValue(v)]));
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${sa.project_id}/databases/(default)/documents/${path}`,
+    { method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ fields }) }
+  );
+  if (!res.ok) throw new Error(`No se pudo escribir ${path}: ${await res.text()}`);
+}
+
+/** Elimina un documento en la ruta indicada (ej: "estudiantes/abc123"). */
+export async function deleteDocument(path: string): Promise<void> {
+  const sa = getServiceAccount();
+  const token = await getAccessToken();
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${sa.project_id}/databases/(default)/documents/${path}`,
+    { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!res.ok) throw new Error(`No se pudo eliminar ${path}: ${await res.text()}`);
+}

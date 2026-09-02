@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/eliminar-estudiantes-vencidos",
+      "schedule": "0 8 * * *"
+    }
+  ]
+}

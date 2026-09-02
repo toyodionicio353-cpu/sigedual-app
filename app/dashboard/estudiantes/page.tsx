@@ -15,6 +15,7 @@ const NIVELES = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
 const ESTADOS: Estudiante["estado"][] = ["activo", "inactivo", "egresado", "retirado"];
 const PAGE_SIZE = 12;
 const RETENCION_ANIOS = 5;
+const AVISO_DIAS_ANTES = 30;
 
 const ESTADO_COLOR: Record<string, string> = {
   activo: "var(--success)",
@@ -216,10 +217,20 @@ export default function EstudiantesPage() {
 
   const hayFiltrosActivos = filtrosActivos.length > 0 || busqueda.trim().length > 0;
 
-  const vencidos = useMemo(() => {
-    const limite = new Date();
-    limite.setFullYear(limite.getFullYear() - RETENCION_ANIOS);
-    return estudiantes.filter((e) => new Date(e.creadoEn) <= limite);
+  const { porVencer, vencidosPendientes } = useMemo(() => {
+    const ahora = Date.now();
+    const porVencerList: Estudiante[] = [];
+    const vencidosList: Estudiante[] = [];
+    estudiantes.forEach((e) => {
+      const fecha = new Date(e.creadoEn);
+      if (Number.isNaN(fecha.getTime())) return;
+      const fechaLimite = new Date(fecha);
+      fechaLimite.setFullYear(fechaLimite.getFullYear() + RETENCION_ANIOS);
+      const diasRestantes = Math.ceil((fechaLimite.getTime() - ahora) / 86400000);
+      if (diasRestantes <= 0) vencidosList.push(e);
+      else if (diasRestantes <= AVISO_DIAS_ANTES) porVencerList.push(e);
+    });
+    return { porVencer: porVencerList, vencidosPendientes: vencidosList };
   }, [estudiantes]);
 
   return (
@@ -242,15 +253,26 @@ export default function EstudiantesPage() {
         )}
       </div>
 
-      {/* Aviso de registros vencidos */}
-      {!loading && vencidos.length > 0 && (
-        <div style={{ background: "var(--warning-bg)", border: "1px solid var(--warning)" }} className="rounded-xl px-4 py-3 mb-6 flex items-start gap-3">
+      {/* Avisos de retención de datos (5 años) */}
+      {!loading && porVencer.length > 0 && (
+        <div style={{ background: "var(--warning-bg)", border: "1px solid var(--warning)" }} className="rounded-xl px-4 py-3 mb-3 flex items-start gap-3">
           <AlertTriangle size={18} style={{ color: "var(--warning)" }} className="flex-shrink-0 mt-0.5" />
           <p style={{ color: "var(--warning)" }} className="text-sm font-medium">
-            {vencidos.length === 1
-              ? "1 estudiante lleva más de 5 años registrado en SIGEDUAL y está vencido según la política de retención de datos."
-              : `${vencidos.length} estudiantes llevan más de 5 años registrados en SIGEDUAL y están vencidos según la política de retención de datos.`}
-            {" "}Estos registros serán marcados para eliminación. Contacta a un administrador para revisarlos.
+            {porVencer.length === 1
+              ? "1 estudiante cumplirá 5 años registrado en los próximos 30 días"
+              : `${porVencer.length} estudiantes cumplirán 5 años registrados en los próximos 30 días`}
+            {" "}y se eliminarán automáticamente de SIGEDUAL según la política de retención de datos.
+          </p>
+        </div>
+      )}
+      {!loading && vencidosPendientes.length > 0 && (
+        <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-4 py-3 mb-3 flex items-start gap-3">
+          <AlertTriangle size={18} style={{ color: "var(--danger)" }} className="flex-shrink-0 mt-0.5" />
+          <p style={{ color: "var(--danger)" }} className="text-sm font-medium">
+            {vencidosPendientes.length === 1
+              ? "1 estudiante ya superó los 5 años de registro"
+              : `${vencidosPendientes.length} estudiantes ya superaron los 5 años de registro`}
+            {" "}y serán eliminados de SIGEDUAL en la próxima limpieza automática (diaria).
           </p>
         </div>
       )}
