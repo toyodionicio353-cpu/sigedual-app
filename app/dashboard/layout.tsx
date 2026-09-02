@@ -30,7 +30,7 @@ const TITULOS: Record<string, string> = {
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, usuario, loading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -74,10 +74,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         {/* Topbar */}
         <header
-          style={{ background: "var(--bg-card)", borderBottom: "1px solid var(--border)", height: 56 }}
+          style={{ background: "var(--bg-card)", height: 56 }}
           className="px-3 md:px-6 flex items-center justify-between sticky top-0 z-20"
         >
-          <div className="flex items-center gap-2 md:gap-4 h-14 min-w-0">
+          <div className="flex items-center gap-3 h-14 min-w-0">
             {/* Hamburguesa */}
             <button
               onClick={toggleSidebar}
@@ -88,11 +88,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Menu size={20} />
             </button>
 
-            {/* Separador */}
-            <div style={{ width: 1, height: 24, background: "var(--border)" }} className="flex-shrink-0" />
-
             {/* Título */}
-            <h2 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{titulo}</h2>
+            <h2 style={{ color: "var(--text-primary)", fontFamily: "var(--font-display), sans-serif" }} className="text-base font-bold tracking-tight truncate">{titulo}</h2>
           </div>
 
           <div className="flex items-center gap-2">
@@ -102,13 +99,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <Bell size={15} style={{ color: "var(--text-muted)" }} />
             </button>
-            <div
-              style={{ background: "var(--accent-blue)", borderRadius: 8, width: 32, height: 32 }}
-              className="flex items-center justify-center cursor-pointer"
-              title={usuario?.nombre}
-            >
-              <span className="text-white text-xs font-bold">{usuario?.nombre?.charAt(0).toUpperCase()}</span>
-            </div>
           </div>
         </header>
 
