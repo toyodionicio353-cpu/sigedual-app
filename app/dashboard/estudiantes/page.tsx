@@ -182,7 +182,7 @@ export default function EstudiantesPage() {
                 <div key={key}>
                   <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">{label}</label>
                   <input
-                    value={(form as Record<string, string>)[key]}
+                    value={(form as unknown as Record<string, string>)[key]}
                     onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                     placeholder={placeholder}
                     style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}

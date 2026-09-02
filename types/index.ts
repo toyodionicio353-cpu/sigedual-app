@@ -62,6 +62,10 @@ export interface Estudiante {
   estado: "activo" | "inactivo" | "egresado" | "retirado";
   fechaIncorporacionDual?: string;
   estadoDual?: string;
+  enfermedadesCronicas?: string;
+  alergias?: string;
+  informacionMedicaAdicional?: string[];
+  rasgos?: string[];
   apoderadoNombre?: string;
   apoderadoRun?: string;
   apoderadoParentesco?: string;
