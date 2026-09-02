@@ -38,7 +38,7 @@ const MENUS: NavGroup[] = [
   {
     id: "inicio",
     label: "Inicio",
-    icon: <LayoutDashboard size={18} strokeWidth={2.5} />,
+    icon: <LayoutDashboard size={20} strokeWidth={2.25} />,
     color: "#2563eb",
     roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"],
     href: "/dashboard",
@@ -47,66 +47,66 @@ const MENUS: NavGroup[] = [
   {
     id: "estudiantes",
     label: "Estudiantes",
-    icon: <Users size={18} strokeWidth={2.5} />,
+    icon: <Users size={20} strokeWidth={2.25} />,
     color: "#3b82f6",
     roles: ["administrador", "coordinador", "director", "profesor"],
     sub: [
-      { href: "/dashboard/estudiantes", label: "Lista de estudiantes", icon: <ClipboardList size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor"] },
-      { href: "/dashboard/estudiantes/nuevo", label: "Agregar estudiante", icon: <UserPlus size={14} strokeWidth={2.5} />, roles: ["administrador", "profesor"] },
-      { href: "/dashboard/estudiantes/asignaciones", label: "Asignaciones", icon: <CalendarCheck size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor"] },
+      { href: "/dashboard/estudiantes", label: "Lista de estudiantes", icon: <ClipboardList size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor"] },
+      { href: "/dashboard/estudiantes/nuevo", label: "Agregar estudiante", icon: <UserPlus size={16} strokeWidth={2.25} />, roles: ["administrador", "profesor"] },
+      { href: "/dashboard/estudiantes/asignaciones", label: "Asignaciones", icon: <CalendarCheck size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor"] },
     ],
   },
   {
     id: "centros",
     label: "Centros Duales",
-    icon: <Building2 size={18} strokeWidth={2.5} />,
+    icon: <Building2 size={20} strokeWidth={2.25} />,
     color: "#22c55e",
     roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"],
     sub: [
-      { href: "/dashboard/centros", label: "Lista de centros", icon: <Building size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] },
-      { href: "/dashboard/centros/nuevo", label: "Agregar centro", icon: <Building2 size={14} strokeWidth={2.5} />, roles: ["administrador", "profesor"] },
-      { href: "/dashboard/centros/maestros", label: "Lista de maestro guía", icon: <UsersRound size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor"] },
-      { href: "/dashboard/centros/maestros/nuevo", label: "Agregar maestro guía", icon: <UserPlus size={14} strokeWidth={2.5} />, roles: ["administrador", "profesor"] },
+      { href: "/dashboard/centros", label: "Lista de centros", icon: <Building size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] },
+      { href: "/dashboard/centros/nuevo", label: "Agregar centro", icon: <Building2 size={16} strokeWidth={2.25} />, roles: ["administrador", "profesor"] },
+      { href: "/dashboard/centros/maestros", label: "Lista de maestro guía", icon: <UsersRound size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor"] },
+      { href: "/dashboard/centros/maestros/nuevo", label: "Agregar maestro guía", icon: <UserPlus size={16} strokeWidth={2.25} />, roles: ["administrador", "profesor"] },
     ],
   },
   {
     id: "profesores",
     label: "Profesores",
-    icon: <BookOpen size={18} strokeWidth={2.5} />,
+    icon: <BookOpen size={20} strokeWidth={2.25} />,
     color: "#8b5cf6",
     roles: ["administrador", "coordinador", "director"],
     sub: [
-      { href: "/dashboard/profesores", label: "Lista de profesores", icon: <ClipboardList size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director"] },
-      { href: "/dashboard/profesores/asignaciones", label: "Asignaciones", icon: <CalendarCheck size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director"] },
+      { href: "/dashboard/profesores", label: "Lista de profesores", icon: <ClipboardList size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director"] },
+      { href: "/dashboard/profesores/asignaciones", label: "Asignaciones", icon: <CalendarCheck size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director"] },
     ],
   },
   {
     id: "especialidades",
     label: "Especialidades",
-    icon: <GraduationCap size={18} strokeWidth={2.5} />,
+    icon: <GraduationCap size={20} strokeWidth={2.25} />,
     color: "#06b6d4",
     roles: ["administrador", "coordinador", "director"],
     sub: [
-      { href: "/dashboard/especialidades", label: "Lista de especialidades", icon: <GraduationCap size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director"] },
-      { href: "/dashboard/especialidades/nueva", label: "Agregar especialidad", icon: <UserPlus size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director"] },
+      { href: "/dashboard/especialidades", label: "Lista de especialidades", icon: <GraduationCap size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director"] },
+      { href: "/dashboard/especialidades/nueva", label: "Agregar especialidad", icon: <UserPlus size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director"] },
     ],
   },
   {
     id: "documentos",
     label: "Documentos",
-    icon: <FileText size={18} strokeWidth={2.5} />,
+    icon: <FileText size={20} strokeWidth={2.25} />,
     color: "#f59e0b",
     roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"],
     sub: [
-      { href: "/dashboard/documentos/convenios", label: "Convenios", icon: <Handshake size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-      { href: "/dashboard/documentos/evaluaciones", label: "Evaluaciones", icon: <ClipboardCheck size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-      { href: "/dashboard/documentos", label: "Documentos", icon: <FolderOpen size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+      { href: "/dashboard/documentos/convenios", label: "Convenios", icon: <Handshake size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+      { href: "/dashboard/documentos/evaluaciones", label: "Evaluaciones", icon: <ClipboardCheck size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+      { href: "/dashboard/documentos", label: "Documentos", icon: <FolderOpen size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
     ],
   },
   {
     id: "mensajes",
     label: "Mensajes",
-    icon: <MessageSquare size={18} strokeWidth={2.5} />,
+    icon: <MessageSquare size={20} strokeWidth={2.25} />,
     color: "#ec4899",
     roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"],
     href: "/dashboard/mensajes",
@@ -115,20 +115,20 @@ const MENUS: NavGroup[] = [
   {
     id: "administracion",
     label: "Administración",
-    icon: <Settings size={18} strokeWidth={2.5} />,
+    icon: <Settings size={20} strokeWidth={2.25} />,
     color: "#ef4444",
     roles: ["administrador", "director"],
     sub: [
-      { href: "/dashboard/usuarios", label: "Usuarios", icon: <UserCog size={14} strokeWidth={2.5} />, roles: ["administrador"] },
-      { href: "/dashboard/liceos", label: "Liceos", icon: <School size={14} strokeWidth={2.5} />, roles: ["administrador"] },
-      { href: "/dashboard/administracion/seguridad", label: "Seguridad", icon: <ShieldCheck size={14} strokeWidth={2.5} />, roles: ["administrador", "director"] },
-      { href: "/dashboard/administracion/configuracion", label: "Configuración", icon: <SlidersHorizontal size={14} strokeWidth={2.5} />, roles: ["administrador", "director"] },
+      { href: "/dashboard/usuarios", label: "Usuarios", icon: <UserCog size={16} strokeWidth={2.25} />, roles: ["administrador"] },
+      { href: "/dashboard/liceos", label: "Liceos", icon: <School size={16} strokeWidth={2.25} />, roles: ["administrador"] },
+      { href: "/dashboard/administracion/seguridad", label: "Seguridad", icon: <ShieldCheck size={16} strokeWidth={2.25} />, roles: ["administrador", "director"] },
+      { href: "/dashboard/administracion/configuracion", label: "Configuración", icon: <SlidersHorizontal size={16} strokeWidth={2.25} />, roles: ["administrador", "director"] },
     ],
   },
   {
     id: "soporte",
     label: "Soporte",
-    icon: <LifeBuoy size={18} strokeWidth={2.5} />,
+    icon: <LifeBuoy size={20} strokeWidth={2.25} />,
     color: "#14b8a6",
     roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"],
     href: "/dashboard/soporte",
@@ -182,7 +182,7 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
       <div className="flex items-center px-4 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", height: 56, minHeight: 56 }}>
         <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={32} height={32} className="object-contain flex-shrink-0" style={{ minWidth: 32 }} />
         {!collapsed && (
-          <h2 style={{ color: "#fff" }} className="ml-2.5 text-base font-bold tracking-tight uppercase leading-none whitespace-nowrap overflow-hidden">
+          <h2 style={{ color: "#fff" }} className="ml-2.5 text-lg font-bold tracking-tight uppercase leading-none whitespace-nowrap overflow-hidden">
             SIGEDUAL
           </h2>
         )}
@@ -213,7 +213,7 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
                   borderRadius: 9,
                   color: isActive ? menu.color : "var(--text-secondary)",
                 }}
-                className="flex items-center gap-2.5 px-2.5 py-2.5 text-sm font-medium hover:bg-white/5 transition-all"
+                className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:bg-white/5 transition-all"
               >
                 <span style={{ color: isActive ? menu.color : "var(--text-muted)", flexShrink: 0 }}>{menu.icon}</span>
                 {!collapsed && <span className="flex-1 whitespace-nowrap">{menu.label}</span>}
@@ -232,7 +232,7 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
                   width: "100%",
                   color: isActive ? menu.color : "var(--text-secondary)",
                 }}
-                className="flex items-center gap-2.5 px-2.5 py-2.5 text-sm font-medium hover:bg-white/5 transition-all text-left"
+                className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:bg-white/5 transition-all text-left"
               >
                 {/* Icono coloreado */}
                 <span style={{ color: isActive ? menu.color : "var(--text-muted)", flexShrink: 0 }}>{menu.icon}</span>
@@ -245,16 +245,16 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      width: 20,
-                      height: 20,
+                      width: 22,
+                      height: 22,
                       borderRadius: 5,
                       background: isOpen ? menu.color + "22" : "transparent",
                       flexShrink: 0,
                       transition: "background 0.15s",
                     }}>
                       <ChevronDown
-                        size={14}
-                        strokeWidth={2.5}
+                        size={18}
+                        strokeWidth={2.25}
                         style={{
                           color: isOpen ? menu.color : "var(--text-muted)",
                           transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)",
@@ -269,7 +269,7 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
               {/* Submenús animados */}
               {!collapsed && (
                 <div style={{
-                  maxHeight: isOpen ? `${visibleSub.length * 36 + 8}px` : "0px",
+                  maxHeight: isOpen ? `${visibleSub.length * 40 + 8}px` : "0px",
                   overflow: "hidden",
                   transition: "max-height 0.22s cubic-bezier(0.4,0,0.2,1)",
                 }}>
@@ -286,7 +286,7 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
                             color: subActive ? menu.color : "var(--text-secondary)",
                             borderRadius: 7,
                           }}
-                          className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium hover:bg-white/5 transition-all"
+                          className="flex items-center gap-2 px-2.5 py-2 text-sm font-medium hover:bg-white/5 transition-all"
                         >
                           <span style={{ color: subActive ? menu.color : "var(--text-muted)", opacity: 0.85, flexShrink: 0 }}>{sub.icon}</span>
                           <span className="truncate">{sub.label}</span>
@@ -310,9 +310,9 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
           onClick={handleLogout}
           title="Cerrar sesión"
           style={{ borderRadius: 9, color: "var(--text-muted)", width: "100%" }}
-          className={`flex items-center gap-2.5 px-2.5 py-2.5 text-sm font-medium hover:bg-red-500/10 hover:text-red-400 transition-all ${collapsed ? "justify-center" : ""}`}
+          className={`flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:bg-red-500/10 hover:text-red-400 transition-all ${collapsed ? "justify-center" : ""}`}
         >
-          <LogOut size={18} strokeWidth={2.5} />
+          <LogOut size={20} strokeWidth={2.25} />
           {!collapsed && <span className="whitespace-nowrap">Cerrar sesión</span>}
         </button>
       </div>
