@@ -38,7 +38,7 @@ const MENUS: NavGroup[] = [
   {
     id: "inicio",
     label: "Inicio",
-    icon: <LayoutDashboard size={17} strokeWidth={2.5} />,
+    icon: <LayoutDashboard size={18} strokeWidth={2.5} />,
     color: "#2563eb",
     roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"],
     href: "/dashboard",
@@ -47,66 +47,66 @@ const MENUS: NavGroup[] = [
   {
     id: "estudiantes",
     label: "Estudiantes",
-    icon: <Users size={17} strokeWidth={2.5} />,
+    icon: <Users size={18} strokeWidth={2.5} />,
     color: "#3b82f6",
     roles: ["administrador", "coordinador", "director", "profesor"],
     sub: [
-      { href: "/dashboard/estudiantes", label: "Lista de estudiantes", icon: <ClipboardList size={13} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor"] },
-      { href: "/dashboard/estudiantes/nuevo", label: "Agregar estudiante", icon: <UserPlus size={13} strokeWidth={2.5} />, roles: ["administrador", "profesor"] },
-      { href: "/dashboard/estudiantes/asignaciones", label: "Asignaciones", icon: <CalendarCheck size={13} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor"] },
+      { href: "/dashboard/estudiantes", label: "Lista de estudiantes", icon: <ClipboardList size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor"] },
+      { href: "/dashboard/estudiantes/nuevo", label: "Agregar estudiante", icon: <UserPlus size={14} strokeWidth={2.5} />, roles: ["administrador", "profesor"] },
+      { href: "/dashboard/estudiantes/asignaciones", label: "Asignaciones", icon: <CalendarCheck size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor"] },
     ],
   },
   {
     id: "centros",
     label: "Centros Duales",
-    icon: <Building2 size={17} strokeWidth={2.5} />,
+    icon: <Building2 size={18} strokeWidth={2.5} />,
     color: "#22c55e",
     roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"],
     sub: [
-      { href: "/dashboard/centros", label: "Lista de centros", icon: <Building size={13} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] },
-      { href: "/dashboard/centros/nuevo", label: "Agregar centro", icon: <Building2 size={13} strokeWidth={2.5} />, roles: ["administrador", "profesor"] },
-      { href: "/dashboard/centros/maestros", label: "Lista de maestro guía", icon: <UsersRound size={13} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor"] },
-      { href: "/dashboard/centros/maestros/nuevo", label: "Agregar maestro guía", icon: <UserPlus size={13} strokeWidth={2.5} />, roles: ["administrador", "profesor"] },
+      { href: "/dashboard/centros", label: "Lista de centros", icon: <Building size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] },
+      { href: "/dashboard/centros/nuevo", label: "Agregar centro", icon: <Building2 size={14} strokeWidth={2.5} />, roles: ["administrador", "profesor"] },
+      { href: "/dashboard/centros/maestros", label: "Lista de maestro guía", icon: <UsersRound size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor"] },
+      { href: "/dashboard/centros/maestros/nuevo", label: "Agregar maestro guía", icon: <UserPlus size={14} strokeWidth={2.5} />, roles: ["administrador", "profesor"] },
     ],
   },
   {
     id: "profesores",
     label: "Profesores",
-    icon: <BookOpen size={17} strokeWidth={2.5} />,
+    icon: <BookOpen size={18} strokeWidth={2.5} />,
     color: "#8b5cf6",
     roles: ["administrador", "coordinador", "director"],
     sub: [
-      { href: "/dashboard/profesores", label: "Lista de profesores", icon: <ClipboardList size={13} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director"] },
-      { href: "/dashboard/profesores/asignaciones", label: "Asignaciones", icon: <CalendarCheck size={13} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director"] },
+      { href: "/dashboard/profesores", label: "Lista de profesores", icon: <ClipboardList size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director"] },
+      { href: "/dashboard/profesores/asignaciones", label: "Asignaciones", icon: <CalendarCheck size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director"] },
     ],
   },
   {
     id: "especialidades",
     label: "Especialidades",
-    icon: <GraduationCap size={17} strokeWidth={2.5} />,
+    icon: <GraduationCap size={18} strokeWidth={2.5} />,
     color: "#06b6d4",
     roles: ["administrador", "coordinador", "director"],
     sub: [
-      { href: "/dashboard/especialidades", label: "Lista de especialidades", icon: <GraduationCap size={13} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director"] },
-      { href: "/dashboard/especialidades/nueva", label: "Agregar especialidad", icon: <UserPlus size={13} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director"] },
+      { href: "/dashboard/especialidades", label: "Lista de especialidades", icon: <GraduationCap size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director"] },
+      { href: "/dashboard/especialidades/nueva", label: "Agregar especialidad", icon: <UserPlus size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director"] },
     ],
   },
   {
     id: "documentos",
     label: "Documentos",
-    icon: <FileText size={17} strokeWidth={2.5} />,
+    icon: <FileText size={18} strokeWidth={2.5} />,
     color: "#f59e0b",
     roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"],
     sub: [
-      { href: "/dashboard/documentos/convenios", label: "Convenios", icon: <Handshake size={13} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-      { href: "/dashboard/documentos/evaluaciones", label: "Evaluaciones", icon: <ClipboardCheck size={13} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-      { href: "/dashboard/documentos", label: "Documentos", icon: <FolderOpen size={13} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+      { href: "/dashboard/documentos/convenios", label: "Convenios", icon: <Handshake size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+      { href: "/dashboard/documentos/evaluaciones", label: "Evaluaciones", icon: <ClipboardCheck size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+      { href: "/dashboard/documentos", label: "Documentos", icon: <FolderOpen size={14} strokeWidth={2.5} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
     ],
   },
   {
     id: "mensajes",
     label: "Mensajes",
-    icon: <MessageSquare size={17} strokeWidth={2.5} />,
+    icon: <MessageSquare size={18} strokeWidth={2.5} />,
     color: "#ec4899",
     roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"],
     href: "/dashboard/mensajes",
@@ -115,20 +115,20 @@ const MENUS: NavGroup[] = [
   {
     id: "administracion",
     label: "Administración",
-    icon: <Settings size={17} strokeWidth={2.5} />,
+    icon: <Settings size={18} strokeWidth={2.5} />,
     color: "#ef4444",
     roles: ["administrador", "director"],
     sub: [
-      { href: "/dashboard/usuarios", label: "Usuarios", icon: <UserCog size={13} strokeWidth={2.5} />, roles: ["administrador"] },
-      { href: "/dashboard/liceos", label: "Liceos", icon: <School size={13} strokeWidth={2.5} />, roles: ["administrador"] },
-      { href: "/dashboard/administracion/seguridad", label: "Seguridad", icon: <ShieldCheck size={13} strokeWidth={2.5} />, roles: ["administrador", "director"] },
-      { href: "/dashboard/administracion/configuracion", label: "Configuración", icon: <SlidersHorizontal size={13} strokeWidth={2.5} />, roles: ["administrador", "director"] },
+      { href: "/dashboard/usuarios", label: "Usuarios", icon: <UserCog size={14} strokeWidth={2.5} />, roles: ["administrador"] },
+      { href: "/dashboard/liceos", label: "Liceos", icon: <School size={14} strokeWidth={2.5} />, roles: ["administrador"] },
+      { href: "/dashboard/administracion/seguridad", label: "Seguridad", icon: <ShieldCheck size={14} strokeWidth={2.5} />, roles: ["administrador", "director"] },
+      { href: "/dashboard/administracion/configuracion", label: "Configuración", icon: <SlidersHorizontal size={14} strokeWidth={2.5} />, roles: ["administrador", "director"] },
     ],
   },
   {
     id: "soporte",
     label: "Soporte",
-    icon: <LifeBuoy size={17} strokeWidth={2.5} />,
+    icon: <LifeBuoy size={18} strokeWidth={2.5} />,
     color: "#14b8a6",
     roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"],
     href: "/dashboard/soporte",
@@ -253,7 +253,7 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
                       transition: "background 0.15s",
                     }}>
                       <ChevronDown
-                        size={13}
+                        size={14}
                         strokeWidth={2.5}
                         style={{
                           color: isOpen ? menu.color : "var(--text-muted)",
@@ -312,7 +312,7 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
           style={{ borderRadius: 9, color: "var(--text-muted)", width: "100%" }}
           className={`flex items-center gap-2.5 px-2.5 py-2.5 text-sm font-medium hover:bg-red-500/10 hover:text-red-400 transition-all ${collapsed ? "justify-center" : ""}`}
         >
-          <LogOut size={17} strokeWidth={2.5} />
+          <LogOut size={18} strokeWidth={2.5} />
           {!collapsed && <span className="whitespace-nowrap">Cerrar sesión</span>}
         </button>
       </div>
