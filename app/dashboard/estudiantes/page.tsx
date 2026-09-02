@@ -8,11 +8,13 @@ import type { Estudiante, Especialidad } from "@/types";
 import {
   Search, SlidersHorizontal, X, LayoutList, LayoutGrid,
   ChevronLeft, ChevronRight, Eye, UserPlus, Users2, BadgeCheck, Handshake,
+  AlertTriangle,
 } from "lucide-react";
 
 const NIVELES = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
 const ESTADOS: Estudiante["estado"][] = ["activo", "inactivo", "egresado", "retirado"];
 const PAGE_SIZE = 12;
+const RETENCION_ANIOS = 5;
 
 const ESTADO_COLOR: Record<string, string> = {
   activo: "var(--success)",
@@ -214,6 +216,12 @@ export default function EstudiantesPage() {
 
   const hayFiltrosActivos = filtrosActivos.length > 0 || busqueda.trim().length > 0;
 
+  const vencidos = useMemo(() => {
+    const limite = new Date();
+    limite.setFullYear(limite.getFullYear() - RETENCION_ANIOS);
+    return estudiantes.filter((e) => new Date(e.creadoEn) <= limite);
+  }, [estudiantes]);
+
   return (
     <div className="p-4 md:p-8">
       {/* Header */}
@@ -233,6 +241,19 @@ export default function EstudiantesPage() {
           </Link>
         )}
       </div>
+
+      {/* Aviso de registros vencidos */}
+      {!loading && vencidos.length > 0 && (
+        <div style={{ background: "var(--warning-bg)", border: "1px solid var(--warning)" }} className="rounded-xl px-4 py-3 mb-6 flex items-start gap-3">
+          <AlertTriangle size={18} style={{ color: "var(--warning)" }} className="flex-shrink-0 mt-0.5" />
+          <p style={{ color: "var(--warning)" }} className="text-sm font-medium">
+            {vencidos.length === 1
+              ? "1 estudiante lleva más de 5 años registrado en SIGEDUAL y está vencido según la política de retención de datos."
+              : `${vencidos.length} estudiantes llevan más de 5 años registrados en SIGEDUAL y están vencidos según la política de retención de datos.`}
+            {" "}Estos registros serán marcados para eliminación. Contacta a un administrador para revisarlos.
+          </p>
+        </div>
+      )}
 
       {/* Estadísticas */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
