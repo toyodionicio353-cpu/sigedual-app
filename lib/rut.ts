@@ -47,5 +47,7 @@ export function validarEmail(email: string): boolean {
 
 export function validarTelefonoChileno(telefono: string): boolean {
   const limpio = telefono.replace(/[\s-]/g, "");
-  return /^(\+?56)?9\d{8}$/.test(limpio);
+  // Acepta celulares (+56 9 XXXXXXXX) y fijos/institucionales (+56 2 XXXXXXXX,
+  // 600 XXX XXXX, etc.): código de país opcional + 8 o 9 dígitos, sin exigir el "9" móvil.
+  return /^(\+?56)?[2-9]\d{7,8}$/.test(limpio);
 }
