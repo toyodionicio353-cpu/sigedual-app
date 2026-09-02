@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import type { Estudiante, Especialidad } from "@/types";
 import {
   ArrowLeft, BadgeCheck, Phone, GraduationCap, HeartPulse,
-  Sparkles, FileText, Users, Pencil,
+  Sparkles, FileText, Users, Pencil, History,
 } from "lucide-react";
 
 const ESTADO_COLOR: Record<string, string> = {
@@ -34,11 +34,11 @@ function Seccion({ icon, titulo, children }: { icon: React.ReactNode; titulo: st
   );
 }
 
-function Dato({ label, valor, span }: { label: string; valor?: string | null; span?: boolean }) {
+function Dato({ label, valor, span, color }: { label: string; valor?: string | null; span?: boolean; color?: string }) {
   return (
     <div className={span ? "sm:col-span-2" : ""}>
       <p style={{ color: "var(--text-muted)" }} className="text-xs mb-1">{label}</p>
-      <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium">{valor?.trim() ? valor : "—"}</p>
+      <p style={{ color: color ?? "var(--text-primary)" }} className="text-sm font-medium">{valor?.trim() ? valor : "—"}</p>
     </div>
   );
 }
@@ -95,6 +95,7 @@ export default function FichaEstudiantePage() {
 
   const especialidadNombre = especialidades.find((e) => e.id === estudiante.especialidadId)?.nombre;
   const anio = estudiante.anioAcademico || String(new Date(estudiante.creadoEn).getFullYear());
+  const repitiendoNivelActual = (estudiante.historialCursos ?? []).some((h) => h.nivel === estudiante.nivel);
 
   return (
     <div className="p-4 md:p-8 max-w-5xl">
@@ -157,13 +158,44 @@ export default function FichaEstudiantePage() {
 
         <Seccion icon={<GraduationCap size={16} />} titulo="Información académica">
           <Dato label="Año académico" valor={anio} />
-          <Dato label="Nivel" valor={estudiante.nivel} />
+          <Dato
+            label={repitiendoNivelActual ? "Nivel (repitiendo)" : "Nivel"}
+            valor={estudiante.nivel}
+            color={repitiendoNivelActual ? "var(--warning)" : undefined}
+          />
           <Dato label="Curso" valor={estudiante.curso} />
           <Dato label="Especialidad" valor={especialidadNombre} />
           <Dato label="Jornada" valor={estudiante.jornada} />
           <Dato label="Centro dual asignado" valor={estudiante.centroDualId ? "Asignado" : "Sin empresa asignada"} />
         </Seccion>
 
+        {(estudiante.historialCursos?.length ?? 0) > 0 && (
+          <Seccion icon={<History size={16} />} titulo="Cursos pasados">
+            <div className="sm:col-span-2 flex flex-col gap-2">
+              {[...estudiante.historialCursos!].reverse().map((h, i) => {
+                const aprobado = h.resultado === "aprobado";
+                const color = aprobado ? "var(--success)" : "var(--warning)";
+                return (
+                  <div
+                    key={i}
+                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
+                    className="rounded-lg px-4 py-3 flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium">
+                        {h.nivel}{especialidades.find((esp) => esp.id === h.especialidadId)?.nombre ? ` en ${especialidades.find((esp) => esp.id === h.especialidadId)?.nombre}` : ""}
+                      </p>
+                      <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{h.curso ? `${h.curso} · ` : ""}Año {h.anioAcademico}</p>
+                    </div>
+                    <span style={{ color, background: color + "22" }} className="px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0">
+                      {aprobado ? "Aprobado" : "Repitió"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </Seccion>
+        )}
         {(estudiante.enfermedadesCronicas || estudiante.alergias || (estudiante.informacionMedicaAdicional?.length ?? 0) > 0) && (
           <Seccion icon={<HeartPulse size={16} />} titulo="Información médica">
             <Dato label="Enfermedades crónicas" valor={estudiante.enfermedadesCronicas} />

@@ -88,8 +88,19 @@ export interface Estudiante {
   apoderadoTelefono?: string;
   apoderadoEmail?: string;
   observaciones?: string;
+  historialCursos?: HistorialCurso[];
   creadoEn: string;
   actualizadoEn?: string;
+}
+
+export interface HistorialCurso {
+  anioAcademico: string;
+  nivel: string;
+  curso?: string;
+  especialidadId: string;
+  resultado: "aprobado" | "repitio";
+  confirmadoEn: string;
+  confirmadoPor: string;
 }
 
 export interface Conversacion {
