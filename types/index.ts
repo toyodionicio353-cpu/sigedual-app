@@ -89,6 +89,7 @@ export interface Estudiante {
   apoderadoEmail?: string;
   observaciones?: string;
   creadoEn: string;
+  actualizadoEn?: string;
 }
 
 export interface Conversacion {

@@ -20,8 +20,8 @@ const AVISO_DIAS_ANTES = 30;
 const ESTADO_COLOR: Record<string, string> = {
   activo: "var(--success)",
   inactivo: "var(--danger)",
-  egresado: "var(--warning)",
-  retirado: "var(--text-muted)",
+  egresado: "var(--text-muted)",
+  retirado: "var(--warning)",
 };
 
 const ORDEN_OPCIONES = [
