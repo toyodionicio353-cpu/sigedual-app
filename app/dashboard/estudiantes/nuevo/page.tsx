@@ -129,8 +129,8 @@ export default function AgregarEstudiantePage() {
           { label: "Último registro", value: stats.ultimoTexto, icon: <CalendarClock size={18} />, color: "#f59e0b" },
         ].map((s) => (
           <div key={s.label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="p-4 flex flex-col gap-3">
-            <div style={{ background: s.color + "22", borderRadius: 10 }} className="w-9 h-9 flex items-center justify-center">
-              <span style={{ color: s.color }}>{s.icon}</span>
+            <div style={{ background: "var(--accent)", borderRadius: 999 }} className="w-9 h-9 flex items-center justify-center">
+              <span style={{ color: "var(--text-on-accent)" }}>{s.icon}</span>
             </div>
             <div>
               <p style={{ color: "var(--text-primary)" }} className="text-lg font-bold leading-tight">
@@ -205,7 +205,7 @@ export default function AgregarEstudiantePage() {
               </button>
               <Link
                 href={`/dashboard/estudiantes/${registrado.id}`}
-                style={{ background: "var(--accent-blue)" }}
+                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
                 className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-1.5"
               >
                 <Eye size={15} />

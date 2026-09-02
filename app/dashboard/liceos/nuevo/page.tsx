@@ -112,7 +112,7 @@ export default function AgregarLiceoPage() {
               </Link>
               <Link
                 href={`/dashboard/liceos/${registrado.id}`}
-                style={{ background: "var(--accent-blue)" }}
+                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
                 className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-1.5"
               >
                 <Eye size={15} />

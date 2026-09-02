@@ -193,12 +193,12 @@ export default function UsuariosPage() {
             onClick={() => sincronizar(false)}
             disabled={sincronizando}
             style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 hover:border-blue-500/50 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 hover:[border-color:var(--accent)] transition-colors"
           >
             <RefreshCw size={15} className={sincronizando ? "animate-spin" : ""} />
             Sincronizar con Firebase
           </button>
-          <button onClick={() => { setForm(EMPTY); setModal(true); }} style={{ background: "var(--accent-blue)" }} className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+          <button onClick={() => { setForm(EMPTY); setModal(true); }} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
             + Crear usuario
           </button>
         </div>
@@ -245,7 +245,7 @@ export default function UsuariosPage() {
                 <tr key={u.uid} style={{ borderBottom: i < usuarios.length - 1 ? "1px solid var(--border)" : "none" }}>
                   <td style={{ color: "var(--text-primary)" }} className="px-5 py-4 font-medium">{u.nombre}</td>
                   <td style={{ color: "var(--text-secondary)" }} className="px-5 py-4">{u.email}</td>
-                  <td style={{ color: "var(--accent-blue-light)" }} className="px-5 py-4">{ROL_LABEL[u.rol]}</td>
+                  <td style={{ color: "var(--accent-light)" }} className="px-5 py-4">{ROL_LABEL[u.rol]}</td>
                   <td style={{ color: "var(--text-secondary)" }} className="px-5 py-4">{u.especialidad || "—"}</td>
                   <td className="px-5 py-4">
                     <span style={{ color: u.activo ? "var(--success)" : "var(--danger)", background: (u.activo ? "var(--success)" : "var(--danger)") + "22" }} className="px-3 py-1 rounded-full text-xs">
@@ -291,7 +291,7 @@ export default function UsuariosPage() {
                   <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">{label}</label>
                   <input type={type} value={(form as Record<string, string>)[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
                     style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                    className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors" />
+                    className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
                 </div>
               ))}
               <div>
@@ -306,7 +306,7 @@ export default function UsuariosPage() {
             </div>
             <div className="flex gap-3 mt-6">
               <button onClick={() => setModal(false)} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex-1 py-2.5 rounded-xl text-sm font-medium">Cancelar</button>
-              <button onClick={crearUsuario} disabled={guardando} style={{ background: "var(--accent-blue)" }} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50">
+              <button onClick={crearUsuario} disabled={guardando} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50">
                 {guardando ? "Creando..." : "Crear usuario"}
               </button>
             </div>
@@ -329,7 +329,7 @@ export default function UsuariosPage() {
                   <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">{label}</label>
                   <input type="text" value={(formHuerfano as Record<string, string>)[key]} onChange={(e) => setFormHuerfano((f) => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
                     style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                    className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors" />
+                    className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
                 </div>
               ))}
               <div>
@@ -343,7 +343,7 @@ export default function UsuariosPage() {
             </div>
             <div className="flex gap-3 mt-6">
               <button onClick={() => setHuerfanoActivo(null)} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex-1 py-2.5 rounded-xl text-sm font-medium">Cancelar</button>
-              <button onClick={completarHuerfano} disabled={guardandoHuerfano || !formHuerfano.nombre.trim()} style={{ background: "var(--accent-blue)" }} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50">
+              <button onClick={completarHuerfano} disabled={guardandoHuerfano || !formHuerfano.nombre.trim()} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50">
                 {guardandoHuerfano ? "Guardando..." : "Guardar"}
               </button>
             </div>

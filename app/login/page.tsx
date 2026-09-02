@@ -58,8 +58,10 @@ export default function LoginPage() {
               className="w-12 h-12 object-contain flex-shrink-0"
             />
             <div>
-              <h1 style={{ color: "#fff" }} className="text-4xl font-bold tracking-tight uppercase leading-none">
-                SIGEDUAL
+              <h1 className="text-4xl font-bold tracking-tight leading-none">
+                <span style={{ color: "var(--text-primary)" }}>SIG</span>
+                <span style={{ color: "#C8102E" }}>e</span>
+                <span style={{ color: "var(--text-primary)" }}>DUAL</span>
               </h1>
               <p style={{ color: "var(--text-muted)" }} className="text-[11px] mt-2 tracking-wide">
                 Sistema Integral de Gestión Dual
@@ -68,7 +70,7 @@ export default function LoginPage() {
           </div>
 
           <div style={{ borderTop: "1px solid var(--border)" }} className="pt-6">
-            <h2 style={{ color: "#fff" }} className="text-base font-semibold mb-1">
+            <h2 style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">
               Iniciar sesión
             </h2>
             <p style={{ color: "var(--text-secondary)" }} className="text-xs mb-6">
@@ -91,7 +93,7 @@ export default function LoginPage() {
                     border: "1px solid var(--border-light)",
                     color: "var(--text-primary)",
                   }}
-                  className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
                 />
               </div>
 
@@ -102,7 +104,7 @@ export default function LoginPage() {
                   </label>
                   <Link
                     href="/recuperar-password"
-                    style={{ color: "var(--accent-blue-light)" }}
+                    style={{ color: "var(--accent-light)" }}
                     className="text-xs hover:underline"
                   >
                     ¿Olvidaste tu contraseña?
@@ -119,7 +121,7 @@ export default function LoginPage() {
                     border: "1px solid var(--border-light)",
                     color: "var(--text-primary)",
                   }}
-                  className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
                 />
               </div>
 
@@ -132,7 +134,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                style={{ background: "var(--accent-blue)" }}
+                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
                 className="w-full py-3 rounded-xl text-white font-semibold text-sm mt-2 hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {loading ? "Ingresando..." : "Ingresar"}
@@ -141,7 +143,7 @@ export default function LoginPage() {
 
             <p style={{ color: "var(--text-secondary)" }} className="text-sm text-center mt-5">
               ¿No tienes cuenta?{" "}
-              <Link href="/crear-cuenta" style={{ color: "var(--accent-blue-light)" }} className="font-medium hover:underline">
+              <Link href="/crear-cuenta" style={{ color: "var(--accent-light)" }} className="font-medium hover:underline">
                 Crear cuenta
               </Link>
             </p>

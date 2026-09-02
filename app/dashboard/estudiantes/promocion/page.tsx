@@ -214,7 +214,7 @@ export default function PromocionCursoPage() {
                       <button
                         onClick={() => confirmar(e)}
                         disabled={!decision || confirmando === e.id}
-                        style={{ background: "var(--accent-blue)" }}
+                        style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
                         className="px-3 py-2 rounded-lg text-white text-xs font-semibold disabled:opacity-40 transition-opacity"
                       >
                         {confirmando === e.id ? "Confirmando..." : "Confirmar"}

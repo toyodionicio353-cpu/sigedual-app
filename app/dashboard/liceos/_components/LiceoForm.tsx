@@ -67,7 +67,7 @@ function Seccion({ icon, titulo, subtitulo, children }: { icon: React.ReactNode;
   return (
     <div className="mb-7 last:mb-0">
       <div className="flex items-center gap-2 mb-1">
-        <span style={{ color: "var(--accent-blue-light)" }}>{icon}</span>
+        <span style={{ color: "var(--accent-light)" }}>{icon}</span>
         <h3 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">{titulo}</h3>
       </div>
       {subtitulo && <p style={{ color: "var(--text-muted)" }} className="text-xs mb-4">{subtitulo}</p>}
@@ -87,7 +87,7 @@ function Campo({ label, error, children, span }: { label: string; error?: string
 }
 
 const inputStyle = { background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" };
-const inputClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors";
+const inputClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors";
 
 interface LiceoFormProps {
   modo: "crear" | "editar";
@@ -331,7 +331,7 @@ export default function LiceoForm({
                       type="button"
                       onClick={() => reactivarEspecialidad(esp.key)}
                       title="Reactivar"
-                      style={{ color: "var(--accent-blue-light)" }}
+                      style={{ color: "var(--accent-light)" }}
                       className="p-2 flex-shrink-0"
                     >
                       <RotateCcw size={16} />
@@ -357,7 +357,7 @@ export default function LiceoForm({
             <button
               type="button"
               onClick={agregarEspecialidad}
-              style={{ color: "var(--accent-blue-light)" }}
+              style={{ color: "var(--accent-light)" }}
               className="flex items-center gap-1.5 text-sm font-medium hover:underline self-start"
             >
               <Plus size={15} />
@@ -387,7 +387,7 @@ export default function LiceoForm({
           <button
             type="submit"
             disabled={guardando}
-            style={{ background: "var(--accent-blue)" }}
+            style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
             className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {guardando ? "Guardando..." : modo === "crear" ? "Guardar liceo" : "Guardar cambios"}
@@ -414,7 +414,7 @@ export default function LiceoForm({
               <button
                 onClick={() => onGuardar(form, especialidades)}
                 disabled={guardando}
-                style={{ background: "var(--accent-blue)" }}
+                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
                 className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
               >
                 {guardando ? "Guardando..." : "Confirmar registro"}

@@ -142,7 +142,7 @@ export default function EditarEstudiantePage() {
       <div className="p-4 md:p-8 max-w-3xl">
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
           <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Estudiante no encontrado</p>
-          <Link href="/dashboard/estudiantes" style={{ background: "var(--accent-blue)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity mt-4">
+          <Link href="/dashboard/estudiantes" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity mt-4">
             <ArrowLeft size={16} />
             Volver al listado
           </Link>

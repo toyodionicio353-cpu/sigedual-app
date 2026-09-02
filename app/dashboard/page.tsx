@@ -79,7 +79,7 @@ export default function DashboardPage() {
 
       {/* Header */}
       <div className="mb-8">
-        <p style={{ color: "var(--accent-blue-light)" }} className="text-sm font-medium mb-1">{saludo}</p>
+        <p style={{ color: "var(--accent-light)" }} className="text-sm font-medium mb-1">{saludo}</p>
         <h1 style={{ color: "var(--text-primary)" }} className="text-4xl font-bold tracking-tight">
           {usuario?.nombre?.split(" ")[0]} 👋
         </h1>
@@ -93,12 +93,12 @@ export default function DashboardPage() {
         {visibleStats.map((s) => (
           <Link key={s.href} href={s.href}
             style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }}
-            className="p-5 flex flex-col gap-4 hover:border-blue-500/50 transition-all group">
+            className="p-5 flex flex-col gap-4 transition-all group hover:[border-color:var(--accent)]">
             <div className="flex items-center justify-between">
-              <div style={{ background: s.color + "22", borderRadius: 10 }} className="w-11 h-11 flex items-center justify-center">
-                <span style={{ color: s.color }}>{s.icon}</span>
+              <div style={{ background: "var(--accent)", borderRadius: 999 }} className="w-11 h-11 flex items-center justify-center">
+                <span style={{ color: "var(--text-on-accent)" }}>{s.icon}</span>
               </div>
-              <ArrowRight size={16} style={{ color: "var(--text-muted)" }} className="group-hover:text-blue-400 transition-colors" />
+              <ArrowRight size={16} style={{ color: "var(--text-muted)" }} className="transition-colors hover:[color:var(--text-primary)]" />
             </div>
             <div>
               <p style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">{s.value}</p>
@@ -116,7 +116,7 @@ export default function DashboardPage() {
             {visibleAccesos.map((a) => (
               <Link key={a.href} href={a.href}
                 style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)", borderRadius: 10 }}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium hover:border-blue-500/50 hover:text-blue-400 transition-all">
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all hover:[border-color:var(--accent)] hover:[color:var(--text-primary)]">
                 {a.icon}
                 {a.label}
               </Link>
@@ -127,8 +127,8 @@ export default function DashboardPage() {
 
       {/* Info sistema */}
       <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="mt-8 p-5 flex items-center gap-4">
-        <div style={{ background: "#2563eb22", borderRadius: 10 }} className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-          <span style={{ color: "var(--accent-blue-light)" }} className="text-lg">ℹ️</span>
+        <div style={{ background: "var(--accent)", borderRadius: 999 }} className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+          <span className="text-lg">ℹ️</span>
         </div>
         <div>
           <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">SIGEDUAL — Sistema Integral de Gestión Dual</p>

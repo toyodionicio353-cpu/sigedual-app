@@ -69,14 +69,16 @@ export default function RecuperarPasswordPage() {
             height={40}
             className="w-10 h-10 object-contain flex-shrink-0"
           />
-          <span style={{ color: "#fff" }} className="text-lg font-bold tracking-tight uppercase">
-            SIGEDUAL
+          <span className="text-lg font-bold tracking-tight">
+            <span style={{ color: "var(--text-primary)" }}>SIG</span>
+            <span style={{ color: "#C8102E" }}>e</span>
+            <span style={{ color: "var(--text-primary)" }}>DUAL</span>
           </span>
         </div>
 
         {!enviado ? (
           <>
-            <h1 style={{ color: "#fff" }} className="text-2xl font-bold mb-1">
+            <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold mb-1">
               Recuperar contraseña
             </h1>
             <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-6">
@@ -100,7 +102,7 @@ export default function RecuperarPasswordPage() {
                     border: "1px solid var(--border-light)",
                     color: "var(--text-primary)",
                   }}
-                  className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
                 />
               </div>
 
@@ -117,7 +119,7 @@ export default function RecuperarPasswordPage() {
                     border: "1px solid var(--border-light)",
                     color: rol ? "var(--text-primary)" : "var(--text-muted)",
                   }}
-                  className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
                 >
                   <option value="" disabled>
                     Selecciona tu rol
@@ -139,7 +141,7 @@ export default function RecuperarPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                style={{ background: "var(--accent-blue)" }}
+                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
                 className="w-full py-3 rounded-xl text-white font-semibold text-sm mt-2 hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {loading ? "Verificando..." : "Enviar enlace de recuperación"}
@@ -161,9 +163,9 @@ export default function RecuperarPasswordPage() {
               style={{ background: "var(--bg-surface)", borderRadius: 14 }}
               className="w-14 h-14 flex items-center justify-center mx-auto mb-5"
             >
-              <MailCheck size={24} style={{ color: "var(--accent-blue-light)" }} />
+              <MailCheck size={24} style={{ color: "var(--accent-light)" }} />
             </div>
-            <h1 style={{ color: "#fff" }} className="text-xl font-bold mb-2">
+            <h1 style={{ color: "var(--text-primary)" }} className="text-xl font-bold mb-2">
               Revisa tu correo
             </h1>
             <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-8">
@@ -172,7 +174,7 @@ export default function RecuperarPasswordPage() {
             </p>
             <Link
               href="/login"
-              style={{ background: "var(--accent-blue)" }}
+              style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
               className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl text-white font-semibold text-sm hover:opacity-90 transition-opacity"
             >
               <ArrowLeft size={16} />

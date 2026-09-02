@@ -127,12 +127,12 @@ export default function SeguridadPage() {
                 onChange={(e) => setDominio(e.target.value)}
                 placeholder="tuliceo.cl"
                 style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                className="flex-1 px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+                className="flex-1 px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
               />
               <button
                 onClick={guardarDominio}
                 disabled={guardandoDominio || dominio.trim().toLowerCase() === dominioGuardado}
-                style={{ background: "var(--accent-blue)" }}
+                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
                 className="px-5 py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition-opacity"
               >
                 {guardandoDominio ? "Guardando..." : "Guardar"}
@@ -144,7 +144,7 @@ export default function SeguridadPage() {
           {/* Código de verificación */}
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6">
             <div className="flex items-center gap-2 mb-1">
-              <ShieldCheck size={18} style={{ color: "var(--accent-blue-light)" }} />
+              <ShieldCheck size={18} style={{ color: "var(--accent-light)" }} />
               <h2 style={{ color: "var(--text-primary)" }} className="text-base font-semibold">Código de verificación</h2>
             </div>
             <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-4">
@@ -156,7 +156,7 @@ export default function SeguridadPage() {
                 <span style={{ color: "var(--text-primary)" }} className="text-2xl font-mono font-bold tracking-[0.2em]">
                   {codigoActual.codigo}
                 </span>
-                <button onClick={copiarCodigo} style={{ color: "var(--text-muted)" }} className="p-2 hover:text-white transition-colors" title="Copiar código">
+                <button onClick={copiarCodigo} style={{ color: "var(--text-muted)" }} className="p-2 hover:[color:var(--text-primary)] transition-colors" title="Copiar código">
                   {copiado ? <Check size={18} style={{ color: "var(--success)" }} /> : <Copy size={18} />}
                 </button>
               </div>
@@ -170,7 +170,7 @@ export default function SeguridadPage() {
               onClick={generarNuevoCodigo}
               disabled={generandoCodigo}
               style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:border-blue-500/50 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors disabled:opacity-50"
             >
               <RefreshCw size={15} className={generandoCodigo ? "animate-spin" : ""} />
               {codigoActual && !expirado ? "Generar nuevo código" : "Generar código"}

@@ -26,7 +26,7 @@ function Seccion({ icon, titulo, children }: { icon: React.ReactNode; titulo: st
   return (
     <div className="mb-7 last:mb-0">
       <div className="flex items-center gap-2 mb-4">
-        <span style={{ color: "var(--accent-blue-light)" }}>{icon}</span>
+        <span style={{ color: "var(--accent-light)" }}>{icon}</span>
         <h3 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">{titulo}</h3>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>
@@ -84,7 +84,7 @@ export default function FichaEstudiantePage() {
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
           <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Estudiante no encontrado</p>
           <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">El registro que buscas no existe o fue eliminado.</p>
-          <Link href="/dashboard/estudiantes" style={{ background: "var(--accent-blue)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+          <Link href="/dashboard/estudiantes" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
             <ArrowLeft size={16} />
             Volver al listado
           </Link>
@@ -111,7 +111,7 @@ export default function FichaEstudiantePage() {
         {(usuario?.rol === "administrador" || usuario?.rol === "profesor") && (
           <Link
             href={`/dashboard/estudiantes/${estudiante.id}/editar`}
-            style={{ background: "var(--accent-blue)" }}
+            style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             <Pencil size={15} />
@@ -122,8 +122,8 @@ export default function FichaEstudiantePage() {
 
       {/* Encabezado */}
       <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
-        <div style={{ background: "var(--accent-blue)22", borderRadius: "9999px" }} className="w-16 h-16 flex items-center justify-center flex-shrink-0">
-          <span style={{ color: "var(--accent-blue-light)" }} className="text-xl font-bold">{iniciales(estudiante.nombres, estudiante.apellidos)}</span>
+        <div style={{ background: "var(--accent)22", borderRadius: "9999px" }} className="w-16 h-16 flex items-center justify-center flex-shrink-0">
+          <span style={{ color: "var(--accent-light)" }} className="text-xl font-bold">{iniciales(estudiante.nombres, estudiante.apellidos)}</span>
         </div>
         <div className="flex-1 min-w-0">
           <h1 style={{ color: "var(--text-primary)" }} className="text-xl font-bold truncate">{estudiante.nombres} {estudiante.apellidos}</h1>

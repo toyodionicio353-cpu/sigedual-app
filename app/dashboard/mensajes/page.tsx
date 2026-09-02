@@ -150,11 +150,11 @@ export default function MensajesPage() {
           <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Mensajes</h1>
           <button
             onClick={() => setModalNuevo(true)}
-            style={{ background: "var(--accent-blue)" }}
+            style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
             className="w-8 h-8 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"
             title="Nueva conversación"
           >
-            <Plus size={16} className="text-white" />
+            <Plus size={16} />
           </button>
         </div>
 
@@ -166,7 +166,7 @@ export default function MensajesPage() {
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar conversación..."
               style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="w-full pl-9 pr-3 py-2 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+              className="w-full pl-9 pr-3 py-2 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
             />
           </div>
         </div>
@@ -184,14 +184,18 @@ export default function MensajesPage() {
                 key={c.id}
                 onClick={() => seleccionarConversacion(c.id)}
                 style={{ background: esActiva ? "var(--bg-surface)" : "transparent" }}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-left"
+                className="w-full flex items-center gap-3 px-4 py-3 hover:[background:var(--hover-overlay)] transition-colors text-left"
               >
                 <div
-                  style={{ background: c.tipo === "grupo" ? "var(--accent-blue)" : "var(--success)", borderRadius: 999 }}
+                  style={{
+                    background: c.tipo === "grupo" ? "var(--accent)" : "var(--success)",
+                    color: c.tipo === "grupo" ? "var(--text-on-accent)" : "#fff",
+                    borderRadius: 999,
+                  }}
                   className="w-11 h-11 flex items-center justify-center flex-shrink-0"
                 >
-                  {c.tipo === "grupo" ? <Users size={17} className="text-white" /> : (
-                    <span className="text-white font-bold text-sm">{inicialConversacion(c)}</span>
+                  {c.tipo === "grupo" ? <Users size={17} /> : (
+                    <span className="font-bold text-sm">{inicialConversacion(c)}</span>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -213,11 +217,15 @@ export default function MensajesPage() {
                 <ArrowLeft size={18} />
               </button>
               <div
-                style={{ background: activa.tipo === "grupo" ? "var(--accent-blue)" : "var(--success)", borderRadius: 999 }}
+                style={{
+                  background: activa.tipo === "grupo" ? "var(--accent)" : "var(--success)",
+                  color: activa.tipo === "grupo" ? "var(--text-on-accent)" : "#fff",
+                  borderRadius: 999,
+                }}
                 className="w-8 h-8 flex items-center justify-center flex-shrink-0"
               >
-                {activa.tipo === "grupo" ? <Users size={14} className="text-white" /> : (
-                  <span className="text-white font-bold text-xs">{inicialConversacion(activa)}</span>
+                {activa.tipo === "grupo" ? <Users size={14} /> : (
+                  <span className="font-bold text-xs">{inicialConversacion(activa)}</span>
                 )}
               </div>
               <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">{nombreConversacion(activa)}</p>
@@ -235,7 +243,7 @@ export default function MensajesPage() {
                       <p style={{ color: "var(--text-muted)" }} className="text-xs mb-1 ml-1">{m.nombre}</p>
                     )}
                     <div
-                      style={{ background: esMio ? "var(--accent-blue)" : "var(--bg-surface)", color: esMio ? "#fff" : "var(--text-primary)", maxWidth: "70%" }}
+                      style={{ background: esMio ? "var(--accent)" : "var(--bg-surface)", color: esMio ? "#fff" : "var(--text-primary)", maxWidth: "70%" }}
                       className="px-4 py-2.5 rounded-2xl text-sm"
                     >
                       {m.texto}
@@ -253,15 +261,15 @@ export default function MensajesPage() {
                 onChange={(e) => setTexto(e.target.value)}
                 placeholder="Escribe un mensaje..."
                 style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                className="flex-1 px-4 py-2.5 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
               />
               <button
                 type="submit"
                 disabled={!texto.trim()}
-                style={{ background: "var(--accent-blue)" }}
+                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
                 className="w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-40 hover:opacity-90 transition-opacity flex-shrink-0"
               >
-                <Send size={16} className="text-white" />
+                <Send size={16} />
               </button>
             </form>
           </>
@@ -289,7 +297,7 @@ export default function MensajesPage() {
                 onChange={(e) => setNombreGrupo(e.target.value)}
                 placeholder="Nombre del grupo"
                 style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                className="w-full px-4 py-2.5 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors mb-4"
+                className="w-full px-4 py-2.5 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors mb-4"
               />
             )}
 
@@ -305,15 +313,15 @@ export default function MensajesPage() {
                     key={u.uid}
                     onClick={() => toggleSeleccion(u.uid)}
                     style={{ background: marcado ? "var(--bg-surface)" : "transparent" }}
-                    className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition-colors text-left"
+                    className="flex items-center gap-3 px-2 py-2 rounded-xl hover:[background:var(--hover-overlay)] transition-colors text-left"
                   >
                     <div style={{ background: "var(--success)", borderRadius: 999 }} className="w-9 h-9 flex items-center justify-center flex-shrink-0">
                       <span className="text-white font-bold text-xs">{u.nombre.charAt(0).toUpperCase()}</span>
                     </div>
                     <span style={{ color: "var(--text-primary)" }} className="text-sm flex-1 truncate">{u.nombre}</span>
                     {marcado && (
-                      <div style={{ background: "var(--accent-blue)" }} className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Check size={12} className="text-white" />
+                      <div style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Check size={12} />
                       </div>
                     )}
                   </button>
@@ -324,7 +332,7 @@ export default function MensajesPage() {
             <button
               onClick={iniciarConversacion}
               disabled={seleccionados.length === 0 || (seleccionados.length > 1 && !nombreGrupo.trim())}
-              style={{ background: "var(--accent-blue)" }}
+              style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
               className="w-full py-2.5 rounded-xl text-white text-sm font-semibold mt-4 disabled:opacity-40 hover:opacity-90 transition-opacity"
             >
               {seleccionados.length > 1 ? "Crear grupo" : "Iniciar conversación"}

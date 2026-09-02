@@ -70,7 +70,7 @@ function Seccion({
   return (
     <div className="mb-7 last:mb-0">
       <div className="flex items-center gap-2 mb-1">
-        <span style={{ color: "var(--accent-blue-light)" }}>{icon}</span>
+        <span style={{ color: "var(--accent-light)" }}>{icon}</span>
         <h3 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">{titulo}</h3>
       </div>
       {subtitulo && (
@@ -96,7 +96,7 @@ function Campo({
 }
 
 const inputStyle = { background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" };
-const inputClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors disabled:opacity-50";
+const inputClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors disabled:opacity-50";
 
 interface EstudianteFormProps {
   modo: "crear" | "editar";
@@ -320,7 +320,7 @@ export default function EstudianteForm({
             <button
               type="button"
               onClick={agregarOtroMedico}
-              style={{ color: "var(--accent-blue-light)" }}
+              style={{ color: "var(--accent-light)" }}
               className="flex items-center gap-1.5 text-sm font-medium hover:underline"
             >
               <Plus size={15} />
@@ -364,8 +364,8 @@ export default function EstudianteForm({
                   type="button"
                   onClick={() => toggleRasgo(r)}
                   style={{
-                    background: activo ? "var(--accent-blue)" : "var(--bg-surface)",
-                    border: `1px solid ${activo ? "var(--accent-blue)" : "var(--border)"}`,
+                    background: activo ? "var(--accent)" : "var(--bg-surface)",
+                    border: `1px solid ${activo ? "var(--accent)" : "var(--border)"}`,
                     color: activo ? "#fff" : "var(--text-secondary)",
                   }}
                   className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
@@ -403,7 +403,7 @@ export default function EstudianteForm({
           <button
             type="submit"
             disabled={guardando}
-            style={{ background: "var(--accent-blue)" }}
+            style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
             className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {guardando ? "Guardando..." : modo === "crear" ? "Agregar estudiante" : "Guardar cambios"}
@@ -430,7 +430,7 @@ export default function EstudianteForm({
               <button
                 onClick={() => onGuardar(form, otrosMedicos, rasgos)}
                 disabled={guardando}
-                style={{ background: "var(--accent-blue)" }}
+                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
                 className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
               >
                 {guardando ? "Guardando..." : "Confirmar registro"}
