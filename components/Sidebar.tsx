@@ -189,7 +189,10 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-2 py-2 overflow-y-auto flex flex-col gap-0.5" style={{ scrollbarWidth: "none" }}>
+      <nav
+        className="sidebar-nav flex-1 px-2 py-2 overflow-y-auto flex flex-col gap-0.5"
+        style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.18) transparent" }}
+      >
         {!collapsed && (
           <p style={{ color: "var(--text-muted)" }} className="text-xs font-semibold uppercase tracking-widest px-2 mb-2 mt-1">Menú</p>
         )}
