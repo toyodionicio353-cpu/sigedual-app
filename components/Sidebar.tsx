@@ -6,7 +6,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Rol } from "@/types";
 import {
   LayoutDashboard, Users, Building2, GraduationCap,
@@ -14,7 +14,7 @@ import {
   ChevronDown, UserPlus, ClipboardList,
   FolderOpen, UsersRound, Building, ShieldCheck,
   CalendarCheck, Handshake, ClipboardCheck,
-  UserCog, School, SlidersHorizontal, LifeBuoy, Menu,
+  UserCog, School, SlidersHorizontal, LifeBuoy,
 } from "lucide-react";
 
 interface SubItem {
@@ -153,7 +153,15 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
     setOpenMenu((prev) => (prev === id ? null : id));
   }
 
+  const [mostrarAviso, setMostrarAviso] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setMostrarAviso(false), 6000);
+    return () => clearTimeout(t);
+  }, []);
+
   function alternarSidebar() {
+    setMostrarAviso(false);
     if (typeof window !== "undefined" && window.innerWidth < 768) {
       onCloseMobile();
     } else {
@@ -186,31 +194,31 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
           collapsed ? "md:w-16" : "md:w-64"
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
-      {/* Logo */}
-      <div className="flex items-center px-4 flex-shrink-0" style={{ height: 56, minHeight: 56 }}>
-        {collapsed ? (
-          <button
-            onClick={alternarSidebar}
-            title="Expandir menú"
-            className="w-full flex items-center justify-center"
-          >
-            <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={32} height={32} className="object-contain flex-shrink-0" style={{ minWidth: 32 }} />
-          </button>
-        ) : (
-          <>
-            <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={32} height={32} className="object-contain flex-shrink-0" style={{ minWidth: 32 }} />
+      {/* Logo (funciona como botón para colapsar/expandir o cerrar en móvil) */}
+      <div className="relative flex-shrink-0">
+        <button
+          onClick={alternarSidebar}
+          title="Colapsar o expandir el menú"
+          className={`flex items-center w-full hover:bg-white/5 transition-colors ${collapsed ? "justify-center px-4" : "px-4"}`}
+          style={{ height: 56, minHeight: 56 }}
+        >
+          <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={32} height={32} className="object-contain flex-shrink-0" style={{ minWidth: 32 }} />
+          {!collapsed && (
             <h2 style={{ color: "#fff" }} className="ml-2.5 text-lg font-bold tracking-tight uppercase leading-none whitespace-nowrap overflow-hidden">
               SIGEDUAL
             </h2>
-            <button
-              onClick={alternarSidebar}
-              title="Colapsar menú"
-              style={{ color: "#fff" }}
-              className="ml-auto p-1.5 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0"
-            >
-              <Menu size={18} />
-            </button>
-          </>
+          )}
+        </button>
+
+        {mostrarAviso && (
+          <div
+            role="status"
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-secondary)" }}
+            className="absolute left-3 top-full mt-2 z-50 w-56 rounded-xl px-3.5 py-2.5 text-xs shadow-2xl"
+          >
+            <p style={{ color: "var(--text-primary)" }} className="font-semibold mb-0.5">Consejo</p>
+            El logo colapsa y expande el menú lateral.
+          </div>
         )}
       </div>
 
