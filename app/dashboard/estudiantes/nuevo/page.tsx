@@ -9,14 +9,27 @@ import { formatearRut, normalizarRut, validarRut, validarEmail, validarTelefonoC
 import type { Estudiante, Especialidad } from "@/types";
 import {
   Users, ArrowLeft, UserPlus, CalendarClock, BadgeCheck,
-  Phone, GraduationCap, Handshake, FileText, CheckCircle2, Eye,
+  Phone, GraduationCap, HeartPulse, Sparkles, FileText,
+  CheckCircle2, Eye, Plus, X,
 } from "lucide-react";
 
 const NIVELES = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
-const JORNADAS = ["Diurna", "Vespertina", "Otra"];
+const LETRAS_CURSO = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+const JORNADAS = ["Diurna", "Vespertina"];
 const ESTADOS: Estudiante["estado"][] = ["activo", "inactivo", "egresado", "retirado"];
-const ESTADOS_DUAL = ["Pendiente", "En curso", "Suspendido", "Finalizado"];
 const PARENTESCOS = ["Padre", "Madre", "Tutor legal", "Otro"];
+const ANIO_ACTUAL = new Date().getFullYear();
+const ANIOS_ACADEMICOS = Array.from({ length: 5 }, (_, i) => ANIO_ACTUAL + i);
+
+const RASGOS = [
+  "Tranquilo/a", "Nervioso/a", "Tímido/a", "Extrovertido/a", "Ansioso/a",
+  "Seguro/a de sí mismo/a", "Sensible", "Resiliente", "Paciente", "Impulsivo/a",
+  "Buena comunicación", "Trabajo en equipo", "Liderazgo", "Responsable", "Puntual",
+  "Proactivo/a", "Autónomo/a", "Necesita supervisión constante",
+  "Buena tolerancia a la presión", "Baja tolerancia a la presión",
+  "Adaptable a cambios", "Dificultad para adaptarse a cambios",
+  "Orientado/a al detalle", "Creativo/a",
+];
 
 interface FormState {
   run: string;
@@ -36,8 +49,8 @@ interface FormState {
   especialidadId: string;
   jornada: string;
   estado: Estudiante["estado"];
-  fechaIncorporacionDual: string;
-  estadoDual: string;
+  enfermedadesCronicas: string;
+  alergias: string;
   apoderadoNombre: string;
   apoderadoRun: string;
   apoderadoParentesco: string;
@@ -50,22 +63,27 @@ const EMPTY: FormState = {
   run: "", nombres: "", apellidoPaterno: "", apellidoMaterno: "",
   fechaNacimiento: "", sexo: "",
   email: "", telefono: "", direccion: "", comuna: "", ciudad: "",
-  anioAcademico: String(new Date().getFullYear()), nivel: "", curso: "",
+  anioAcademico: String(ANIO_ACTUAL), nivel: "", curso: "",
   especialidadId: "", jornada: "", estado: "activo",
-  fechaIncorporacionDual: "", estadoDual: "Pendiente",
+  enfermedadesCronicas: "", alergias: "",
   apoderadoNombre: "", apoderadoRun: "", apoderadoParentesco: "",
   apoderadoTelefono: "", apoderadoEmail: "",
   observaciones: "",
 };
 
-function Seccion({ icon, titulo, children }: { icon: React.ReactNode; titulo: string; children: React.ReactNode }) {
+function Seccion({
+  icon, titulo, subtitulo, children,
+}: { icon: React.ReactNode; titulo: string; subtitulo?: string; children: React.ReactNode }) {
   return (
     <div className="mb-7 last:mb-0">
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-1">
         <span style={{ color: "var(--accent-blue-light)" }}>{icon}</span>
         <h3 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">{titulo}</h3>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>
+      {subtitulo && (
+        <p style={{ color: "var(--text-muted)" }} className="text-xs mb-4">{subtitulo}</p>
+      )}
+      <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${subtitulo ? "" : "mt-4"}`}>{children}</div>
     </div>
   );
 }
@@ -85,7 +103,7 @@ function Campo({
 }
 
 const inputStyle = { background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" };
-const inputClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors";
+const inputClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors disabled:opacity-50";
 
 export default function AgregarEstudiantePage() {
   const { usuario } = useAuth();
@@ -97,6 +115,8 @@ export default function AgregarEstudiantePage() {
 
   const [form, setForm] = useState<FormState>(EMPTY);
   const [errores, setErrores] = useState<Partial<Record<keyof FormState, string>>>({});
+  const [otrosMedicos, setOtrosMedicos] = useState<string[]>([]);
+  const [rasgos, setRasgos] = useState<string[]>([]);
   const [confirmando, setConfirmando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [errorSistema, setErrorSistema] = useState("");
@@ -118,8 +138,7 @@ export default function AgregarEstudiantePage() {
   }, [usuario]);
 
   const stats = useMemo(() => {
-    const anioActual = new Date().getFullYear();
-    const agregadosEsteAnio = estudiantes.filter((e) => new Date(e.creadoEn).getFullYear() === anioActual).length;
+    const agregadosEsteAnio = estudiantes.filter((e) => new Date(e.creadoEn).getFullYear() === ANIO_ACTUAL).length;
     const activos = estudiantes.filter((e) => e.estado === "activo").length;
     const ultimo = [...estudiantes].sort((a, b) => (b.creadoEn > a.creadoEn ? 1 : -1))[0];
     let ultimoTexto = "Sin registros";
@@ -135,9 +154,32 @@ export default function AgregarEstudiantePage() {
     };
   }, [estudiantes]);
 
+  const cursosDisponibles = form.nivel ? LETRAS_CURSO.map((letra) => `${form.nivel} ${letra}`) : [];
+
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
     if (errores[key]) setErrores((e) => ({ ...e, [key]: undefined }));
+  }
+
+  function cambiarNivel(nivel: string) {
+    setForm((f) => ({ ...f, nivel, curso: "" }));
+    if (errores.nivel) setErrores((e) => ({ ...e, nivel: undefined }));
+  }
+
+  function toggleRasgo(rasgo: string) {
+    setRasgos((prev) => (prev.includes(rasgo) ? prev.filter((r) => r !== rasgo) : [...prev, rasgo]));
+  }
+
+  function agregarOtroMedico() {
+    setOtrosMedicos((prev) => [...prev, ""]);
+  }
+
+  function actualizarOtroMedico(index: number, valor: string) {
+    setOtrosMedicos((prev) => prev.map((v, i) => (i === index ? valor : v)));
+  }
+
+  function quitarOtroMedico(index: number) {
+    setOtrosMedicos((prev) => prev.filter((_, i) => i !== index));
   }
 
   function validar(): boolean {
@@ -154,9 +196,8 @@ export default function AgregarEstudiantePage() {
     if (form.email.trim() && !validarEmail(form.email)) nuevosErrores.email = "Correo electrónico inválido.";
     if (form.telefono.trim() && !validarTelefonoChileno(form.telefono)) nuevosErrores.telefono = "Teléfono inválido. Usa formato chileno, ej: +56 9 1234 5678.";
 
-    if (!form.anioAcademico.trim()) nuevosErrores.anioAcademico = "El año académico es obligatorio.";
+    if (!form.anioAcademico.trim()) nuevosErrores.anioAcademico = "Selecciona el año académico.";
     if (!form.nivel) nuevosErrores.nivel = "Selecciona un nivel.";
-    if (!form.curso.trim()) nuevosErrores.curso = "El curso es obligatorio.";
     if (!form.especialidadId) nuevosErrores.especialidadId = "Selecciona una especialidad.";
 
     if (form.apoderadoEmail.trim() && !validarEmail(form.apoderadoEmail)) nuevosErrores.apoderadoEmail = "Correo electrónico inválido.";
@@ -178,7 +219,6 @@ export default function AgregarEstudiantePage() {
     setGuardando(true);
     setErrorSistema("");
     try {
-      const especialidad = especialidades.find((e) => e.id === form.especialidadId);
       const nuevo = {
         run: normalizarRut(form.run),
         nombres: form.nombres.trim(),
@@ -200,8 +240,10 @@ export default function AgregarEstudiantePage() {
         liceoId: usuario.liceoId,
         profesorId: usuario.uid,
         estado: form.estado,
-        fechaIncorporacionDual: form.fechaIncorporacionDual,
-        estadoDual: form.estadoDual,
+        enfermedadesCronicas: form.enfermedadesCronicas.trim(),
+        alergias: form.alergias.trim(),
+        informacionMedicaAdicional: otrosMedicos.map((v) => v.trim()).filter(Boolean),
+        rasgos,
         apoderadoNombre: form.apoderadoNombre.trim(),
         apoderadoRun: form.apoderadoRun.trim() ? normalizarRut(form.apoderadoRun) : "",
         apoderadoParentesco: form.apoderadoParentesco,
@@ -216,6 +258,8 @@ export default function AgregarEstudiantePage() {
       setRegistrado(guardado);
       setConfirmando(false);
       setForm(EMPTY);
+      setOtrosMedicos([]);
+      setRasgos([]);
       setErrores({});
     } catch {
       setErrorSistema("No fue posible registrar al estudiante. Intenta nuevamente.");
@@ -224,8 +268,6 @@ export default function AgregarEstudiantePage() {
       setGuardando(false);
     }
   }
-
-  const especialidadSeleccionada = especialidades.find((e) => e.id === form.especialidadId);
 
   return (
     <div className="p-4 md:p-8 max-w-5xl">
@@ -329,16 +371,21 @@ export default function AgregarEstudiantePage() {
 
         <Seccion icon={<GraduationCap size={16} />} titulo="Información académica">
           <Campo label="Año académico" error={errores.anioAcademico}>
-            <input value={form.anioAcademico} onChange={(e) => set("anioAcademico", e.target.value)} placeholder="2026" style={inputStyle} className={inputClass} />
+            <select value={form.anioAcademico} onChange={(e) => set("anioAcademico", e.target.value)} style={inputStyle} className={inputClass}>
+              {ANIOS_ACADEMICOS.map((a) => <option key={a} value={a}>{a}</option>)}
+            </select>
           </Campo>
           <Campo label="Nivel" error={errores.nivel}>
-            <select value={form.nivel} onChange={(e) => set("nivel", e.target.value)} style={inputStyle} className={inputClass}>
+            <select value={form.nivel} onChange={(e) => cambiarNivel(e.target.value)} style={inputStyle} className={inputClass}>
               <option value="">Selecciona un nivel</option>
               {NIVELES.map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
           </Campo>
-          <Campo label="Curso" error={errores.curso}>
-            <input value={form.curso} onChange={(e) => set("curso", e.target.value)} placeholder="3° Medio A" style={inputStyle} className={inputClass} />
+          <Campo label="Curso (opcional)" error={errores.curso}>
+            <select value={form.curso} onChange={(e) => set("curso", e.target.value)} disabled={!form.nivel} style={inputStyle} className={inputClass}>
+              <option value="">{form.nivel ? "Selecciona un curso (opcional)" : "Selecciona primero un nivel"}</option>
+              {cursosDisponibles.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
           </Campo>
           <Campo label="Especialidad" error={errores.especialidadId}>
             <select value={form.especialidadId} onChange={(e) => set("especialidadId", e.target.value)} style={inputStyle} className={inputClass}>
@@ -354,28 +401,55 @@ export default function AgregarEstudiantePage() {
           </Campo>
           <Campo label="Estado del estudiante" error={errores.estado}>
             <select value={form.estado} onChange={(e) => set("estado", e.target.value as Estudiante["estado"])} style={inputStyle} className={inputClass}>
-              {ESTADOS.map((es) => <option key={es} value={es} className="capitalize">{es.charAt(0).toUpperCase() + es.slice(1)}</option>)}
+              {ESTADOS.map((es) => <option key={es} value={es}>{es.charAt(0).toUpperCase() + es.slice(1)}</option>)}
             </select>
           </Campo>
         </Seccion>
 
-        <Seccion icon={<Handshake size={16} />} titulo="Información de formación dual">
+        <Seccion
+          icon={<HeartPulse size={16} />}
+          titulo="Información médica"
+          subtitulo="Enfermedades crónicas, alergias u otra información relevante para el bienestar del estudiante."
+        >
+          <Campo label="Enfermedades crónicas" error={errores.enfermedadesCronicas}>
+            <input value={form.enfermedadesCronicas} onChange={(e) => set("enfermedadesCronicas", e.target.value)} placeholder="Ej: Asma, diabetes, epilepsia..." style={inputStyle} className={inputClass} />
+          </Campo>
+          <Campo label="Alergias" error={errores.alergias}>
+            <input value={form.alergias} onChange={(e) => set("alergias", e.target.value)} placeholder="Ej: Alergia a penicilina, polen..." style={inputStyle} className={inputClass} />
+          </Campo>
+
+          {otrosMedicos.map((valor, i) => (
+            <div key={i} className="sm:col-span-2 flex gap-2 items-center">
+              <input
+                value={valor}
+                onChange={(e) => actualizarOtroMedico(i, e.target.value)}
+                placeholder="Otra información médica relevante..."
+                style={inputStyle}
+                className={inputClass}
+              />
+              <button
+                type="button"
+                onClick={() => quitarOtroMedico(i)}
+                title="Quitar"
+                style={{ color: "var(--danger)" }}
+                className="p-2 flex-shrink-0"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ))}
+
           <div className="sm:col-span-2">
-            <p style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="rounded-lg px-3 py-2 text-xs">
-              Especialidad / programa dual: <strong style={{ color: "var(--text-primary)" }}>{especialidadSeleccionada?.nombre || "—"}</strong>
-              {" · "}Curso: <strong style={{ color: "var(--text-primary)" }}>{form.curso || "—"}</strong>
-              <br />
-              El estudiante se registra sin una empresa asignada. Esto se gestiona en <em>Estudiantes → Asignar empresas</em>.
-            </p>
+            <button
+              type="button"
+              onClick={agregarOtroMedico}
+              style={{ color: "var(--accent-blue-light)" }}
+              className="flex items-center gap-1.5 text-sm font-medium hover:underline"
+            >
+              <Plus size={15} />
+              Agregar otro dato médico
+            </button>
           </div>
-          <Campo label="Fecha de incorporación al sistema dual" error={errores.fechaIncorporacionDual}>
-            <input type="date" value={form.fechaIncorporacionDual} onChange={(e) => set("fechaIncorporacionDual", e.target.value)} style={inputStyle} className={inputClass} />
-          </Campo>
-          <Campo label="Estado dentro del programa dual" error={errores.estadoDual}>
-            <select value={form.estadoDual} onChange={(e) => set("estadoDual", e.target.value)} style={inputStyle} className={inputClass}>
-              {ESTADOS_DUAL.map((es) => <option key={es} value={es}>{es}</option>)}
-            </select>
-          </Campo>
         </Seccion>
 
         <Seccion icon={<Users size={16} />} titulo="Información del apoderado">
@@ -397,6 +471,33 @@ export default function AgregarEstudiantePage() {
           <Campo label="Correo electrónico" error={errores.apoderadoEmail} span>
             <input type="email" value={form.apoderadoEmail} onChange={(e) => set("apoderadoEmail", e.target.value)} placeholder="apoderado@email.com" style={inputStyle} className={inputClass} />
           </Campo>
+        </Seccion>
+
+        <Seccion
+          icon={<Sparkles size={16} />}
+          titulo="Características y habilidades"
+          subtitulo="Ayudan a definir el centro dual más adecuado para el estudiante (por ejemplo, un estudiante más nervioso puede adaptarse mejor a un centro con un ambiente tranquilo)."
+        >
+          <div className="sm:col-span-2 flex flex-wrap gap-2">
+            {RASGOS.map((r) => {
+              const activo = rasgos.includes(r);
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => toggleRasgo(r)}
+                  style={{
+                    background: activo ? "var(--accent-blue)" : "var(--bg-surface)",
+                    border: `1px solid ${activo ? "var(--accent-blue)" : "var(--border)"}`,
+                    color: activo ? "#fff" : "var(--text-secondary)",
+                  }}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+                >
+                  {r}
+                </button>
+              );
+            })}
+          </div>
         </Seccion>
 
         <Seccion icon={<FileText size={16} />} titulo="Observaciones">
@@ -476,7 +577,7 @@ export default function AgregarEstudiantePage() {
             <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="rounded-xl p-4 text-left text-sm flex flex-col gap-1.5 mb-6">
               <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Nombre: </span>{registrado.nombres} {registrado.apellidos}</p>
               <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>RUN: </span>{registrado.run}</p>
-              <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Curso: </span>{registrado.curso}</p>
+              <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Curso: </span>{registrado.curso || "—"}</p>
               <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Especialidad: </span>{especialidades.find((e) => e.id === registrado.especialidadId)?.nombre || "—"}</p>
               <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Estado: </span><span className="capitalize">{registrado.estado}</span></p>
             </div>
