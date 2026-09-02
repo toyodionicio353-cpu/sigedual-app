@@ -92,7 +92,7 @@ function Campo({
   label, error, children, span,
 }: { label: string; error?: string; children: React.ReactNode; span?: boolean }) {
   return (
-    <div className={span ? "sm:col-span-2" : ""}>
+    <div className={span ? "sm:col-span-2" : ""} data-error={error ? "true" : "false"}>
       <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">{label}</label>
       {children}
       {error && (
@@ -120,6 +120,7 @@ export default function AgregarEstudiantePage() {
   const [confirmando, setConfirmando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [errorSistema, setErrorSistema] = useState("");
+  const [formularioInvalido, setFormularioInvalido] = useState(false);
   const [registrado, setRegistrado] = useState<Estudiante | null>(null);
 
   useEffect(() => {
@@ -210,7 +211,13 @@ export default function AgregarEstudiantePage() {
 
   function intentarRegistrar(e: React.FormEvent) {
     e.preventDefault();
-    if (!validar()) return;
+    if (!validar()) {
+      setFormularioInvalido(true);
+      const primerCampoConError = document.querySelector('[data-error="true"]');
+      primerCampoConError?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    setFormularioInvalido(false);
     setConfirmando(true);
   }
 
@@ -261,8 +268,9 @@ export default function AgregarEstudiantePage() {
       setOtrosMedicos([]);
       setRasgos([]);
       setErrores({});
-    } catch {
-      setErrorSistema("No fue posible registrar al estudiante. Intenta nuevamente.");
+    } catch (err) {
+      const detalle = err instanceof Error ? err.message : String(err);
+      setErrorSistema(`No fue posible registrar al estudiante. Intenta nuevamente. (${detalle})`);
       setConfirmando(false);
     } finally {
       setGuardando(false);
@@ -310,6 +318,27 @@ export default function AgregarEstudiantePage() {
           </div>
         ))}
       </div>
+
+      {!cargandoDatos && especialidades.length === 0 && (
+        <div style={{ background: "var(--warning-bg)", border: "1px solid var(--warning)" }} className="rounded-xl px-4 py-3 mb-6 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <p style={{ color: "var(--warning)" }} className="text-sm font-medium">
+            Tu liceo aún no tiene especialidades registradas. Necesitas agregar al menos una (ej: "Contabilidad") antes de poder registrar estudiantes.
+          </p>
+          <Link
+            href="/dashboard/especialidades"
+            style={{ background: "var(--warning)", color: "#1a1300" }}
+            className="px-4 py-2 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity flex-shrink-0 text-center"
+          >
+            Agregar especialidad
+          </Link>
+        </div>
+      )}
+
+      {formularioInvalido && Object.keys(errores).length > 0 && (
+        <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-4 py-3 mb-6">
+          <p style={{ color: "var(--danger)" }} className="text-sm font-medium">Revisa los campos marcados en rojo antes de continuar.</p>
+        </div>
+      )}
 
       {errorSistema && (
         <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-4 py-3 mb-6">
