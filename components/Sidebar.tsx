@@ -186,7 +186,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
       )}
       <aside
         style={{
-          background: "linear-gradient(to top right, #140C30 0%, #14253E 30%, #153D4C 55%, #15565B 70%, #156F69 82%, #168777 92%, #16A085 100%)",
+          background: "var(--sidebar-bg)",
           borderRight: "1px solid var(--border)",
           flexShrink: 0,
         }}
@@ -199,13 +199,15 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
         <button
           onClick={alternarSidebar}
           title="Colapsar o expandir el menú"
-          className={`flex items-center w-full hover:bg-white/5 transition-colors ${collapsed ? "justify-center px-4" : "px-4"}`}
+          className={`flex items-center w-full hover:[background:var(--hover-overlay)] transition-colors ${collapsed ? "justify-center px-4" : "px-4"}`}
           style={{ height: 72, minHeight: 72 }}
         >
           <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={32} height={32} className="object-contain flex-shrink-0" style={{ minWidth: 32 }} />
           {!collapsed && (
-            <h2 style={{ color: "#fff" }} className="ml-3 text-left text-3xl font-bold tracking-wider uppercase leading-none whitespace-nowrap overflow-hidden">
-              SIGEDUAL
+            <h2 className="ml-3 text-left text-3xl font-bold tracking-wider leading-none whitespace-nowrap overflow-hidden">
+              <span style={{ color: "var(--text-primary)" }}>SIG</span>
+              <span style={{ color: "#C8102E" }}>e</span>
+              <span style={{ color: "var(--text-primary)" }}>DUAL</span>
             </h2>
           )}
         </button>
@@ -246,13 +248,13 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 onClick={onCloseMobile}
                 title={collapsed ? menu.label : undefined}
                 style={{
-                  background: isActive ? menu.color + "22" : "transparent",
+                  background: isActive ? "var(--accent)" : "transparent",
                   borderRadius: 9,
-                  color: isActive ? menu.color : "var(--text-secondary)",
+                  color: isActive ? "var(--text-on-accent)" : "var(--text-secondary)",
                 }}
-                className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:bg-white/5 transition-all"
+                className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:[background:var(--hover-overlay)] transition-all"
               >
-                <span style={{ color: isActive ? menu.color : "var(--text-muted)", flexShrink: 0 }}>{menu.icon}</span>
+                <span style={{ color: isActive ? "var(--text-on-accent)" : menu.color, flexShrink: 0 }}>{menu.icon}</span>
                 {!collapsed && <span className="flex-1 whitespace-nowrap">{menu.label}</span>}
               </Link>
             );
@@ -264,15 +266,15 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 onClick={() => !collapsed && toggleMenu(menu.id)}
                 title={collapsed ? menu.label : undefined}
                 style={{
-                  background: isActive && collapsed ? menu.color + "22" : "transparent",
+                  background: isActive ? "var(--accent)" : "transparent",
                   borderRadius: 9,
                   width: "100%",
-                  color: isActive ? menu.color : "var(--text-secondary)",
+                  color: isActive ? "var(--text-on-accent)" : "var(--text-secondary)",
                 }}
-                className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:bg-white/5 transition-all text-left"
+                className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:[background:var(--hover-overlay)] transition-all text-left"
               >
                 {/* Icono coloreado */}
-                <span style={{ color: isActive ? menu.color : "var(--text-muted)", flexShrink: 0 }}>{menu.icon}</span>
+                <span style={{ color: isActive ? "var(--text-on-accent)" : menu.color, flexShrink: 0 }}>{menu.icon}</span>
 
                 {!collapsed && (
                   <>
@@ -285,7 +287,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                       width: 22,
                       height: 22,
                       borderRadius: 5,
-                      background: isOpen ? menu.color + "22" : "transparent",
+                      background: isOpen && !isActive ? "var(--hover-overlay)" : "transparent",
                       flexShrink: 0,
                       transition: "background 0.15s",
                     }}>
@@ -293,7 +295,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                         size={18}
                         strokeWidth={2.25}
                         style={{
-                          color: isOpen ? menu.color : "var(--text-muted)",
+                          color: isActive ? "var(--text-on-accent)" : (isOpen ? "var(--text-primary)" : "var(--text-muted)"),
                           transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)",
                           transition: "transform 0.2s ease, color 0.15s",
                         }}
@@ -319,17 +321,14 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                           href={sub.href}
                           onClick={onCloseMobile}
                           style={{
-                            background: subActive ? menu.color + "20" : "transparent",
-                            color: subActive ? menu.color : "var(--text-secondary)",
+                            background: subActive ? "var(--accent)" : "transparent",
+                            color: subActive ? "var(--text-on-accent)" : "var(--text-secondary)",
                             borderRadius: 7,
                           }}
-                          className="flex items-center gap-2 px-2.5 py-2 text-sm font-medium hover:bg-white/5 transition-all"
+                          className="flex items-center gap-2 px-2.5 py-2 text-sm font-medium hover:[background:var(--hover-overlay)] transition-all"
                         >
-                          <span style={{ color: subActive ? menu.color : "var(--text-muted)", opacity: 0.85, flexShrink: 0 }}>{sub.icon}</span>
+                          <span style={{ color: subActive ? "var(--text-on-accent)" : menu.color, opacity: subActive ? 1 : 0.85, flexShrink: 0 }}>{sub.icon}</span>
                           <span className="truncate">{sub.label}</span>
-                          {subActive && (
-                            <span className="ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: menu.color }} />
-                          )}
                         </Link>
                       );
                     })}

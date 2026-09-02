@@ -1,22 +1,61 @@
 @import "tailwindcss";
 
+/*
+ * Sistema de temas SIGEDUAL (claro / oscuro).
+ * Por defecto (sin atributo, o data-theme="dark") se usa el tema oscuro.
+ * data-theme="light" en <html> activa el tema claro.
+ * El acento de marca (amarillo) y el texto sobre acento (siempre negro)
+ * son iguales en ambos temas: solo cambian fondos, bordes y textos.
+ */
 :root {
-  --bg-base: #0b1220;
-  --bg-card: #111a2f;
-  --bg-card-hover: #1a2338;
-  --bg-surface: #16213c;
-  --border: #1f2c4d;
-  --border-light: #273554;
-  --text-primary: #e8eefc;
-  --text-secondary: #9aa8c7;
-  --text-muted: #7b8aad;
-  --accent-blue: #2563eb;
-  --accent-blue-light: #3b82f6;
-  --accent-blue-hover: #60a5fa;
+  /* Oscuro (Premium Dark) — valores por defecto */
+  --bg-base: #0f1117;
+  --bg-card: #1c1f2b;
+  --bg-card-hover: #232736;
+  --bg-surface: #222636;
+  --border: #2a2e3f;
+  --border-light: #363b4f;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a3b1;
+  --text-muted: #797d8c;
+  --sidebar-bg: #12141e;
+
+  --accent: #ffd100;
+  --accent-light: #ffd100;
+  --accent-hover: #e6bc00;
+  --text-on-accent: #000000;
+
   --success: #22c55e;
   --danger: #ef4444;
   --warning: #ffd54f;
   --warning-bg: #4b3a00;
+
+  --hover-overlay: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="light"] {
+  --bg-base: #ffffff;
+  --bg-card: #f2f2f2;
+  --bg-card-hover: #ececec;
+  --bg-surface: #fafafa;
+  --border: #e5e7eb;
+  --border-light: #e5e7eb;
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --sidebar-bg: #ffffff;
+
+  --accent: #ffd100;
+  --accent-light: #ffd100;
+  --accent-hover: #e6bc00;
+  --text-on-accent: #000000;
+
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #92700a;
+  --warning-bg: #fff3c4;
+
+  --hover-overlay: rgba(0, 0, 0, 0.05);
 }
 
 @layer base {

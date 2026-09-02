@@ -39,7 +39,7 @@ export default function ProfesoresPage() {
 
       <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por nombre, especialidad o correo..."
         style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-        className="w-full px-4 py-3 rounded-xl text-sm mb-6 outline-none focus:border-blue-500 transition-colors" />
+        className="w-full px-4 py-3 rounded-xl text-sm mb-6 outline-none focus:[border-color:var(--accent)] transition-colors" />
 
       {loading ? (
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
@@ -53,12 +53,12 @@ export default function ProfesoresPage() {
           {filtrados.map((p) => (
             <div key={p.uid} style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-6">
               <div className="flex items-center gap-3 mb-3">
-                <div style={{ background: "var(--accent-blue)", color: "#fff" }} className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm">
+                <div style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm">
                   {p.nombre.charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <p style={{ color: "var(--text-primary)" }} className="font-semibold text-sm">{p.nombre}</p>
-                  <p style={{ color: "var(--accent-blue-light)" }} className="text-xs">{p.especialidad || "Sin especialidad asignada"}</p>
+                  <p style={{ color: "var(--accent-light)" }} className="text-xs">{p.especialidad || "Sin especialidad asignada"}</p>
                 </div>
               </div>
               <p style={{ color: "var(--text-secondary)" }} className="text-xs">✉️ {p.email}</p>

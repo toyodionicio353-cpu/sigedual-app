@@ -21,7 +21,11 @@ export default function Home() {
   return (
     <div style={{ background: "var(--bg-base)" }} className="min-h-screen flex items-center justify-center">
       <div className="text-center">
-        <h1 style={{ color: "var(--accent-blue-light)" }} className="text-3xl font-bold">SIGEDUAL</h1>
+        <h1 className="text-3xl font-bold">
+          <span style={{ color: "var(--text-primary)" }}>SIG</span>
+          <span style={{ color: "#C8102E" }}>e</span>
+          <span style={{ color: "var(--text-primary)" }}>DUAL</span>
+        </h1>
         <p style={{ color: "var(--text-secondary)" }} className="mt-2">Cargando...</p>
       </div>
     </div>

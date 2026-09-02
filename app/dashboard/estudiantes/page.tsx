@@ -60,7 +60,7 @@ function iniciales(nombres: string, apellidos: string): string {
 }
 
 const selectStyle = { background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" };
-const selectClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors disabled:opacity-50";
+const selectClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors disabled:opacity-50";
 
 export default function EstudiantesPage() {
   const { usuario } = useAuth();
@@ -255,7 +255,7 @@ export default function EstudiantesPage() {
             <Link
               href="/dashboard/estudiantes/promocion"
               style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:border-blue-500/50 transition-colors relative"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:[border-color:var(--accent)] transition-colors relative"
             >
               <GraduationCap size={16} />
               Promoción de curso
@@ -267,7 +267,7 @@ export default function EstudiantesPage() {
             </Link>
             <Link
               href="/dashboard/estudiantes/nuevo"
-              style={{ background: "var(--accent-blue)" }}
+              style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity"
             >
               <UserPlus size={16} />
@@ -310,8 +310,8 @@ export default function EstudiantesPage() {
           { label: "En formación dual", value: stats.enFormacionDual, icon: <Handshake size={18} />, color: "#06b6d4" },
         ].map((s) => (
           <div key={s.label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="p-4 flex flex-col gap-3">
-            <div style={{ background: s.color + "22", borderRadius: 10 }} className="w-9 h-9 flex items-center justify-center">
-              <span style={{ color: s.color }}>{s.icon}</span>
+            <div style={{ background: "var(--accent)", borderRadius: 999 }} className="w-9 h-9 flex items-center justify-center">
+              <span style={{ color: "var(--text-on-accent)" }}>{s.icon}</span>
             </div>
             <div>
               <p style={{ color: "var(--text-primary)" }} className="text-lg font-bold leading-tight">{loading ? "—" : s.value}</p>
@@ -330,23 +330,23 @@ export default function EstudiantesPage() {
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar estudiante por nombre, RUN o curso..."
             style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-            className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+            className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
           />
         </div>
 
         <button
           onClick={() => setFiltrosAbiertos((v) => !v)}
           style={{
-            background: filtrosAbiertos ? "var(--accent-blue)" + "22" : "var(--bg-card)",
-            border: `1px solid ${filtrosAbiertos ? "var(--accent-blue)" : "var(--border-light)"}`,
-            color: filtrosAbiertos ? "var(--accent-blue-light)" : "var(--text-secondary)",
+            background: filtrosAbiertos ? "var(--accent)" + "22" : "var(--bg-card)",
+            border: `1px solid ${filtrosAbiertos ? "var(--accent)" : "var(--border-light)"}`,
+            color: filtrosAbiertos ? "var(--accent-light)" : "var(--text-secondary)",
           }}
           className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors flex-shrink-0"
         >
           <SlidersHorizontal size={16} />
           Filtros
           {filtrosActivos.length > 0 && (
-            <span style={{ background: "var(--accent-blue)" }} className="w-5 h-5 rounded-full text-white text-xs flex items-center justify-center">
+            <span style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="w-5 h-5 rounded-full text-white text-xs flex items-center justify-center">
               {filtrosActivos.length}
             </span>
           )}
@@ -368,7 +368,7 @@ export default function EstudiantesPage() {
           <button
             onClick={() => setVista("lista")}
             title="Vista de lista"
-            style={{ background: vista === "lista" ? "var(--accent-blue)" : "transparent", color: vista === "lista" ? "#fff" : "var(--text-muted)" }}
+            style={{ background: vista === "lista" ? "var(--accent)" : "transparent", color: vista === "lista" ? "#fff" : "var(--text-muted)" }}
             className="p-2 rounded-lg transition-colors"
           >
             <LayoutList size={16} />
@@ -376,7 +376,7 @@ export default function EstudiantesPage() {
           <button
             onClick={() => setVista("tarjetas")}
             title="Vista de tarjetas"
-            style={{ background: vista === "tarjetas" ? "var(--accent-blue)" : "transparent", color: vista === "tarjetas" ? "#fff" : "var(--text-muted)" }}
+            style={{ background: vista === "tarjetas" ? "var(--accent)" : "transparent", color: vista === "tarjetas" ? "#fff" : "var(--text-muted)" }}
             className="p-2 rounded-lg transition-colors"
           >
             <LayoutGrid size={16} />
@@ -456,7 +456,7 @@ export default function EstudiantesPage() {
               <button onClick={() => actualizarFiltro(chip.key, "")} style={{ color: "var(--text-muted)" }}><X size={13} /></button>
             </span>
           ))}
-          <button onClick={limpiarFiltros} style={{ color: "var(--accent-blue-light)" }} className="text-xs font-semibold hover:underline">
+          <button onClick={limpiarFiltros} style={{ color: "var(--accent-light)" }} className="text-xs font-semibold hover:underline">
             Limpiar filtros
           </button>
         </div>
@@ -469,13 +469,13 @@ export default function EstudiantesPage() {
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
       ) : estudiantes.length === 0 ? (
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
-          <div style={{ background: "var(--accent-blue)22", borderRadius: "9999px" }} className="w-14 h-14 flex items-center justify-center mx-auto mb-4">
-            <Users2 size={24} style={{ color: "var(--accent-blue-light)" }} />
+          <div style={{ background: "var(--accent)22", borderRadius: "9999px" }} className="w-14 h-14 flex items-center justify-center mx-auto mb-4">
+            <Users2 size={24} style={{ color: "var(--accent-light)" }} />
           </div>
           <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Aún no hay estudiantes registrados</p>
           <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Comienza agregando el primer estudiante a SIGEDUAL.</p>
           {puedeAgregar && (
-            <Link href="/dashboard/estudiantes/nuevo" style={{ background: "var(--accent-blue)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+            <Link href="/dashboard/estudiantes/nuevo" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
               <UserPlus size={16} />
               Agregar estudiante
             </Link>
@@ -504,10 +504,10 @@ export default function EstudiantesPage() {
                 <div
                   key={e.id}
                   style={{ borderBottom: i < paginaEstudiantes.length - 1 ? "1px solid var(--border)" : "none" }}
-                  className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 sm:px-5 py-4 hover:bg-white/2 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 sm:px-5 py-4 hover:[background:var(--hover-overlay)] transition-colors"
                 >
-                  <div style={{ background: "var(--accent-blue)22", borderRadius: "9999px" }} className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                    <span style={{ color: "var(--accent-blue-light)" }} className="text-xs font-bold">{iniciales(e.nombres, e.apellidos)}</span>
+                  <div style={{ background: "var(--accent)22", borderRadius: "9999px" }} className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                    <span style={{ color: "var(--accent-light)" }} className="text-xs font-bold">{iniciales(e.nombres, e.apellidos)}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{e.nombres} {e.apellidos}</p>
@@ -520,8 +520,8 @@ export default function EstudiantesPage() {
                     <span style={{ color: "var(--text-secondary)" }} className="text-xs hidden md:block w-12">{anioDe(e)}</span>
                     <Link
                       href={`/dashboard/estudiantes/${e.id}`}
-                      style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--accent-blue-light)" }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:border-blue-500/50 transition-colors flex-shrink-0"
+                      style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--accent-light)" }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--accent)] transition-colors flex-shrink-0"
                     >
                       <Eye size={13} />
                       Ver ficha
@@ -535,8 +535,8 @@ export default function EstudiantesPage() {
               {paginaEstudiantes.map((e) => (
                 <div key={e.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="p-4 flex flex-col gap-3">
                   <div className="flex items-center gap-3">
-                    <div style={{ background: "var(--accent-blue)22", borderRadius: "9999px" }} className="w-11 h-11 flex items-center justify-center flex-shrink-0">
-                      <span style={{ color: "var(--accent-blue-light)" }} className="text-sm font-bold">{iniciales(e.nombres, e.apellidos)}</span>
+                    <div style={{ background: "var(--accent)22", borderRadius: "9999px" }} className="w-11 h-11 flex items-center justify-center flex-shrink-0">
+                      <span style={{ color: "var(--accent-light)" }} className="text-sm font-bold">{iniciales(e.nombres, e.apellidos)}</span>
                     </div>
                     <div className="min-w-0">
                       <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{e.nombres} {e.apellidos}</p>
@@ -553,7 +553,7 @@ export default function EstudiantesPage() {
                     </span>
                     <Link
                       href={`/dashboard/estudiantes/${e.id}`}
-                      style={{ color: "var(--accent-blue-light)" }}
+                      style={{ color: "var(--accent-light)" }}
                       className="flex items-center gap-1 text-xs font-semibold hover:underline"
                     >
                       <Eye size={13} />
@@ -585,8 +585,8 @@ export default function EstudiantesPage() {
                     <button
                       onClick={() => setPagina(n)}
                       style={{
-                        background: n === paginaActual ? "var(--accent-blue)" : "var(--bg-card)",
-                        border: `1px solid ${n === paginaActual ? "var(--accent-blue)" : "var(--border)"}`,
+                        background: n === paginaActual ? "var(--accent)" : "var(--bg-card)",
+                        border: `1px solid ${n === paginaActual ? "var(--accent)" : "var(--border)"}`,
                         color: n === paginaActual ? "#fff" : "var(--text-secondary)",
                       }}
                       className="w-8 h-8 rounded-lg text-xs font-medium transition-colors"

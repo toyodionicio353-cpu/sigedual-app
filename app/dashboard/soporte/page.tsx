@@ -92,7 +92,7 @@ export default function SoportePage() {
                   value={form.nombre}
                   onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
                   style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors"
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
                 />
               </div>
               <div>
@@ -101,7 +101,7 @@ export default function SoportePage() {
                   value={form.cargo}
                   onChange={(e) => setForm((f) => ({ ...f, cargo: e.target.value }))}
                   style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors"
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
                 />
               </div>
             </div>
@@ -130,7 +130,7 @@ export default function SoportePage() {
                     value={form[key]}
                     onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                     style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                    className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors mt-1"
+                    className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors mt-1"
                   />
                 ) : (
                   <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium">{datos[key] || "—"}</p>
@@ -151,7 +151,7 @@ export default function SoportePage() {
                 onChange={(e) => setForm((f) => ({ ...f, notas: e.target.value }))}
                 rows={3}
                 style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors mt-1 resize-none"
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors mt-1 resize-none"
               />
             ) : (
               <p style={{ color: "var(--text-primary)" }} className="text-sm">{datos.notas || "—"}</p>
@@ -173,7 +173,7 @@ export default function SoportePage() {
                   <button
                     onClick={guardar}
                     disabled={guardando}
-                    style={{ background: "var(--accent-blue)" }}
+                    style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
                     className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition-opacity"
                   >
                     <Check size={15} />
@@ -184,7 +184,7 @@ export default function SoportePage() {
                 <button
                   onClick={() => setEditando(true)}
                   style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium hover:border-blue-500/50 transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors"
                 >
                   <Pencil size={15} />
                   Editar información

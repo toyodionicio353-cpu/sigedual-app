@@ -94,7 +94,7 @@ export default function ConfiguracionPage() {
           {/* Datos del liceo */}
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6">
             <div className="flex items-center gap-2 mb-1">
-              <Building2 size={18} style={{ color: "var(--accent-blue-light)" }} />
+              <Building2 size={18} style={{ color: "var(--accent-light)" }} />
               <h2 style={{ color: "var(--text-primary)" }} className="text-base font-semibold">Datos del liceo</h2>
             </div>
             <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-4">
@@ -118,7 +118,7 @@ export default function ConfiguracionPage() {
                     value={(liceo as Record<string, string>)[key]}
                     onChange={(e) => setLiceo((l) => ({ ...l, [key]: e.target.value }))}
                     style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                    className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
                   />
                 </div>
               ))}
@@ -127,7 +127,7 @@ export default function ConfiguracionPage() {
             <button
               onClick={guardarLiceo}
               disabled={guardandoLiceo}
-              style={{ background: "var(--accent-blue)" }}
+              style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
               className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition-opacity mt-4"
             >
               {guardandoLiceo ? "Guardando..." : "Guardar cambios"}
@@ -138,7 +138,7 @@ export default function ConfiguracionPage() {
           {/* Notificaciones */}
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6">
             <div className="flex items-center gap-2 mb-1">
-              <Bell size={18} style={{ color: "var(--accent-blue-light)" }} />
+              <Bell size={18} style={{ color: "var(--accent-light)" }} />
               <h2 style={{ color: "var(--text-primary)" }} className="text-base font-semibold">Notificaciones</h2>
             </div>
             <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-4">
@@ -154,7 +154,7 @@ export default function ConfiguracionPage() {
                   <span style={{ color: "var(--text-primary)" }} className="text-sm">{label}</span>
                   <button
                     onClick={() => cambiarNotificacion(key)}
-                    style={{ background: notificaciones[key] ? "var(--accent-blue)" : "var(--bg-surface)", border: "1px solid var(--border-light)" }}
+                    style={{ background: notificaciones[key] ? "var(--accent)" : "var(--bg-surface)", border: "1px solid var(--border-light)" }}
                     className="w-11 h-6 rounded-full relative transition-colors"
                   >
                     <span

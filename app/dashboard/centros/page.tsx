@@ -71,7 +71,7 @@ export default function CentrosPage() {
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{filtrados.length} centro(s) registrado(s)</p>
         </div>
         {puedeEditar && (
-          <button onClick={() => { setForm(EMPTY); setEditId(null); setModal(true); }} style={{ background: "var(--accent-blue)" }} className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+          <button onClick={() => { setForm(EMPTY); setEditId(null); setModal(true); }} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
             + Agregar centro
           </button>
         )}
@@ -79,7 +79,7 @@ export default function CentrosPage() {
 
       <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar centro, RUT o maestro guía..."
         style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-        className="w-full px-4 py-3 rounded-xl text-sm mb-6 outline-none focus:border-blue-500 transition-colors" />
+        className="w-full px-4 py-3 rounded-xl text-sm mb-6 outline-none focus:[border-color:var(--accent)] transition-colors" />
 
       {loading ? (
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
@@ -90,7 +90,7 @@ export default function CentrosPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filtrados.map((c) => (
-            <div key={c.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-6 hover:border-blue-500/50 transition-colors">
+            <div key={c.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-6 hover:[border-color:var(--accent)] transition-colors">
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h3 style={{ color: "var(--text-primary)" }} className="font-semibold">{c.nombre}</h3>
@@ -108,7 +108,7 @@ export default function CentrosPage() {
               </div>
               {puedeEditar && (
                 <div className="flex gap-3 mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
-                  <button onClick={() => abrirEditar(c)} style={{ color: "var(--accent-blue-light)" }} className="text-xs hover:underline">Editar</button>
+                  <button onClick={() => abrirEditar(c)} style={{ color: "var(--accent-light)" }} className="text-xs hover:underline">Editar</button>
                   <button onClick={() => eliminar(c.id)} style={{ color: "var(--danger)" }} className="text-xs hover:underline">Eliminar</button>
                 </div>
               )}
@@ -137,13 +137,13 @@ export default function CentrosPage() {
                   <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">{label}</label>
                   <input value={(form as unknown as Record<string, string>)[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
                     style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                    className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors" />
+                    className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
                 </div>
               ))}
             </div>
             <div className="flex gap-3 mt-6">
               <button onClick={() => { setModal(false); setEditId(null); }} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex-1 py-2.5 rounded-xl text-sm font-medium">Cancelar</button>
-              <button onClick={guardar} disabled={guardando} style={{ background: "var(--accent-blue)" }} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50">
+              <button onClick={guardar} disabled={guardando} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50">
                 {guardando ? "Guardando..." : editId ? "Guardar cambios" : "Agregar"}
               </button>
             </div>

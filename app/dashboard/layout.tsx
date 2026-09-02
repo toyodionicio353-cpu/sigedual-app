@@ -4,6 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import Sidebar from "@/components/Sidebar";
+import ThemeToggle from "@/components/ThemeToggle";
 import { Bell } from "lucide-react";
 
 const TITULOS: Record<string, string> = {
@@ -53,8 +54,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
       <div style={{ background: "var(--bg-base)" }} className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div style={{ background: "var(--accent-blue)", borderRadius: 10 }} className="w-12 h-12 flex items-center justify-center mx-auto mb-3">
-            <span className="text-white font-black">SG</span>
+          <div style={{ background: "var(--accent)", borderRadius: 10 }} className="w-12 h-12 flex items-center justify-center mx-auto mb-3">
+            <span style={{ color: "var(--text-on-accent)" }} className="font-black">SG</span>
           </div>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
         </div>
@@ -83,7 +84,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button
               onClick={toggleSidebar}
               style={{ borderRadius: 8 }}
-              className="p-1 hover:bg-white/5 transition-colors flex-shrink-0 md:hidden"
+              className="p-1 hover:[background:var(--hover-overlay)] transition-colors flex-shrink-0 md:hidden"
               title="Abrir menú"
             >
               <Image src="/logo-icon.png" alt="Abrir menú" width={24} height={24} className="object-contain" />
@@ -94,9 +95,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <button
               style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 8 }}
-              className="w-8 h-8 flex items-center justify-center hover:border-blue-500/50 transition-colors"
+              className="w-8 h-8 flex items-center justify-center hover:[border-color:var(--accent)] transition-colors"
             >
               <Bell size={15} style={{ color: "var(--text-muted)" }} />
             </button>

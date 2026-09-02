@@ -92,7 +92,7 @@ export default function DocumentosPage() {
           <div>
             <input ref={fileRef} type="file" className="hidden" onChange={subirArchivo} accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
             <button onClick={() => fileRef.current?.click()} disabled={subiendo}
-              style={{ background: "var(--accent-blue)" }}
+              style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
               className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50">
               {subiendo ? "Subiendo..." : "+ Subir documento"}
             </button>
@@ -109,7 +109,7 @@ export default function DocumentosPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {documentos.map((d) => (
-            <div key={d.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-xl px-5 py-4 flex items-center gap-4 hover:border-blue-500/40 transition-colors">
+            <div key={d.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-xl px-5 py-4 flex items-center gap-4 hover:[border-color:var(--accent)] transition-colors">
               <span className="text-2xl">{iconoTipo(d.tipo)}</span>
               <div className="flex-1 min-w-0">
                 <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium truncate">{d.nombre}</p>
@@ -119,7 +119,7 @@ export default function DocumentosPage() {
               </div>
               <div className="flex gap-3 items-center">
                 <a href={d.url} target="_blank" rel="noopener noreferrer"
-                  style={{ color: "var(--accent-blue-light)" }} className="text-xs hover:underline">
+                  style={{ color: "var(--accent-light)" }} className="text-xs hover:underline">
                   Abrir
                 </a>
                 {(usuario?.rol === "administrador" || usuario?.uid === d.subidoPor) && (

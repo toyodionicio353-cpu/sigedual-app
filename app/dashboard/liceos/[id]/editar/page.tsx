@@ -203,7 +203,7 @@ export default function EditarLiceoPage() {
       <div className="p-4 md:p-8 max-w-3xl">
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
           <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Liceo no encontrado</p>
-          <Link href="/dashboard/liceos" style={{ background: "var(--accent-blue)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity mt-4">
+          <Link href="/dashboard/liceos" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity mt-4">
             <ArrowLeft size={16} />
             Volver al listado
           </Link>
@@ -256,7 +256,7 @@ export default function EditarLiceoPage() {
       {/* Código de seguridad */}
       <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-8 mt-6">
         <div className="flex items-center gap-2 mb-1">
-          <ShieldCheck size={16} style={{ color: "var(--accent-blue-light)" }} />
+          <ShieldCheck size={16} style={{ color: "var(--accent-light)" }} />
           <h3 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">Código de seguridad</h3>
         </div>
         <p style={{ color: "var(--text-muted)" }} className="text-xs mb-4">
@@ -270,7 +270,7 @@ export default function EditarLiceoPage() {
               onClick={confirmarRegenerar}
               disabled={generandoCodigo}
               style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:border-blue-500/50 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors disabled:opacity-50"
             >
               <RefreshCw size={15} className={generandoCodigo ? "animate-spin" : ""} />
               Generar código de seguridad
@@ -283,7 +283,7 @@ export default function EditarLiceoPage() {
               onClick={confirmarRegenerar}
               disabled={generandoCodigo}
               style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:border-blue-500/50 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors disabled:opacity-50"
             >
               <RefreshCw size={15} className={generandoCodigo ? "animate-spin" : ""} />
               Generar nuevo código
@@ -297,7 +297,7 @@ export default function EditarLiceoPage() {
             {mostrarCodigo ? (
               <div style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)" }} className="rounded-xl p-4 flex items-center justify-between gap-3 mb-4">
                 <span style={{ color: "var(--text-primary)" }} className="text-2xl font-mono font-bold tracking-[0.2em]">{codigoActual.codigo}</span>
-                <button onClick={copiarCodigo} style={{ color: "var(--text-muted)" }} className="p-2 hover:text-white transition-colors" title="Copiar código">
+                <button onClick={copiarCodigo} style={{ color: "var(--text-muted)" }} className="p-2 hover:[color:var(--text-primary)] transition-colors" title="Copiar código">
                   {copiado ? <Check size={18} style={{ color: "var(--success)" }} /> : <Copy size={18} />}
                 </button>
               </div>
@@ -308,7 +308,7 @@ export default function EditarLiceoPage() {
                 <button
                   onClick={() => setMostrarCodigo(true)}
                   style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="px-4 py-2.5 rounded-xl text-sm font-medium hover:border-blue-500/50 transition-colors"
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors"
                 >
                   Mostrar código
                 </button>
@@ -317,7 +317,7 @@ export default function EditarLiceoPage() {
                 <button
                   onClick={copiarCodigo}
                   style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:border-blue-500/50 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors"
                 >
                   <Copy size={15} />
                   {copiado ? "Copiado" : "Copiar código"}
@@ -327,7 +327,7 @@ export default function EditarLiceoPage() {
                 onClick={() => setConfirmandoRegenerar(true)}
                 disabled={generandoCodigo}
                 style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:border-blue-500/50 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors disabled:opacity-50"
               >
                 <RefreshCw size={15} className={generandoCodigo ? "animate-spin" : ""} />
                 Regenerar código
@@ -354,7 +354,7 @@ export default function EditarLiceoPage() {
               <button
                 onClick={confirmarRegenerar}
                 disabled={generandoCodigo}
-                style={{ background: "var(--accent-blue)" }}
+                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
                 className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
               >
                 {generandoCodigo ? "Generando..." : "Generar nuevo código"}

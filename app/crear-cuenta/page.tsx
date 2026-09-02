@@ -119,12 +119,14 @@ export default function CrearCuentaPage() {
             height={40}
             className="w-10 h-10 object-contain flex-shrink-0"
           />
-          <span style={{ color: "#fff" }} className="text-lg font-bold tracking-tight uppercase">
-            SIGEDUAL
+          <span className="text-lg font-bold tracking-tight">
+            <span style={{ color: "var(--text-primary)" }}>SIG</span>
+            <span style={{ color: "#C8102E" }}>e</span>
+            <span style={{ color: "var(--text-primary)" }}>DUAL</span>
           </span>
         </div>
 
-        <h1 style={{ color: "#fff" }} className="text-2xl font-bold mb-1">
+        <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold mb-1">
           Crear cuenta
         </h1>
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-6">
@@ -144,7 +146,7 @@ export default function CrearCuentaPage() {
               placeholder="María González"
               required
               style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
             />
           </div>
 
@@ -159,7 +161,7 @@ export default function CrearCuentaPage() {
               placeholder="nombre@tuliceo.cl"
               required
               style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
             />
           </div>
 
@@ -172,7 +174,7 @@ export default function CrearCuentaPage() {
               onChange={(e) => setRol(e.target.value as Rol)}
               required
               style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: rol ? "var(--text-primary)" : "var(--text-muted)" }}
-              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
             >
               <option value="" disabled>Selecciona tu rol</option>
               {ROLES.map((r) => (
@@ -192,7 +194,7 @@ export default function CrearCuentaPage() {
               placeholder="••••••••"
               required
               style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
             />
           </div>
 
@@ -207,7 +209,7 @@ export default function CrearCuentaPage() {
               placeholder="••••••••"
               required
               style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
             />
           </div>
 
@@ -222,7 +224,7 @@ export default function CrearCuentaPage() {
               placeholder="Ej: 7K2QXT"
               required
               style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors uppercase"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors uppercase"
             />
           </div>
 
@@ -235,7 +237,7 @@ export default function CrearCuentaPage() {
           <button
             type="submit"
             disabled={loading}
-            style={{ background: "var(--accent-blue)" }}
+            style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
             className="w-full py-3 rounded-xl text-white font-semibold text-sm mt-2 hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {loading ? "Creando cuenta..." : "Crear cuenta"}

@@ -18,7 +18,7 @@ function normalizar(texto?: string): string {
 }
 
 const selectStyle = { background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" };
-const selectClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors disabled:opacity-50";
+const selectClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors disabled:opacity-50";
 
 interface Filtros {
   estado: string;
@@ -157,7 +157,7 @@ export default function LiceosPage() {
         </div>
         <Link
           href="/dashboard/liceos/nuevo"
-          style={{ background: "var(--accent-blue)" }}
+          style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity flex-shrink-0"
         >
           <Plus size={16} />
@@ -174,8 +174,8 @@ export default function LiceosPage() {
           { label: "Agregados recientemente", value: stats.recientes, icon: <CalendarClock size={18} />, color: "#f59e0b" },
         ].map((s) => (
           <div key={s.label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="p-4 flex flex-col gap-3">
-            <div style={{ background: s.color + "22", borderRadius: 10 }} className="w-9 h-9 flex items-center justify-center">
-              <span style={{ color: s.color }}>{s.icon}</span>
+            <div style={{ background: "var(--accent)", borderRadius: 999 }} className="w-9 h-9 flex items-center justify-center">
+              <span style={{ color: "var(--text-on-accent)" }}>{s.icon}</span>
             </div>
             <div>
               <p style={{ color: "var(--text-primary)" }} className="text-lg font-bold leading-tight">{loading ? "—" : s.value}</p>
@@ -194,22 +194,22 @@ export default function LiceosPage() {
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar liceo por nombre, responsable o dominio..."
             style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-            className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+            className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
           />
         </div>
         <button
           onClick={() => setFiltrosAbiertos((v) => !v)}
           style={{
-            background: filtrosAbiertos ? "var(--accent-blue)" + "22" : "var(--bg-card)",
-            border: `1px solid ${filtrosAbiertos ? "var(--accent-blue)" : "var(--border-light)"}`,
-            color: filtrosAbiertos ? "var(--accent-blue-light)" : "var(--text-secondary)",
+            background: filtrosAbiertos ? "var(--accent)" + "22" : "var(--bg-card)",
+            border: `1px solid ${filtrosAbiertos ? "var(--accent)" : "var(--border-light)"}`,
+            color: filtrosAbiertos ? "var(--accent-light)" : "var(--text-secondary)",
           }}
           className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors flex-shrink-0"
         >
           <SlidersHorizontal size={16} />
           Filtros
           {filtrosActivos.length > 0 && (
-            <span style={{ background: "var(--accent-blue)" }} className="w-5 h-5 rounded-full text-white text-xs flex items-center justify-center">
+            <span style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="w-5 h-5 rounded-full text-white text-xs flex items-center justify-center">
               {filtrosActivos.length}
             </span>
           )}
@@ -267,7 +267,7 @@ export default function LiceosPage() {
               <button onClick={() => actualizarFiltro(chip.key, "")} style={{ color: "var(--text-muted)" }}><X size={13} /></button>
             </span>
           ))}
-          <button onClick={limpiarFiltros} style={{ color: "var(--accent-blue-light)" }} className="text-xs font-semibold hover:underline">
+          <button onClick={limpiarFiltros} style={{ color: "var(--accent-light)" }} className="text-xs font-semibold hover:underline">
             Limpiar filtros
           </button>
         </div>
@@ -279,12 +279,12 @@ export default function LiceosPage() {
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
       ) : liceos.length === 0 ? (
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
-          <div style={{ background: "var(--accent-blue)22", borderRadius: "9999px" }} className="w-14 h-14 flex items-center justify-center mx-auto mb-4">
-            <Building2 size={24} style={{ color: "var(--accent-blue-light)" }} />
+          <div style={{ background: "var(--accent)22", borderRadius: "9999px" }} className="w-14 h-14 flex items-center justify-center mx-auto mb-4">
+            <Building2 size={24} style={{ color: "var(--accent-light)" }} />
           </div>
           <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Aún no hay liceos registrados</p>
           <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Comienza registrando el primer establecimiento en SIGEDUAL.</p>
-          <Link href="/dashboard/liceos/nuevo" style={{ background: "var(--accent-blue)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+          <Link href="/dashboard/liceos/nuevo" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
             <Plus size={16} />
             Agregar liceo
           </Link>
@@ -308,8 +308,8 @@ export default function LiceosPage() {
             return (
               <div key={liceo.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="p-4 flex flex-col gap-3">
                 <div className="flex items-start gap-3">
-                  <div style={{ background: "var(--accent-blue)22", borderRadius: 10 }} className="w-11 h-11 flex items-center justify-center flex-shrink-0">
-                    <Building2 size={20} style={{ color: "var(--accent-blue-light)" }} />
+                  <div style={{ background: "var(--accent)22", borderRadius: 10 }} className="w-11 h-11 flex items-center justify-center flex-shrink-0">
+                    <Building2 size={20} style={{ color: "var(--accent-light)" }} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold leading-snug">{liceo.nombre}</p>
@@ -344,8 +344,8 @@ export default function LiceosPage() {
                 <div className="flex items-center gap-2 mt-1">
                   <Link
                     href={`/dashboard/liceos/${liceo.id}`}
-                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--accent-blue-light)" }}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium hover:border-blue-500/50 transition-colors"
+                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--accent-light)" }}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium hover:[border-color:var(--accent)] transition-colors"
                   >
                     <Eye size={13} />
                     Ver
@@ -353,7 +353,7 @@ export default function LiceosPage() {
                   <Link
                     href={`/dashboard/liceos/${liceo.id}/editar`}
                     style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium hover:border-blue-500/50 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium hover:[border-color:var(--accent)] transition-colors"
                   >
                     <Pencil size={13} />
                     Editar

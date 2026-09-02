@@ -55,8 +55,8 @@ export default function EspecialidadesPage() {
         <form onSubmit={agregar} className="flex flex-col sm:flex-row gap-3 mb-6">
           <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre de la especialidad (ej: Contabilidad)"
             style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-            className="flex-1 px-4 py-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors" />
-          <button type="submit" disabled={guardando || !nombre.trim()} style={{ background: "var(--accent-blue)" }}
+            className="flex-1 px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
+          <button type="submit" disabled={guardando || !nombre.trim()} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
             className="px-5 py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-50 sm:w-auto w-full">
             {guardando ? "Agregando..." : "Agregar"}
           </button>
