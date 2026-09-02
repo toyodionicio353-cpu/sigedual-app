@@ -179,7 +179,7 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
       {/* Logo */}
-      <div className="flex items-center px-4 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", height: 56, minHeight: 56 }}>
+      <div className="flex items-center px-4 flex-shrink-0" style={{ height: 56, minHeight: 56 }}>
         <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={32} height={32} className="object-contain flex-shrink-0" style={{ minWidth: 32 }} />
         {!collapsed && (
           <h2 style={{ color: "#fff" }} className="ml-2.5 text-lg font-bold tracking-tight uppercase leading-none whitespace-nowrap overflow-hidden">
