@@ -47,7 +47,7 @@ export default function EspecialidadesPage() {
   return (
     <div className="p-4 md:p-8">
       <div className="mb-6">
-        <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Especialidades</h1>
+        <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Especialidades</h1>
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Carreras técnico-profesionales del establecimiento</p>
       </div>
 

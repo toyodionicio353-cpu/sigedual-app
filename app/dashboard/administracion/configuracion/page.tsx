@@ -82,7 +82,7 @@ export default function ConfiguracionPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-2xl">
-      <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold mb-1">Configuración</h1>
+      <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold mb-1">Configuración</h1>
       <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-8">
         Ajustes generales de la aplicación para tu institución.
       </p>

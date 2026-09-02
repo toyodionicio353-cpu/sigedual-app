@@ -147,7 +147,7 @@ export default function MensajesPage() {
         className={`w-full md:w-80 flex-shrink-0 flex-col ${activaId ? "hidden md:flex" : "flex"}`}
       >
         <div className="p-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--border)" }}>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-xl font-bold">Mensajes</h1>
+          <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Mensajes</h1>
           <button
             onClick={() => setModalNuevo(true)}
             style={{ background: "var(--accent-blue)" }}

@@ -80,7 +80,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="mb-8">
         <p style={{ color: "var(--accent-blue-light)" }} className="text-sm font-medium mb-1">{saludo}</p>
-        <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold tracking-tight">
+        <h1 style={{ color: "var(--text-primary)" }} className="text-4xl font-bold tracking-tight">
           {usuario?.nombre?.split(" ")[0]} 👋
         </h1>
         <p style={{ color: "var(--text-secondary)" }} className="mt-1.5 text-sm">
@@ -101,7 +101,7 @@ export default function DashboardPage() {
               <ArrowRight size={16} style={{ color: "var(--text-muted)" }} className="group-hover:text-blue-400 transition-colors" />
             </div>
             <div>
-              <p style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">{s.value}</p>
+              <p style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">{s.value}</p>
               <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-0.5">{s.label}</p>
             </div>
           </Link>

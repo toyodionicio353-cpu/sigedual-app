@@ -133,7 +133,7 @@ export default function PromocionCursoPage() {
     <div className="p-4 md:p-8 max-w-4xl">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Promoción de curso</h1>
+          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Promoción de curso</h1>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             Confirma quiénes pasaron de nivel y quiénes repiten para el año académico {ANIO_ACTUAL}.
           </p>

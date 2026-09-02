@@ -247,7 +247,7 @@ export default function EstudiantesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-2xl font-bold">Listado de estudiantes</h1>
+          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Listado de estudiantes</h1>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Consulta y revisa los estudiantes registrados en SIGEDUAL.</p>
         </div>
         {puedeAgregar && (
