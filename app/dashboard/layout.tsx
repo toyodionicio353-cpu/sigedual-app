@@ -82,8 +82,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button
               onClick={toggleSidebar}
               style={{ borderRadius: 8, color: "var(--text-secondary)" }}
-              className="p-2 hover:bg-white/5 transition-colors flex-shrink-0"
-              title="Abrir/cerrar menú"
+              className="p-2 hover:bg-white/5 transition-colors flex-shrink-0 md:hidden"
+              title="Abrir menú"
             >
               <Menu size={20} />
             </button>

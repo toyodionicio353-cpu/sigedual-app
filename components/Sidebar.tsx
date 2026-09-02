@@ -14,7 +14,7 @@ import {
   ChevronDown, UserPlus, ClipboardList,
   FolderOpen, UsersRound, Building, ShieldCheck,
   CalendarCheck, Handshake, ClipboardCheck,
-  UserCog, School, SlidersHorizontal, LifeBuoy,
+  UserCog, School, SlidersHorizontal, LifeBuoy, Menu,
 } from "lucide-react";
 
 interface SubItem {
@@ -143,7 +143,7 @@ interface SidebarProps {
   onCloseMobile: () => void;
 }
 
-export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) {
+export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMobile }: SidebarProps) {
   const { usuario } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
@@ -151,6 +151,14 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
 
   function toggleMenu(id: string) {
     setOpenMenu((prev) => (prev === id ? null : id));
+  }
+
+  function alternarSidebar() {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      onCloseMobile();
+    } else {
+      setCollapsed((v) => !v);
+    }
   }
 
   async function handleLogout() {
@@ -180,11 +188,29 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
       >
       {/* Logo */}
       <div className="flex items-center px-4 flex-shrink-0" style={{ height: 56, minHeight: 56 }}>
-        <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={32} height={32} className="object-contain flex-shrink-0" style={{ minWidth: 32 }} />
-        {!collapsed && (
-          <h2 style={{ color: "#fff" }} className="ml-2.5 text-lg font-bold tracking-tight uppercase leading-none whitespace-nowrap overflow-hidden">
-            SIGEDUAL
-          </h2>
+        {collapsed ? (
+          <button
+            onClick={alternarSidebar}
+            title="Expandir menú"
+            className="w-full flex items-center justify-center"
+          >
+            <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={32} height={32} className="object-contain flex-shrink-0" style={{ minWidth: 32 }} />
+          </button>
+        ) : (
+          <>
+            <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={32} height={32} className="object-contain flex-shrink-0" style={{ minWidth: 32 }} />
+            <h2 style={{ color: "#fff" }} className="ml-2.5 text-lg font-bold tracking-tight uppercase leading-none whitespace-nowrap overflow-hidden">
+              SIGEDUAL
+            </h2>
+            <button
+              onClick={alternarSidebar}
+              title="Colapsar menú"
+              style={{ color: "#fff" }}
+              className="ml-auto p-1.5 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0"
+            >
+              <Menu size={18} />
+            </button>
+          </>
         )}
       </div>
 
