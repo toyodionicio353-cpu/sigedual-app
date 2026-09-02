@@ -8,7 +8,7 @@ import type { Estudiante, Especialidad } from "@/types";
 import {
   Search, SlidersHorizontal, X, LayoutList, LayoutGrid,
   ChevronLeft, ChevronRight, Eye, UserPlus, Users2, BadgeCheck, Handshake,
-  AlertTriangle,
+  AlertTriangle, GraduationCap,
 } from "lucide-react";
 
 const NIVELES = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
@@ -233,6 +233,15 @@ export default function EstudiantesPage() {
     return { porVencer: porVencerList, vencidosPendientes: vencidosList };
   }, [estudiantes]);
 
+  const pendientesPromocion = useMemo(() => {
+    const anioActual = new Date().getFullYear();
+    return estudiantes.filter((e) => {
+      if (e.estado !== "activo") return false;
+      const anio = Number(e.anioAcademico);
+      return !Number.isNaN(anio) && anio < anioActual;
+    }).length;
+  }, [estudiantes]);
+
   return (
     <div className="p-4 md:p-8">
       {/* Header */}
@@ -242,14 +251,29 @@ export default function EstudiantesPage() {
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Consulta y revisa los estudiantes registrados en SIGEDUAL.</p>
         </div>
         {puedeAgregar && (
-          <Link
-            href="/dashboard/estudiantes/nuevo"
-            style={{ background: "var(--accent-blue)" }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity flex-shrink-0"
-          >
-            <UserPlus size={16} />
-            Agregar estudiante
-          </Link>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link
+              href="/dashboard/estudiantes/promocion"
+              style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:border-blue-500/50 transition-colors relative"
+            >
+              <GraduationCap size={16} />
+              Promoción de curso
+              {pendientesPromocion > 0 && (
+                <span style={{ background: "var(--warning)", color: "#1a1300" }} className="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center">
+                  {pendientesPromocion}
+                </span>
+              )}
+            </Link>
+            <Link
+              href="/dashboard/estudiantes/nuevo"
+              style={{ background: "var(--accent-blue)" }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+            >
+              <UserPlus size={16} />
+              Agregar estudiante
+            </Link>
+          </div>
         )}
       </div>
 
