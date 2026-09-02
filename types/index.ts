@@ -14,13 +14,28 @@ export interface Usuario {
 export interface Liceo {
   id: string;
   nombre: string;
+  nombreCorto?: string;
+  rut?: string;
+  tipoEstablecimiento?: string;
+  dependencia?: string;
   rbd: string;
   comuna: string;
   region: string;
+  ciudad?: string;
   direccion: string;
   telefono?: string;
   email?: string;
+  sitioWeb?: string;
   dominioCorreo?: string;
+  responsableNombre?: string;
+  responsableCargo?: string;
+  responsableRun?: string;
+  responsableTelefono?: string;
+  responsableEmail?: string;
+  estado?: "activo" | "inactivo";
+  creadoEn?: string;
+  actualizadoEn?: string;
+  actualizadoPor?: string;
 }
 
 export interface CodigoAcceso {
@@ -35,6 +50,7 @@ export interface Especialidad {
   id: string;
   nombre: string;
   liceoId: string;
+  estado?: "activa" | "inactiva";
 }
 
 export interface Estudiante {
