@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import type { Estudiante, Especialidad } from "@/types";
 import {
   Search, SlidersHorizontal, X, LayoutList, LayoutGrid,
-  ChevronLeft, ChevronRight, Eye, UserPlus, Users2,
+  ChevronLeft, ChevronRight, Eye, UserPlus, Users2, BadgeCheck, Handshake,
 } from "lucide-react";
 
 const NIVELES = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
@@ -237,14 +237,19 @@ export default function EstudiantesPage() {
       {/* Estadísticas */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
-          { label: "Total de estudiantes", value: stats.total, color: "#2563eb" },
-          { label: "Estudiantes activos", value: stats.activos, color: "#22c55e" },
-          { label: "Agregados este año", value: stats.agregadosEsteAnio, color: "#f59e0b" },
-          { label: "En formación dual", value: stats.enFormacionDual, color: "#06b6d4" },
+          { label: "Total de estudiantes", value: stats.total, icon: <Users2 size={18} />, color: "#2563eb" },
+          { label: "Estudiantes activos", value: stats.activos, icon: <BadgeCheck size={18} />, color: "#22c55e" },
+          { label: "Agregados este año", value: stats.agregadosEsteAnio, icon: <UserPlus size={18} />, color: "#f59e0b" },
+          { label: "En formación dual", value: stats.enFormacionDual, icon: <Handshake size={18} />, color: "#06b6d4" },
         ].map((s) => (
-          <div key={s.label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="p-4">
-            <p style={{ color: "var(--text-primary)" }} className="text-lg font-bold leading-tight">{loading ? "—" : s.value}</p>
-            <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-0.5">{s.label}</p>
+          <div key={s.label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="p-4 flex flex-col gap-3">
+            <div style={{ background: s.color + "22", borderRadius: 10 }} className="w-9 h-9 flex items-center justify-center">
+              <span style={{ color: s.color }}>{s.icon}</span>
+            </div>
+            <div>
+              <p style={{ color: "var(--text-primary)" }} className="text-lg font-bold leading-tight">{loading ? "—" : s.value}</p>
+              <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-0.5">{s.label}</p>
+            </div>
           </div>
         ))}
       </div>
