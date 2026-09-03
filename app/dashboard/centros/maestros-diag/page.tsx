@@ -1,9 +1,8 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import { estadoDisponibilidadMaestroGuia, disponibilidadMaestroGuiaDe, camposFaltantesMaestroGuia } from "@/lib/maestro-guia";
 import type { Asignacion, CentroDual, Especialidad, MaestroGuia } from "@/types";
 
 export default function DiagFullPage() {
@@ -14,6 +13,7 @@ export default function DiagFullPage() {
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [errMsg, setErrMsg] = useState("");
 
   async function cargar() {
     if (!usuario) return;
@@ -33,6 +33,7 @@ export default function DiagFullPage() {
     } catch (err) {
       console.error("Error al cargar maestros guía:", err);
       setError(true);
+      setErrMsg(String(err));
     } finally {
       setLoading(false);
     }
@@ -40,30 +41,18 @@ export default function DiagFullPage() {
 
   useEffect(() => { if (usuario) cargar(); }, [usuario]);
 
-  function centroDe(id: string): CentroDual | undefined {
-    return centros.find((c) => c.id === id);
-  }
-
-  const resumen = useMemo(() => {
-    return maestros.map((m) => ({
-      id: m.id,
-      disp: estadoDisponibilidadMaestroGuia(m, centroDe(m.centroDualId), asignaciones),
-      cap: disponibilidadMaestroGuiaDe(m, asignaciones),
-      faltantes: camposFaltantesMaestroGuia(m, Boolean(centroDe(m.centroDualId))),
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [maestros, centros, asignaciones]);
-
   return (
     <div style={{ padding: 24 }}>
-      <p>DIAG v2 — solo datos, sin interfaz completa.</p>
+      <p>DIAG v3 — solo conteos crudos, sin ningún cálculo.</p>
       <p>loading: {String(loading)}</p>
-      <p>error: {String(error)}</p>
+      <p>error: {String(error)} {errMsg}</p>
       <p>maestros: {maestros.length}</p>
       <p>centros: {centros.length}</p>
       <p>especialidades: {especialidades.length}</p>
       <p>asignaciones: {asignaciones.length}</p>
-      <p>resumen: {resumen.length}</p>
+      <pre style={{ whiteSpace: "pre-wrap", fontSize: 11 }}>
+        {JSON.stringify(maestros, null, 2).slice(0, 3000)}
+      </pre>
     </div>
   );
 }
