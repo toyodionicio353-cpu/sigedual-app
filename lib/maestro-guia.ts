@@ -44,7 +44,7 @@ export function estadoDisponibilidadMaestroGuia(mg: MaestroGuia, centro: CentroD
 export function camposFaltantesMaestroGuia(mg: MaestroGuia, centroExiste: boolean): string[] {
   const faltantes: string[] = [];
   if (!centroExiste) faltantes.push("Centro dual");
-  if (mg.especialidades.length === 0) faltantes.push("Especialidad");
+  if ((mg.especialidades ?? []).length === 0) faltantes.push("Especialidad");
   if (!mg.email) faltantes.push("Correo");
   if (!mg.telefono) faltantes.push("Teléfono");
   if (mg.capacidad == null) faltantes.push("Capacidad");
