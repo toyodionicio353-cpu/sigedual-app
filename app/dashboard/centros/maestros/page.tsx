@@ -46,6 +46,7 @@ export default function ListaMaestrosGuiaPage() {
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
@@ -60,17 +61,24 @@ export default function ListaMaestrosGuiaPage() {
   async function cargar() {
     if (!usuario) return;
     setLoading(true);
-    const [snapMg, snapCentros, snapEsp, snapAsig] = await Promise.all([
-      getDocs(query(collection(db, "maestros_guia"), where("liceoId", "==", usuario.liceoId))),
-      getDocs(query(collection(db, "centros_duales"), where("liceoId", "==", usuario.liceoId))),
-      getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId))),
-      getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario.liceoId))),
-    ]);
-    setMaestros(snapMg.docs.map((d) => ({ id: d.id, ...d.data() } as MaestroGuia)));
-    setCentros(snapCentros.docs.map((d) => ({ id: d.id, ...d.data() } as CentroDual)));
-    setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
-    setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
-    setLoading(false);
+    setError(false);
+    try {
+      const [snapMg, snapCentros, snapEsp, snapAsig] = await Promise.all([
+        getDocs(query(collection(db, "maestros_guia"), where("liceoId", "==", usuario.liceoId))),
+        getDocs(query(collection(db, "centros_duales"), where("liceoId", "==", usuario.liceoId))),
+        getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId))),
+        getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario.liceoId))),
+      ]);
+      setMaestros(snapMg.docs.map((d) => ({ id: d.id, ...d.data() } as MaestroGuia)));
+      setCentros(snapCentros.docs.map((d) => ({ id: d.id, ...d.data() } as CentroDual)));
+      setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
+      setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
+    } catch (err) {
+      console.error("Error al cargar maestros guía:", err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { if (usuario) cargar(); }, [usuario]);
@@ -89,7 +97,7 @@ export default function ListaMaestrosGuiaPage() {
     let base = maestros;
     if (filtroEstado) base = base.filter((m) => m.estado === filtroEstado);
     if (filtroCentroId) base = base.filter((m) => m.centroDualId === filtroCentroId);
-    if (filtroEspecialidadId) base = base.filter((m) => m.especialidades.includes(filtroEspecialidadId));
+    if (filtroEspecialidadId) base = base.filter((m) => (m.especialidades ?? []).includes(filtroEspecialidadId));
     if (filtroDisponibilidad) {
       base = base.filter((m) => {
         const estado = estadoDisponibilidadMaestroGuia(m, centroDe(m.centroDualId), asignaciones);
@@ -254,6 +262,15 @@ export default function ListaMaestrosGuiaPage() {
       {/* Contenido */}
       {loading ? (
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
+      ) : error ? (
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
+          <AlertCircle size={22} style={{ color: "var(--text-muted)" }} className="mx-auto mb-3" />
+          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No pudimos cargar los maestros guía</p>
+          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Ocurrió un problema de conexión. Intenta de nuevo.</p>
+          <button onClick={cargar} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
+            Reintentar
+          </button>
+        </div>
       ) : maestros.length === 0 ? (
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
           <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No hay maestros guía registrados</p>
@@ -295,7 +312,7 @@ export default function ListaMaestrosGuiaPage() {
               const { capacidad, asignados, disponibles } = disponibilidadMaestroGuiaDe(m, asignaciones);
               const disp = estadoDisponibilidadMaestroGuia(m, centro, asignaciones);
               const incompleto = camposFaltantesMaestroGuia(m, Boolean(centro)).length > 0;
-              const especialidadesNombres = m.especialidades.map((id) => especialidadNombre(id));
+              const especialidadesNombres = (m.especialidades ?? []).map((id) => especialidadNombre(id));
               return (
                 <Link
                   key={m.id}
@@ -339,7 +356,7 @@ export default function ListaMaestrosGuiaPage() {
               const { capacidad, asignados, disponibles } = disponibilidadMaestroGuiaDe(m, asignaciones);
               const disp = estadoDisponibilidadMaestroGuia(m, centro, asignaciones);
               const incompleto = camposFaltantesMaestroGuia(m, Boolean(centro)).length > 0;
-              const especialidadesNombres = m.especialidades.map((id) => especialidadNombre(id));
+              const especialidadesNombres = (m.especialidades ?? []).map((id) => especialidadNombre(id));
               return (
                 <Link
                   key={m.id}
