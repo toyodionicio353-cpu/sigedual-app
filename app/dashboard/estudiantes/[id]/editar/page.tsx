@@ -19,6 +19,7 @@ export default function EditarEstudiantePage() {
   const [valores, setValores] = useState<EstudianteFormValues | null>(null);
   const [otrosMedicos, setOtrosMedicos] = useState<string[]>([]);
   const [rasgos, setRasgos] = useState<string[]>([]);
+  const [habilidades, setHabilidades] = useState<string[]>([]);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [runsOcupados, setRunsOcupados] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +62,7 @@ export default function EditarEstudiantePage() {
       });
       setOtrosMedicos(e.informacionMedicaAdicional ?? []);
       setRasgos(e.rasgos ?? []);
+      setHabilidades(e.habilidades ?? []);
       setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
       setRunsOcupados(
         snapTodos.docs
@@ -75,7 +77,7 @@ export default function EditarEstudiantePage() {
 
   const runsOcupadosMemo = useMemo(() => runsOcupados, [runsOcupados]);
 
-  async function guardar(form: EstudianteFormValues, nuevosOtrosMedicos: string[], nuevosRasgos: string[]) {
+  async function guardar(form: EstudianteFormValues, nuevosOtrosMedicos: string[], nuevosRasgos: string[], nuevasHabilidades: string[]) {
     if (!usuario || !id || !estudianteOriginal || guardando) return;
     setGuardando(true);
     setErrorSistema("");
@@ -104,6 +106,7 @@ export default function EditarEstudiantePage() {
         alergias: form.alergias.trim(),
         informacionMedicaAdicional: nuevosOtrosMedicos.map((v) => v.trim()).filter(Boolean),
         rasgos: nuevosRasgos,
+        habilidades: nuevasHabilidades,
         apoderadoNombre: form.apoderadoNombre.trim(),
         apoderadoRun: form.apoderadoRun.trim() ? normalizarRut(form.apoderadoRun) : "",
         apoderadoParentesco: form.apoderadoParentesco,
@@ -186,6 +189,7 @@ export default function EditarEstudiantePage() {
         valoresIniciales={valores}
         otrosMedicosIniciales={otrosMedicos}
         rasgosIniciales={rasgos}
+        habilidadesIniciales={habilidades}
         especialidades={especialidades}
         runsOcupados={runsOcupadosMemo}
         guardando={guardando}

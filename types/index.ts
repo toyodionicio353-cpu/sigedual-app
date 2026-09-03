@@ -82,6 +82,7 @@ export interface Estudiante {
   alergias?: string;
   informacionMedicaAdicional?: string[];
   rasgos?: string[];
+  habilidades?: string[];
   apoderadoNombre?: string;
   apoderadoRun?: string;
   apoderadoParentesco?: string;
@@ -147,5 +148,46 @@ export interface CentroDual {
   emailMaestro?: string;
   liceoId: string;
   especialidades: string[];
+  caracteristicas?: string[];
+  habilidadesValoradas?: string[];
+  cuposDisponibles?: number;
   activo: boolean;
+}
+
+export type EstadoAsignacion =
+  | "pendiente"
+  | "en_proceso"
+  | "asignada"
+  | "activa"
+  | "finalizada"
+  | "cancelada";
+
+export interface FactorCompatibilidad {
+  tipo: "especialidad" | "caracteristica" | "habilidad" | "advertencia";
+  descripcion: string;
+}
+
+export interface Compatibilidad {
+  puntaje: number | null;
+  limitada: boolean;
+  coincidencias: FactorCompatibilidad[];
+  advertencias: FactorCompatibilidad[];
+}
+
+export interface Asignacion {
+  id: string;
+  estudianteId: string;
+  centroDualId: string;
+  liceoId: string;
+  estado: EstadoAsignacion;
+  fechaInicio?: string;
+  fechaTermino?: string;
+  jornada?: string;
+  profesorSupervisorId?: string;
+  maestroGuia?: string;
+  observaciones?: string;
+  compatibilidad: Compatibilidad;
+  creadoPor: string;
+  creadoEn: string;
+  actualizadoEn?: string;
 }

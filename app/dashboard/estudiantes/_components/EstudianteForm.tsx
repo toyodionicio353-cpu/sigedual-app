@@ -4,6 +4,7 @@ import {
   Users, BadgeCheck, Phone, GraduationCap, HeartPulse, Sparkles, FileText, Plus, X,
 } from "lucide-react";
 import { formatearRut, normalizarRut, validarRut, validarEmail, validarTelefonoChileno } from "@/lib/rut";
+import { RASGOS_ESTUDIANTE, HABILIDADES } from "@/lib/caracteristicas";
 import type { Estudiante, Especialidad } from "@/types";
 
 const NIVELES = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
@@ -13,16 +14,6 @@ const ESTADOS: Estudiante["estado"][] = ["activo", "inactivo", "egresado", "reti
 const PARENTESCOS = ["Padre", "Madre", "Tutor legal", "Otro"];
 const ANIO_ACTUAL = new Date().getFullYear();
 const ANIOS_ACADEMICOS = Array.from({ length: 5 }, (_, i) => ANIO_ACTUAL + i);
-
-const RASGOS = [
-  "Tranquilo/a", "Nervioso/a", "Tímido/a", "Extrovertido/a", "Ansioso/a",
-  "Seguro/a de sí mismo/a", "Sensible", "Resiliente", "Paciente", "Impulsivo/a",
-  "Buena comunicación", "Trabajo en equipo", "Liderazgo", "Responsable", "Puntual",
-  "Proactivo/a", "Autónomo/a", "Necesita supervisión constante",
-  "Buena tolerancia a la presión", "Baja tolerancia a la presión",
-  "Adaptable a cambios", "Dificultad para adaptarse a cambios",
-  "Orientado/a al detalle", "Creativo/a",
-];
 
 export interface EstudianteFormValues {
   run: string;
@@ -103,21 +94,23 @@ interface EstudianteFormProps {
   valoresIniciales: EstudianteFormValues;
   otrosMedicosIniciales: string[];
   rasgosIniciales: string[];
+  habilidadesIniciales: string[];
   especialidades: Especialidad[];
   runsOcupados: string[];
   guardando: boolean;
   onCancelar: () => void;
-  onGuardar: (valores: EstudianteFormValues, otrosMedicos: string[], rasgos: string[]) => void | Promise<void>;
+  onGuardar: (valores: EstudianteFormValues, otrosMedicos: string[], rasgos: string[], habilidades: string[]) => void | Promise<void>;
 }
 
 export default function EstudianteForm({
-  modo, valoresIniciales, otrosMedicosIniciales, rasgosIniciales, especialidades,
+  modo, valoresIniciales, otrosMedicosIniciales, rasgosIniciales, habilidadesIniciales, especialidades,
   runsOcupados, guardando, onCancelar, onGuardar,
 }: EstudianteFormProps) {
   const [form, setForm] = useState<EstudianteFormValues>(valoresIniciales);
   const [errores, setErrores] = useState<Partial<Record<keyof EstudianteFormValues, string>>>({});
   const [otrosMedicos, setOtrosMedicos] = useState<string[]>(otrosMedicosIniciales);
   const [rasgos, setRasgos] = useState<string[]>(rasgosIniciales);
+  const [habilidades, setHabilidades] = useState<string[]>(habilidadesIniciales);
   const [formularioInvalido, setFormularioInvalido] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
 
@@ -135,6 +128,10 @@ export default function EstudianteForm({
 
   function toggleRasgo(rasgo: string) {
     setRasgos((prev) => (prev.includes(rasgo) ? prev.filter((r) => r !== rasgo) : [...prev, rasgo]));
+  }
+
+  function toggleHabilidad(habilidad: string) {
+    setHabilidades((prev) => (prev.includes(habilidad) ? prev.filter((h) => h !== habilidad) : [...prev, habilidad]));
   }
 
   function agregarOtroMedico() {
@@ -187,7 +184,7 @@ export default function EstudianteForm({
     if (modo === "crear") {
       setConfirmando(true);
     } else {
-      onGuardar(form, otrosMedicos, rasgos);
+      onGuardar(form, otrosMedicos, rasgos, habilidades);
     }
   }
 
@@ -356,7 +353,7 @@ export default function EstudianteForm({
           subtitulo="Ayudan a definir el centro dual más adecuado para el estudiante (por ejemplo, un estudiante más nervioso puede adaptarse mejor a un centro con un ambiente tranquilo)."
         >
           <div className="sm:col-span-2 flex flex-wrap gap-2">
-            {RASGOS.map((r) => {
+            {RASGOS_ESTUDIANTE.map((r) => {
               const activo = rasgos.includes(r);
               return (
                 <button
@@ -366,11 +363,38 @@ export default function EstudianteForm({
                   style={{
                     background: activo ? "var(--accent)" : "var(--bg-surface)",
                     border: `1px solid ${activo ? "var(--accent)" : "var(--border)"}`,
-                    color: activo ? "#fff" : "var(--text-secondary)",
+                    color: activo ? "var(--text-on-accent)" : "var(--text-secondary)",
                   }}
                   className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
                 >
                   {r}
+                </button>
+              );
+            })}
+          </div>
+        </Seccion>
+
+        <Seccion
+          icon={<Sparkles size={16} />}
+          titulo="Habilidades"
+          subtitulo="Habilidades que el estudiante ya domina o está desarrollando. Se usan junto con sus características para recomendar centros duales compatibles."
+        >
+          <div className="sm:col-span-2 flex flex-wrap gap-2">
+            {HABILIDADES.map((h) => {
+              const activo = habilidades.includes(h);
+              return (
+                <button
+                  key={h}
+                  type="button"
+                  onClick={() => toggleHabilidad(h)}
+                  style={{
+                    background: activo ? "var(--accent)" : "var(--bg-surface)",
+                    border: `1px solid ${activo ? "var(--accent)" : "var(--border)"}`,
+                    color: activo ? "var(--text-on-accent)" : "var(--text-secondary)",
+                  }}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+                >
+                  {h}
                 </button>
               );
             })}
@@ -428,7 +452,7 @@ export default function EstudianteForm({
                 Cancelar
               </button>
               <button
-                onClick={() => onGuardar(form, otrosMedicos, rasgos)}
+                onClick={() => onGuardar(form, otrosMedicos, rasgos, habilidades)}
                 disabled={guardando}
                 style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
                 className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
