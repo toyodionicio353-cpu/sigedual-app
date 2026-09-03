@@ -282,7 +282,7 @@ export default function BibliotecaDocumental({
                   key={item.id}
                   onClick={() => onAbrirCreado?.(item)}
                   style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
-                  className={`rounded-2xl overflow-hidden hover:[border-color:var(--accent)] transition-colors flex flex-col ${onAbrirCreado ? "cursor-pointer" : ""}`}
+                  className={`rounded-2xl hover:[border-color:var(--accent)] transition-colors flex flex-col ${onAbrirCreado ? "cursor-pointer" : ""}`}
                 >
                   <div className="p-3 pb-0">
                     <VistaPreviaDocumento lineas={item.previewLineas} />
