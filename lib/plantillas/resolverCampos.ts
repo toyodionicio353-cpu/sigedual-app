@@ -5,6 +5,13 @@ export interface ResultadoCampo {
   mensajeAusente?: string;
 }
 
+function formatoFecha(iso?: string): string | undefined {
+  if (!iso) return undefined;
+  const fecha = new Date(iso);
+  if (Number.isNaN(fecha.getTime())) return iso;
+  return fecha.toLocaleDateString("es-CL");
+}
+
 /**
  * Resuelve los campos automáticos de un estudiante a partir de las
  * relaciones reales de SIGEDUAL. La Asignacion activa (estado "asignada" o
@@ -37,25 +44,71 @@ export function resolverCamposEstudiante(estudianteId: string, ctx: ContextoReso
     "estudiante.direccion": estudiante.direccion
       ? { valor: `${estudiante.direccion}${estudiante.comuna ? `, ${estudiante.comuna}` : ""}` }
       : { mensajeAusente: "Este estudiante no tiene domicilio registrado." },
+    "estudiante.domicilio": estudiante.direccion
+      ? { valor: estudiante.direccion }
+      : { mensajeAusente: "Este estudiante no tiene domicilio registrado." },
+    "estudiante.ciudad": estudiante.ciudad
+      ? { valor: estudiante.ciudad }
+      : { mensajeAusente: "Este estudiante no tiene ciudad registrada." },
+    "estudiante.fechaNacimiento": formatoFecha(estudiante.fechaNacimiento)
+      ? { valor: formatoFecha(estudiante.fechaNacimiento) }
+      : { mensajeAusente: "Este estudiante no tiene fecha de nacimiento registrada." },
+    "estudiante.nacionalidad": { mensajeAusente: "Este estudiante no tiene nacionalidad registrada en SIGEDUAL." },
+    "estudiante.apoderadoNombre": estudiante.apoderadoNombre
+      ? { valor: estudiante.apoderadoNombre }
+      : { mensajeAusente: "Este estudiante no tiene un representante legal registrado." },
+    "estudiante.apoderadoRun": estudiante.apoderadoRun
+      ? { valor: estudiante.apoderadoRun }
+      : { mensajeAusente: "Este estudiante no tiene el RUN del representante legal registrado." },
+    "estudiante.apoderadoDomicilio": { mensajeAusente: "El domicilio del representante legal no está registrado en SIGEDUAL." },
+    "estudiante.apoderadoCiudad": { mensajeAusente: "La ciudad del representante legal no está registrada en SIGEDUAL." },
     "especialidad.nombre": especialidad ? { valor: especialidad.nombre } : { mensajeAusente: "No se encontró la especialidad del estudiante." },
     "centro.nombre": centro ? { valor: centro.nombre } : { mensajeAusente: "Este estudiante no tiene un centro dual asignado." },
     "centro.direccion": centro
       ? { valor: `${centro.direccion}${centro.comuna ? `, ${centro.comuna}` : ""}` }
       : { mensajeAusente: "Este estudiante no tiene un centro dual asignado." },
+    "centro.domicilio": centro
+      ? { valor: centro.direccion }
+      : { mensajeAusente: "Este estudiante no tiene un centro dual asignado." },
+    "centro.ciudad": centro?.ciudad
+      ? { valor: centro.ciudad }
+      : { mensajeAusente: "El centro dual no tiene ciudad registrada." },
+    "centro.contactoNombre": centro?.contactoNombre
+      ? { valor: centro.contactoNombre }
+      : { mensajeAusente: "El centro dual no tiene un representante/contacto registrado." },
+    "centro.contactoCargo": centro?.contactoCargo
+      ? { valor: centro.contactoCargo }
+      : { mensajeAusente: "El centro dual no tiene el cargo del representante/contacto registrado." },
     "maestroGuia.nombreCompleto": maestroGuia
       ? { valor: `${maestroGuia.nombres} ${maestroGuia.apellidoPaterno}`.trim() }
       : { mensajeAusente: "Este estudiante no tiene un maestro guía asociado." },
     "profesorSupervisor.nombre": profesorSupervisor
       ? { valor: profesorSupervisor.nombre }
       : { mensajeAusente: "Este estudiante no tiene un profesor supervisor asignado." },
-    "asignacion.fechaInicio": asignacionActiva?.fechaInicio
-      ? { valor: asignacionActiva.fechaInicio }
+    "asignacion.fechaInicio": formatoFecha(asignacionActiva?.fechaInicio)
+      ? { valor: formatoFecha(asignacionActiva?.fechaInicio) }
       : { mensajeAusente: "Sin fecha de inicio registrada." },
-    "asignacion.fechaTermino": asignacionActiva?.fechaTermino
-      ? { valor: asignacionActiva.fechaTermino }
+    "asignacion.fechaTermino": formatoFecha(asignacionActiva?.fechaTermino)
+      ? { valor: formatoFecha(asignacionActiva?.fechaTermino) }
       : { mensajeAusente: "Sin fecha de término registrada." },
     "liceo.nombre": ctx.liceo?.nombre ? { valor: ctx.liceo.nombre } : { mensajeAusente: "No se encontró el liceo." },
     "liceo.comuna": ctx.liceo?.comuna ? { valor: ctx.liceo.comuna } : { mensajeAusente: "No se encontró la comuna del liceo." },
+  };
+}
+
+/**
+ * Campos que no dependen de un estudiante, sino del propio documento (ej.
+ * la fecha en que se redacta el convenio). "documento.fechaCreacion" se
+ * resuelve al momento de crear el registro y luego queda fija: al reabrir
+ * un documento guardado, EditorDocumento usa el valor almacenado en
+ * `campos` en vez de recalcular esta función.
+ */
+export function resolverCamposDocumento(): Record<string, ResultadoCampo> {
+  return {
+    "documento.fechaCreacion": { valor: new Date().toLocaleDateString("es-CL") },
+    "documento.fechaPublicacionDecreto": {
+      mensajeAusente: "Este dato todavía no está configurado en SIGEDUAL.",
+    },
   };
 }
 
