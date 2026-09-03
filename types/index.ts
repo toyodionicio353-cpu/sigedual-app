@@ -28,6 +28,8 @@ export interface Liceo {
   email?: string;
   sitioWeb?: string;
   dominioCorreo?: string;
+  directorNombre?: string;
+  directorRut?: string;
   responsableNombre?: string;
   responsableCargo?: string;
   responsableRun?: string;
@@ -68,6 +70,9 @@ export interface Estudiante {
   direccion?: string;
   comuna?: string;
   ciudad?: string;
+  nacionalidad?: string;
+  apoderadoDomicilio?: string;
+  apoderadoCiudad?: string;
   anioAcademico?: string;
   curso: string;
   nivel: string;
@@ -240,4 +245,29 @@ export interface MaestroGuia {
   creadoPor: string;
   creadoEn: string;
   actualizadoEn?: string;
+}
+
+export interface ConvenioSegmento {
+  tipo: "texto" | "token";
+  valor: string;
+}
+
+export interface ConvenioParrafo {
+  id: string;
+  esTitulo?: boolean;
+  segmentos: ConvenioSegmento[];
+}
+
+export interface ConvenioRealizado {
+  id: string;
+  plantillaId: string;
+  plantillaNombre: string;
+  estudianteId: string;
+  estudianteNombre: string;
+  centroDualId: string;
+  centroNombre: string;
+  liceoId: string;
+  parrafos: ConvenioParrafo[];
+  creadoPor: string;
+  creadoEn: string;
 }
