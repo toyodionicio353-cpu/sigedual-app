@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -32,9 +33,16 @@ export default function ProfesoresPage() {
 
   return (
     <div className="p-4 md:p-8">
-      <div className="mb-6">
-        <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Profesores Supervisores</h1>
-        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{filtrados.length} profesor(es)</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
+        <div>
+          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Profesores Supervisores</h1>
+          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{filtrados.length} profesor(es)</p>
+        </div>
+        {usuario?.rol === "administrador" && (
+          <Link href="/dashboard/profesores/nuevo" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity text-center flex-shrink-0">
+            + Agregar profesor
+          </Link>
+        )}
       </div>
 
       <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por nombre, especialidad o correo..."
