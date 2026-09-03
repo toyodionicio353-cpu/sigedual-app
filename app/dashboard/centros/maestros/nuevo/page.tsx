@@ -52,7 +52,7 @@ export default function AgregarMaestroGuiaPage() {
     try {
       const centro = centros.find((c) => c.id === centroDualId);
       if (!centro) throw new Error("Centro dual no encontrado.");
-      const nuevo = {
+      const nuevo: Record<string, unknown> = {
         centroDualId,
         liceoId: usuario.liceoId,
         nombres: form.nombres.trim(),
@@ -63,15 +63,15 @@ export default function AgregarMaestroGuiaPage() {
         telefono: form.telefono.trim(),
         cargo: form.cargo.trim(),
         area: form.area.trim(),
-        aniosExperiencia: form.aniosExperiencia.trim() ? Number(form.aniosExperiencia) : undefined,
         especialidades: especialidadesSel,
         areasSupervision: areas,
-        capacidad: form.capacidad.trim() ? Number(form.capacidad) : undefined,
         estado: form.estado,
         observaciones: form.observaciones.trim(),
         creadoPor: usuario.uid,
         creadoEn: new Date().toISOString(),
       };
+      if (form.aniosExperiencia.trim()) nuevo.aniosExperiencia = Number(form.aniosExperiencia);
+      if (form.capacidad.trim()) nuevo.capacidad = Number(form.capacidad);
       const ref = await addDoc(collection(db, "maestros_guia"), nuevo);
       setCreado({ mg: { id: ref.id, ...nuevo } as MaestroGuia, centro });
     } catch (err) {
