@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import Sidebar from "@/components/Sidebar";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Bell } from "lucide-react";
+import { Bell, Building2, LogOut } from "lucide-react";
 
 const TITULOS: Record<string, string> = {
   "/dashboard": "Inicio",
@@ -35,7 +35,7 @@ const TITULOS: Record<string, string> = {
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, liceoActivo, salirDelLiceo } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -67,6 +67,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const titulo = TITULOS[pathname] ?? "Panel";
+
+  function salir() {
+    salirDelLiceo();
+    router.push("/dashboard/liceos");
+  }
 
   return (
     <div style={{ background: "var(--bg-base)" }} className="flex h-screen overflow-hidden">
@@ -107,6 +112,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
           </div>
         </header>
+
+        {liceoActivo && (
+          <div
+            style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+            className="px-3 md:px-6 py-2 flex items-center justify-between gap-3 flex-shrink-0"
+          >
+            <span className="flex items-center gap-2 text-xs font-semibold truncate">
+              <Building2 size={14} className="flex-shrink-0" />
+              Viendo como administrador el liceo: {liceoActivo.nombre}
+            </span>
+            <button
+              onClick={salir}
+              className="flex items-center gap-1.5 text-xs font-semibold hover:underline flex-shrink-0"
+            >
+              <LogOut size={13} />
+              Salir del liceo
+            </button>
+          </div>
+        )}
 
         {/* Contenido */}
         <main className="flex-1 min-h-0 overflow-auto">
