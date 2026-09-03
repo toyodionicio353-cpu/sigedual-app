@@ -66,12 +66,12 @@ export default function FichaMaestroGuiaPage() {
         setMg(m);
 
         const [snapCentro, snapEsp, snapAsig, snapEst] = await Promise.all([
-          getDoc(doc(db, "centros_duales", m.centroDualId)),
+          m.centroDualId ? getDoc(doc(db, "centros_duales", m.centroDualId)) : Promise.resolve(null),
           getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
           getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario!.liceoId))),
           getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
         ]);
-        if (snapCentro.exists()) setCentro({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
+        if (snapCentro?.exists()) setCentro({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
         setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
         setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
         setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));

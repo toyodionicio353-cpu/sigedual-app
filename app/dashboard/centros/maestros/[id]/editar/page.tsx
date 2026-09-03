@@ -53,11 +53,11 @@ export default function EditarMaestroGuiaPage() {
       setAreasSel(m.areasSupervision ?? []);
 
       const [snapCentro, snapEsp, snapMgTodos] = await Promise.all([
-        getDoc(doc(db, "centros_duales", m.centroDualId)),
+        m.centroDualId ? getDoc(doc(db, "centros_duales", m.centroDualId)) : Promise.resolve(null),
         getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
         getDocs(query(collection(db, "maestros_guia"), where("liceoId", "==", usuario!.liceoId))),
       ]);
-      if (snapCentro.exists()) setCentro({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
+      if (snapCentro?.exists()) setCentro({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
       setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
       setRutsOcupados(
         snapMgTodos.docs
