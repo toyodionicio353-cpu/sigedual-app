@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import { calcularCompatibilidad, disponibleParaRecomendar } from "@/lib/compatibilidad";
+import { calcularCompatibilidad, disponibleParaRecomendar, estadoEfectivo, capacidadDe } from "@/lib/compatibilidad";
 import type { Asignacion, CentroDual, Compatibilidad, EstadoAsignacion, Especialidad, Estudiante, Usuario } from "@/types";
 import {
   ArrowLeft, ArrowRight, Search, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, User, Users,
@@ -197,7 +197,7 @@ export default function NuevaAsignacionPage() {
     const porEstudiante = seleccionados.map((estudiante) => ({
       estudiante,
       opciones: centros
-        .filter((c) => c.especialidades.includes(estudiante.especialidadId) && c.activo !== false)
+        .filter((c) => c.especialidades.includes(estudiante.especialidadId) && estadoEfectivo(c) === "activo")
         .map((centro) => ({ centro, compatibilidad: calcularCompatibilidad(estudiante, centro) }))
         .sort((a, b) => (b.compatibilidad.puntaje ?? -1) - (a.compatibilidad.puntaje ?? -1)),
     }));
@@ -215,7 +215,8 @@ export default function NuevaAsignacionPage() {
       let elegido: string | null = null;
       for (const { centro } of opciones) {
         const usados = cuposUsados.get(centro.id) ?? 0;
-        if (centro.cuposDisponibles == null || usados < centro.cuposDisponibles) {
+        const capacidad = capacidadDe(centro);
+        if (capacidad == null || usados < capacidad) {
           elegido = centro.id;
           cuposUsados.set(centro.id, usados + 1);
           break;

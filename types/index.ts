@@ -135,22 +135,44 @@ export interface Soporte {
   notas: string;
 }
 
+export type TipoCentroDual = "empresa" | "institucion" | "organizacion" | "otro";
+export type EstadoCentroDual = "activo" | "inactivo" | "en_revision";
+
 export interface CentroDual {
   id: string;
   nombre: string;
-  rut: string;
+  rut?: string;
+  tipo?: TipoCentroDual;
+  razonSocial?: string;
+  nombreComercial?: string;
   direccion: string;
   comuna: string;
+  ciudad?: string;
+  region?: string;
   telefono?: string;
   email?: string;
-  maestroGuia: string;
+  sitioWeb?: string;
+  contactoNombre?: string;
+  contactoCargo?: string;
+  contactoTelefono?: string;
+  contactoEmail?: string;
+  /** @deprecated se gestiona desde "Centros Duales → Lista de maestro guía"; se conserva por compatibilidad con centros creados antes de ese cambio */
+  maestroGuia?: string;
+  /** @deprecated ver maestroGuia */
   telefonoMaestro?: string;
+  /** @deprecated ver maestroGuia */
   emailMaestro?: string;
   liceoId: string;
   especialidades: string[];
+  areasDesempeno?: string[];
   caracteristicas?: string[];
   habilidadesValoradas?: string[];
+  /** dato ingresado por el administrador; los cupos disponibles se calculan, no se guardan */
+  capacidad?: number;
+  /** @deprecated usar capacidad */
   cuposDisponibles?: number;
+  estado?: EstadoCentroDual;
+  /** @deprecated usar estado; se mantiene espejado en escritura por compatibilidad con código que aún lo lea */
   activo: boolean;
 }
 
