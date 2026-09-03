@@ -12,17 +12,6 @@ function normalizar(texto?: string): string {
   return (texto || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function SegmentoProtegidoView({ texto }: { texto: string }) {
-  return (
-    <strong
-      contentEditable={false}
-      style={{ color: "var(--text-primary)", userSelect: "none", WebkitUserSelect: "none" }}
-    >
-      {texto}
-    </strong>
-  );
-}
-
 const FUENTE_CAMPO = "var(--font-sans), sans-serif";
 
 function SegmentoCampoView({ resultado, etiqueta }: { resultado?: ResultadoCampo; etiqueta?: string }) {
@@ -40,7 +29,7 @@ function SegmentoCampoView({ resultado, etiqueta }: { resultado?: ResultadoCampo
   );
 }
 
-function SegmentoEditableView({ texto, onCambio }: { texto: string; onCambio: (t: string) => void }) {
+function SegmentoEditableView({ texto, negrita, onCambio }: { texto: string; negrita?: boolean; onCambio: (t: string) => void }) {
   const [editando, setEditando] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
 
@@ -73,6 +62,7 @@ function SegmentoEditableView({ texto, onCambio }: { texto: string; onCambio: (t
         outline: editando ? "1px dashed var(--accent)" : "none",
         background: editando ? "var(--hover-overlay)" : "transparent",
         borderBottom: !editando ? "1px dashed var(--border)" : "none",
+        fontWeight: negrita ? 700 : undefined,
       }}
       className="rounded transition-colors"
     >
@@ -323,9 +313,15 @@ export default function EditorDocumento({
               className="text-sm text-justify"
             >
               {parrafo.map((s, si) => {
-                if (s.tipo === "protegido") return <SegmentoProtegidoView key={si} texto={s.texto} />;
                 if (s.tipo === "campo") return <SegmentoCampoView key={si} resultado={resultadoCampos[s.clave ?? ""]} etiqueta={etiquetaCampo(s.clave)} />;
-                return <SegmentoEditableView key={si} texto={s.texto} onCambio={(t) => actualizarSegmento(pi, si, t)} />;
+                return (
+                  <SegmentoEditableView
+                    key={si}
+                    texto={s.texto}
+                    negrita={s.tipo === "protegido"}
+                    onCambio={(t) => actualizarSegmento(pi, si, t)}
+                  />
+                );
               })}
             </p>
           ))}
