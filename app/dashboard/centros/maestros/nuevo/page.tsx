@@ -106,12 +106,12 @@ export default function AgregarMaestroGuiaPage() {
           </p>
         </div>
         <Link
-          href="/dashboard/centros"
+          href="/dashboard/centros/maestros"
           style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
         >
           <ArrowLeft size={16} />
-          Volver a centros duales
+          Volver a maestros guía
         </Link>
       </div>
 

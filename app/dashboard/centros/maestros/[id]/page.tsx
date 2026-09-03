@@ -146,9 +146,9 @@ export default function FichaMaestroGuiaPage() {
       <div className="p-4 md:p-8 max-w-3xl">
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
           <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Maestro guía no encontrado</p>
-          <Link href="/dashboard/centros" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity mt-4">
+          <Link href="/dashboard/centros/maestros" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity mt-4">
             <ArrowLeft size={16} />
-            Volver a centros duales
+            Volver a maestros guía
           </Link>
         </div>
       </div>
@@ -171,12 +171,12 @@ export default function FichaMaestroGuiaPage() {
           </p>
         </div>
         <Link
-          href="/dashboard/centros"
+          href="/dashboard/centros/maestros"
           style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
         >
           <ArrowLeft size={16} />
-          Volver a centros duales
+          Volver a maestros guía
         </Link>
       </div>
 
