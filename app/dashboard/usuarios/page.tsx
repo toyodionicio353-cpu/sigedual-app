@@ -5,7 +5,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { RefreshCw, Trash2 } from "lucide-react";
-import type { Usuario, Rol } from "@/types";
+import type { Usuario, Rol, Liceo } from "@/types";
 
 const ROLES: { value: Rol; label: string }[] = [
   { value: "coordinador", label: "Coordinador" },
@@ -26,6 +26,7 @@ interface Huerfano {
 export default function UsuariosPage() {
   const { usuario } = useAuth();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [liceos, setLiceos] = useState<Liceo[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(EMPTY);
@@ -45,8 +46,12 @@ export default function UsuariosPage() {
     // El administrador ve a todos los usuarios de la plataforma, sin
     // filtrar por liceo (a diferencia de otros roles, que solo verían
     // el suyo si esta pantalla se habilitara para ellos).
-    const snap = await getDocs(collection(db, "usuarios"));
-    setUsuarios(snap.docs.map((d) => ({ ...d.data() } as Usuario)));
+    const [snapUsuarios, snapLiceos] = await Promise.all([
+      getDocs(collection(db, "usuarios")),
+      getDocs(collection(db, "liceos")),
+    ]);
+    setUsuarios(snapUsuarios.docs.map((d) => ({ ...d.data() } as Usuario)));
+    setLiceos(snapLiceos.docs.map((d) => ({ id: d.id, ...d.data() } as Liceo)));
     setLoading(false);
   }
 
@@ -198,7 +203,7 @@ export default function UsuariosPage() {
             <RefreshCw size={15} className={sincronizando ? "animate-spin" : ""} />
             Sincronizar con Firebase
           </button>
-          <button onClick={() => { setForm(EMPTY); setModal(true); }} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+          <button onClick={() => { setForm({ ...EMPTY, liceoId: usuario?.liceoId ?? "" }); setModal(true); }} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
             + Crear usuario
           </button>
         </div>
@@ -216,7 +221,7 @@ export default function UsuariosPage() {
               <div key={h.uid} className="flex items-center justify-between gap-3">
                 <span style={{ color: "var(--text-primary)" }} className="text-sm truncate">{h.email}</span>
                 <button
-                  onClick={() => { setHuerfanoActivo(h); setFormHuerfano(EMPTY_HUERFANO); }}
+                  onClick={() => { setHuerfanoActivo(h); setFormHuerfano({ ...EMPTY_HUERFANO, liceoId: usuario?.liceoId ?? "" }); }}
                   style={{ background: "var(--warning)", color: "#1a1300" }}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity flex-shrink-0"
                 >
@@ -285,7 +290,6 @@ export default function UsuariosPage() {
                 { key: "email", label: "Correo electrónico", placeholder: "usuario@liceo.cl", type: "email" },
                 { key: "password", label: "Contraseña temporal", placeholder: "••••••••", type: "password" },
                 { key: "especialidad", label: "Especialidad (si aplica)", placeholder: "Contabilidad", type: "text" },
-                { key: "liceoId", label: "ID del liceo", placeholder: usuario?.liceoId, type: "text" },
               ].map(({ key, label, placeholder, type }) => (
                 <div key={key}>
                   <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">{label}</label>
@@ -294,6 +298,15 @@ export default function UsuariosPage() {
                     className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
                 </div>
               ))}
+              <div>
+                <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
+                <select value={form.liceoId} onChange={(e) => setForm((f) => ({ ...f, liceoId: e.target.value }))}
+                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none">
+                  <option value="">Selecciona un liceo</option>
+                  {liceos.map((l) => <option key={l.id} value={l.id}>{l.nombre}</option>)}
+                </select>
+              </div>
               <div>
                 <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Rol</label>
                 <select value={form.rol} onChange={(e) => setForm((f) => ({ ...f, rol: e.target.value as Rol }))}
@@ -323,7 +336,6 @@ export default function UsuariosPage() {
               {[
                 { key: "nombre", label: "Nombre completo", placeholder: "María González" },
                 { key: "especialidad", label: "Especialidad (si aplica)", placeholder: "Contabilidad" },
-                { key: "liceoId", label: "ID del liceo", placeholder: usuario?.liceoId },
               ].map(({ key, label, placeholder }) => (
                 <div key={key}>
                   <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">{label}</label>
@@ -332,6 +344,15 @@ export default function UsuariosPage() {
                     className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
                 </div>
               ))}
+              <div>
+                <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
+                <select value={formHuerfano.liceoId} onChange={(e) => setFormHuerfano((f) => ({ ...f, liceoId: e.target.value }))}
+                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none">
+                  <option value="">Selecciona un liceo</option>
+                  {liceos.map((l) => <option key={l.id} value={l.id}>{l.nombre}</option>)}
+                </select>
+              </div>
               <div>
                 <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Rol</label>
                 <select value={formHuerfano.rol} onChange={(e) => setFormHuerfano((f) => ({ ...f, rol: e.target.value as Rol }))}
