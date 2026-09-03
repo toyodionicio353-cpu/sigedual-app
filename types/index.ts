@@ -208,8 +208,34 @@ export interface Asignacion {
   jornada?: string;
   profesorSupervisorId?: string;
   maestroGuia?: string;
+  maestroGuiaId?: string;
   observaciones?: string;
   compatibilidad: Compatibilidad;
+  creadoPor: string;
+  creadoEn: string;
+  actualizadoEn?: string;
+}
+
+export type EstadoMaestroGuia = "activo" | "inactivo";
+
+export interface MaestroGuia {
+  id: string;
+  centroDualId: string;
+  liceoId: string;
+  nombres: string;
+  apellidoPaterno: string;
+  apellidoMaterno?: string;
+  run: string;
+  email: string;
+  telefono: string;
+  cargo: string;
+  area?: string;
+  aniosExperiencia?: number;
+  especialidades: string[];
+  areasSupervision?: string[];
+  capacidad?: number;
+  estado: EstadoMaestroGuia;
+  observaciones?: string;
   creadoPor: string;
   creadoEn: string;
   actualizadoEn?: string;
