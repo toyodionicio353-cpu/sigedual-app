@@ -5,6 +5,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { DocumentoGenerado, TipoModuloDocumento } from "@/types";
 import type { ItemBiblioteca } from "@/components/biblioteca/BibliotecaDocumental";
+import { deserializarContenido } from "@/lib/documentos/guardarDocumento";
 
 function textoParaPreview(doc: DocumentoGenerado): string[] {
   const lineas: string[] = [];
@@ -31,7 +32,10 @@ export function useDocumentosCreados(tipoModulo: TipoModuloDocumento) {
       where("liceoId", "==", usuario.liceoId),
       where("tipoModulo", "==", tipoModulo)
     ));
-    setDocumentos(snap.docs.map((d) => ({ id: d.id, ...d.data() } as DocumentoGenerado)));
+    setDocumentos(snap.docs.map((d) => {
+      const data = d.data();
+      return { id: d.id, ...data, contenido: deserializarContenido(data.contenido) } as DocumentoGenerado;
+    }));
     setCargando(false);
   }
 

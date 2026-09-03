@@ -4,6 +4,25 @@ import type { SegmentoDocumento, TipoModuloDocumento } from "@/types";
 
 export const NOMBRE_DUPLICADO = "NOMBRE_DUPLICADO";
 
+/**
+ * Firestore no admite arrays anidados dentro de arrays (un array de
+ * párrafos, cada uno un array de segmentos, es justo eso), así que
+ * `contenido` se guarda como JSON y se reconstruye al leerlo.
+ */
+export function serializarContenido(contenido: SegmentoDocumento[][]): string {
+  return JSON.stringify(contenido);
+}
+
+export function deserializarContenido(valor: unknown): SegmentoDocumento[][] {
+  if (typeof valor !== "string") return [];
+  try {
+    const parsed = JSON.parse(valor);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 function normalizarNombre(nombre: string): string {
   return nombre.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
@@ -48,7 +67,7 @@ export async function crearDocumento(params: CrearDocumentoParams): Promise<stri
       liceoId: params.liceoId,
       nombre,
       campos: params.campos,
-      contenido: params.contenido,
+      contenido: serializarContenido(params.contenido),
       creadoPor: params.creadoPor,
       creadoEn: new Date().toISOString(),
     };
@@ -84,7 +103,7 @@ export async function actualizarDocumento(params: ActualizarDocumentoParams): Pr
   const cambios: Record<string, unknown> = {
     nombre: nombreNuevo,
     campos: params.campos,
-    contenido: params.contenido,
+    contenido: serializarContenido(params.contenido),
     actualizadoEn: new Date().toISOString(),
   };
   if (params.estudianteId) cambios.estudianteId = params.estudianteId;
