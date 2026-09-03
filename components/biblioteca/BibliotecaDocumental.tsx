@@ -31,6 +31,8 @@ interface BibliotecaDocumentalProps {
   acciones?: AccionMenu[];
   onUsarPlantilla?: (item: ItemBiblioteca) => void;
   onAbrirCreado?: (item: ItemBiblioteca) => void;
+  tabInicial?: "plantillas" | "creados";
+  onCambiarTab?: (tab: "plantillas" | "creados") => void;
 }
 
 type Orden = "recientes" | "antiguos" | "az" | "za";
@@ -112,9 +114,13 @@ function MenuTarjeta({ item, acciones, abierto, onToggle }: { item: ItemBibliote
 export default function BibliotecaDocumental({
   titulo, descripcion, placeholderBusqueda, labelTabCreados, labelPlural,
   plantillas, creados, cargando = false, accionPrincipal, acciones = [],
-  onUsarPlantilla, onAbrirCreado,
+  onUsarPlantilla, onAbrirCreado, tabInicial, onCambiarTab,
 }: BibliotecaDocumentalProps) {
-  const [tab, setTab] = useState<"plantillas" | "creados">("plantillas");
+  const [tab, setTabInterno] = useState<"plantillas" | "creados">(tabInicial ?? "plantillas");
+  function setTab(t: "plantillas" | "creados") {
+    setTabInterno(t);
+    onCambiarTab?.(t);
+  }
   const [busqueda, setBusqueda] = useState("");
   const [orden, setOrden] = useState<Orden>("recientes");
   const [menuAbierto, setMenuAbierto] = useState<string | null>(null);
