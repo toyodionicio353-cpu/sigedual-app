@@ -5,9 +5,14 @@ import Link from "next/link";
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import { disponibilidadMaestroGuiaDe } from "@/lib/maestro-guia";
-import type { Asignacion, CentroDual, Especialidad, MaestroGuia } from "@/types";
-import { ArrowLeft, Pencil, Power } from "lucide-react";
+import { disponibilidadMaestroGuiaDe, camposFaltantesMaestroGuia } from "@/lib/maestro-guia";
+import type { Asignacion, CentroDual, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia } from "@/types";
+import { AlertCircle, ArrowLeft, Pencil, Power } from "lucide-react";
+
+const ESTADO_ASIGNACION_LABEL: Record<EstadoAsignacion, string> = {
+  pendiente: "Pendiente", en_proceso: "En proceso", asignada: "Asignada",
+  activa: "Activa", finalizada: "Finalizada", cancelada: "Cancelada",
+};
 
 function Bloque({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
@@ -35,6 +40,7 @@ export default function FichaMaestroGuiaPage() {
   const [centro, setCentro] = useState<CentroDual | null>(null);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
+  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [actualizando, setActualizando] = useState(false);
@@ -54,14 +60,16 @@ export default function FichaMaestroGuiaPage() {
       const m = { id: snapMg.id, ...snapMg.data() } as MaestroGuia;
       setMg(m);
 
-      const [snapCentro, snapEsp, snapAsig] = await Promise.all([
+      const [snapCentro, snapEsp, snapAsig, snapEst] = await Promise.all([
         getDoc(doc(db, "centros_duales", m.centroDualId)),
         getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
         getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario!.liceoId))),
+        getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
       ]);
       if (snapCentro.exists()) setCentro({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
       setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
       setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
+      setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
       setLoading(false);
     }
     cargar();
@@ -69,6 +77,10 @@ export default function FichaMaestroGuiaPage() {
 
   function especialidadNombre(espId: string): string {
     return especialidades.find((e) => e.id === espId)?.nombre || espId;
+  }
+
+  function estudianteDe(asig: Asignacion): Estudiante | undefined {
+    return estudiantes.find((e) => e.id === asig.estudianteId);
   }
 
   async function cambiarEstado() {
@@ -106,6 +118,10 @@ export default function FichaMaestroGuiaPage() {
   }
 
   const disponibilidad = disponibilidadMaestroGuiaDe(mg, asignaciones);
+  const asignacionesDeEsteGuia = asignaciones.filter((a) => a.maestroGuiaId === mg.id);
+  const asignacionesVigentes = asignacionesDeEsteGuia.filter((a) => a.estado === "asignada" || a.estado === "activa");
+  const asignacionesHistoricas = asignacionesDeEsteGuia.filter((a) => a.estado === "finalizada" || a.estado === "cancelada");
+  const faltantes = camposFaltantesMaestroGuia(mg, Boolean(centro));
 
   return (
     <div className="p-4 md:p-8 max-w-3xl">
@@ -143,6 +159,16 @@ export default function FichaMaestroGuiaPage() {
           </>
         )}
       </div>
+
+      {faltantes.length > 0 && (
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-xl px-4 py-3 mb-6 flex items-start gap-2">
+          <AlertCircle size={15} style={{ color: "var(--text-muted)" }} className="flex-shrink-0 mt-0.5" />
+          <p style={{ color: "var(--text-secondary)" }} className="text-xs">
+            <span style={{ color: "var(--text-primary)" }} className="font-medium">Información incompleta. </span>
+            Falta: {faltantes.join(", ")}.
+          </p>
+        </div>
+      )}
 
       <Bloque titulo="Información personal">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -193,6 +219,53 @@ export default function FichaMaestroGuiaPage() {
           <Dato label="Disponibles" valor={disponibilidad.disponibles != null ? disponibilidad.disponibles : "Sin límite definido"} />
         </div>
       </Bloque>
+
+      <Bloque titulo="Estudiantes asignados">
+        {asignacionesVigentes.length === 0 ? (
+          <p style={{ color: "var(--text-secondary)" }} className="text-sm">Este maestro guía no tiene estudiantes asignados actualmente.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {asignacionesVigentes.map((a) => {
+              const est = estudianteDe(a);
+              return (
+                <Link
+                  key={a.id}
+                  href={`/dashboard/estudiantes/asignaciones/${a.id}`}
+                  style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
+                  className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:[border-color:var(--accent)] transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium truncate">{est ? `${est.nombres} ${est.apellidos}` : "Estudiante no encontrado"}</p>
+                    <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{est?.curso || "Sin curso"} · Asignado desde: {a.fechaInicio || "No definida"}</p>
+                  </div>
+                  <span style={{ color: "var(--text-secondary)" }} className="text-xs flex-shrink-0">{ESTADO_ASIGNACION_LABEL[a.estado]}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </Bloque>
+
+      {asignacionesHistoricas.length > 0 && (
+        <Bloque titulo="Historial">
+          <div className="flex flex-col gap-2">
+            {asignacionesHistoricas.map((a) => {
+              const est = estudianteDe(a);
+              return (
+                <Link
+                  key={a.id}
+                  href={`/dashboard/estudiantes/asignaciones/${a.id}`}
+                  style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
+                  className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:[border-color:var(--accent)] transition-colors"
+                >
+                  <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium truncate">{est ? `${est.nombres} ${est.apellidos}` : "Estudiante no encontrado"}</p>
+                  <span style={{ color: "var(--text-muted)" }} className="text-xs flex-shrink-0">{ESTADO_ASIGNACION_LABEL[a.estado]}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </Bloque>
+      )}
 
       {mg.observaciones && (
         <Bloque titulo="Observaciones">
