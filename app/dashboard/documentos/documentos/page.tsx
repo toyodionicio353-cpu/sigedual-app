@@ -1,15 +1,75 @@
 "use client";
 import { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
 import BibliotecaDocumental, { type ItemBiblioteca } from "@/components/biblioteca/BibliotecaDocumental";
+import EditorDocumento from "@/components/biblioteca/EditorDocumento";
+import { plantillasParaModulo } from "@/lib/plantillas";
+import { useContextoDocumentos } from "@/lib/plantillas/useContextoDocumentos";
+import { useDocumentosCreados } from "@/lib/plantillas/useDocumentosCreados";
+import { eliminarDocumento } from "@/lib/documentos/guardarDocumento";
+import type { DocumentoGenerado } from "@/types";
+import type { PlantillaDocumento } from "@/types/plantillas";
+
+const TIPO_MODULO = "documento" as const;
+
+type Vista = { modo: "biblioteca" } | { modo: "editor"; plantilla?: PlantillaDocumento; existente?: DocumentoGenerado };
 
 export default function DocumentosPage() {
+  const { usuario } = useAuth();
   const [aviso, setAviso] = useState("");
-  const plantillas: ItemBiblioteca[] = [];
-  const creados: ItemBiblioteca[] = [];
+  const [vista, setVista] = useState<Vista>({ modo: "biblioteca" });
 
-  function mostrarProximamente() {
-    setAviso("Esta función estará disponible próximamente.");
+  const plantillasDefinidas = plantillasParaModulo(TIPO_MODULO);
+  const { contexto, cargando: cargandoContexto } = useContextoDocumentos();
+  const { documentos, items: itemsCreados, cargando: cargandoCreados, recargar } = useDocumentosCreados(TIPO_MODULO);
+
+  const plantillas: ItemBiblioteca[] = plantillasDefinidas.map((p) => ({
+    id: p.id,
+    nombre: p.nombre,
+    subtitulo: p.descripcion,
+    previewLineas: p.previewLineas,
+  }));
+
+  function mostrarAviso(texto: string) {
+    setAviso(texto);
     setTimeout(() => setAviso(""), 3000);
+  }
+
+  function usarPlantilla(item: ItemBiblioteca) {
+    const plantilla = plantillasDefinidas.find((p) => p.id === item.id);
+    if (!plantilla) return;
+    setVista({ modo: "editor", plantilla });
+  }
+
+  function abrirCreado(item: ItemBiblioteca) {
+    const doc = documentos.find((d) => d.id === item.id);
+    if (!doc) return;
+    setVista({ modo: "editor", existente: doc });
+  }
+
+  async function eliminarCreado(item: ItemBiblioteca) {
+    const doc = documentos.find((d) => d.id === item.id);
+    if (!doc || !usuario) return;
+    await eliminarDocumento({
+      documentoId: doc.id, liceoId: usuario.liceoId, tipoModulo: TIPO_MODULO, nombre: doc.nombre,
+    });
+    mostrarAviso("Documento eliminado.");
+    recargar();
+  }
+
+  if (vista.modo === "editor" && usuario) {
+    return (
+      <EditorDocumento
+        tipoModulo={TIPO_MODULO}
+        liceoId={usuario.liceoId}
+        usuarioUid={usuario.uid}
+        contexto={contexto}
+        plantilla={vista.plantilla}
+        documentoExistente={vista.existente}
+        onGuardado={() => { recargar(); setVista({ modo: "biblioteca" }); }}
+        onCancelar={() => setVista({ modo: "biblioteca" })}
+      />
+    );
   }
 
   return (
@@ -28,16 +88,13 @@ export default function DocumentosPage() {
         labelTabCreados="Documentos creados"
         labelPlural="documentos"
         plantillas={plantillas}
-        creados={creados}
-        cargando={false}
-        accionPrincipal={{ label: "+ Agregar documento", onClick: mostrarProximamente }}
+        creados={itemsCreados}
+        cargando={cargandoContexto || cargandoCreados}
+        onUsarPlantilla={usarPlantilla}
+        onAbrirCreado={abrirCreado}
         acciones={[
-          { label: "Abrir", onClick: mostrarProximamente },
-          { label: "Ver", onClick: mostrarProximamente },
-          { label: "Editar", onClick: mostrarProximamente },
-          { label: "Duplicar", onClick: mostrarProximamente },
-          { label: "Descargar", onClick: mostrarProximamente },
-          { label: "Eliminar", onClick: mostrarProximamente },
+          { label: "Editar", onClick: abrirCreado },
+          { label: "Eliminar", onClick: eliminarCreado },
         ]}
       />
     </div>

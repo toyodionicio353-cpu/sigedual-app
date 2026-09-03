@@ -1,39 +1,75 @@
 "use client";
-import { useEffect, useState } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import BibliotecaDocumental, { type ItemBiblioteca } from "@/components/biblioteca/BibliotecaDocumental";
+import EditorDocumento from "@/components/biblioteca/EditorDocumento";
+import { plantillasParaModulo } from "@/lib/plantillas";
+import { useContextoDocumentos } from "@/lib/plantillas/useContextoDocumentos";
+import { useDocumentosCreados } from "@/lib/plantillas/useDocumentosCreados";
+import { eliminarDocumento } from "@/lib/documentos/guardarDocumento";
+import type { DocumentoGenerado } from "@/types";
+import type { PlantillaDocumento } from "@/types/plantillas";
+
+const TIPO_MODULO = "convenio" as const;
+
+type Vista = { modo: "biblioteca" } | { modo: "editor"; plantilla?: PlantillaDocumento; existente?: DocumentoGenerado };
 
 export default function ConveniosPage() {
   const { usuario } = useAuth();
-  const [creados, setCreados] = useState<ItemBiblioteca[]>([]);
-  const [cargando, setCargando] = useState(true);
   const [aviso, setAviso] = useState("");
+  const [vista, setVista] = useState<Vista>({ modo: "biblioteca" });
 
-  useEffect(() => { if (usuario) cargar(); }, [usuario]);
+  const plantillasDefinidas = plantillasParaModulo(TIPO_MODULO);
+  const { contexto, cargando: cargandoContexto } = useContextoDocumentos();
+  const { documentos, items: itemsCreados, cargando: cargandoCreados, recargar } = useDocumentosCreados(TIPO_MODULO);
 
-  async function cargar() {
-    if (!usuario) return;
-    setCargando(true);
-    const snap = await getDocs(query(collection(db, "convenios"), where("liceoId", "==", usuario.liceoId)));
-    setCreados(snap.docs.map((d) => {
-      const data = d.data() as Record<string, unknown>;
-      return {
-        id: d.id,
-        nombre: (data.nombre as string) || (data.plantillaNombre as string) || "Convenio sin nombre",
-        tipo: (data.tipo as string) || "Convenio",
-        fecha: (data.creadoEn as string) || "",
-        estado: data.estado as string | undefined,
-        autor: (data.estudianteNombre as string) || (data.centroNombre as string) || undefined,
-      };
-    }));
-    setCargando(false);
+  const plantillas: ItemBiblioteca[] = plantillasDefinidas.map((p) => ({
+    id: p.id,
+    nombre: p.nombre,
+    subtitulo: p.descripcion,
+    previewLineas: p.previewLineas,
+  }));
+
+  function mostrarAviso(texto: string) {
+    setAviso(texto);
+    setTimeout(() => setAviso(""), 3000);
   }
 
-  function mostrarProximamente() {
-    setAviso("Esta función estará disponible próximamente.");
-    setTimeout(() => setAviso(""), 3000);
+  function usarPlantilla(item: ItemBiblioteca) {
+    const plantilla = plantillasDefinidas.find((p) => p.id === item.id);
+    if (!plantilla) return;
+    setVista({ modo: "editor", plantilla });
+  }
+
+  function abrirCreado(item: ItemBiblioteca) {
+    const doc = documentos.find((d) => d.id === item.id);
+    if (!doc) return;
+    setVista({ modo: "editor", existente: doc });
+  }
+
+  async function eliminarCreado(item: ItemBiblioteca) {
+    const doc = documentos.find((d) => d.id === item.id);
+    if (!doc || !usuario) return;
+    await eliminarDocumento({
+      documentoId: doc.id, liceoId: usuario.liceoId, tipoModulo: TIPO_MODULO, nombre: doc.nombre,
+    });
+    mostrarAviso("Convenio eliminado.");
+    recargar();
+  }
+
+  if (vista.modo === "editor" && usuario) {
+    return (
+      <EditorDocumento
+        tipoModulo={TIPO_MODULO}
+        liceoId={usuario.liceoId}
+        usuarioUid={usuario.uid}
+        contexto={contexto}
+        plantilla={vista.plantilla}
+        documentoExistente={vista.existente}
+        onGuardado={() => { recargar(); setVista({ modo: "biblioteca" }); }}
+        onCancelar={() => setVista({ modo: "biblioteca" })}
+      />
+    );
   }
 
   return (
@@ -51,17 +87,14 @@ export default function ConveniosPage() {
         placeholderBusqueda="Buscar convenios..."
         labelTabCreados="Convenios creados"
         labelPlural="convenios"
-        plantillas={[]}
-        creados={creados}
-        cargando={cargando}
-        accionPrincipal={{ label: "+ Agregar convenio", onClick: mostrarProximamente }}
+        plantillas={plantillas}
+        creados={itemsCreados}
+        cargando={cargandoContexto || cargandoCreados}
+        onUsarPlantilla={usarPlantilla}
+        onAbrirCreado={abrirCreado}
         acciones={[
-          { label: "Abrir", onClick: mostrarProximamente },
-          { label: "Ver", onClick: mostrarProximamente },
-          { label: "Editar", onClick: mostrarProximamente },
-          { label: "Duplicar", onClick: mostrarProximamente },
-          { label: "Descargar", onClick: mostrarProximamente },
-          { label: "Eliminar", onClick: mostrarProximamente },
+          { label: "Editar", onClick: abrirCreado },
+          { label: "Eliminar", onClick: eliminarCreado },
         ]}
       />
     </div>
