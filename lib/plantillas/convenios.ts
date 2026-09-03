@@ -90,9 +90,44 @@ const CONVENIO_APRENDIZAJE: PlantillaDocumento = {
   ],
 };
 
+const COMPROMISO: PlantillaDocumento = {
+  id: "compromiso",
+  tipoModulo: "convenio",
+  nombre: "Compromiso",
+  descripcion: "Compromiso del apoderado con la formación profesional dual del estudiante.",
+  previewLineas: [
+    "COMPROMISO",
+    "Yo, (Nombre del apoderado) PADRE Y/O APODERADO(A) DE (Nombre del estudiante) ESTUDIANTE DEL (Nivel/Año de estudio)…",
+  ],
+  requiereEstudiante: true,
+  camposRequeridos: [
+    "documento.anio",
+    "estudiante.apoderadoNombre",
+    "estudiante.nombreCompleto",
+    "estudiante.nivel",
+    "especialidad.nombre",
+  ],
+  parrafos: [
+    [p("COMPROMISO "), c("documento.anio")],
+    [
+      p("Yo, "), c("estudiante.apoderadoNombre"),
+      p(" PADRE Y/O APODERADO(A) DE "), c("estudiante.nombreCompleto"),
+      p(" ESTUDIANTE DEL "), c("estudiante.nivel"),
+      p(" DE LA ESPECIALIDAD DE "), c("especialidad.nombre"),
+      p(", DECLARO:"),
+    ],
+    [p("• Aceptar y autorizar a que mi pupilo participe en la innovación educativa denominada \"Formación Profesional Dual\" en la especialidad antes mencionads.")],
+    [p("• Aceptar y hacer cumplir el Reglamento Interno del Liceo y de la Especialidad, del cual tomé conocimiento.")],
+    [p("• Aceptar el compromiso de Uniformar a mi pupilo(a) según las exigencias de la especialidad, tanto en actividades educativas internas como formales externas, asumiendo el costo que ello demande.")],
+    [p("• Velar por la asistencia de mi pupilo a las clases sistemáticas y a las Empresas Duales, asumiendo los costos que ello demande.")],
+    [p("• Entregar un aporte voluntario a la Especialidad, para solventar gastos de supervisión, actividades curriculares y mantención de talleres entre otros.")],
+    [p("• Asumir y apoyar a la especialidad en todas las actividades que requiera a favor de la formación profesional e integral de mi Hijo(a) y/o Pupilo(a).")],
+  ],
+};
+
 /**
- * Plantillas de Convenios. La primera plantilla real (Convenio de
- * Aprendizaje) fue entregada por el usuario; nuevas plantillas se agregan
- * acá como entradas nuevas, sin tocar el resto del sistema.
+ * Plantillas de Convenios. "Convenio de Aprendizaje" y "Compromiso" son
+ * las plantillas reales entregadas por el usuario; nuevas plantillas se
+ * agregan acá como entradas nuevas, sin tocar el resto del sistema.
  */
-export const PLANTILLAS_CONVENIOS: PlantillaDocumento[] = [CONVENIO_APRENDIZAJE];
+export const PLANTILLAS_CONVENIOS: PlantillaDocumento[] = [CONVENIO_APRENDIZAJE, COMPROMISO];
