@@ -24,6 +24,7 @@ const TITULOS: Record<string, string> = {
   "/dashboard/especialidades": "Especialidades",
   "/dashboard/especialidades/cursos": "Cursos",
   "/dashboard/documentos": "Documentos",
+  "/dashboard/documentos/convenios": "Convenios",
   "/dashboard/documentos/subir": "Subir Documento",
   "/dashboard/documentos/mis-documentos": "Mis Documentos",
   "/dashboard/mensajes": "Canal General",
