@@ -1,4 +1,5 @@
 import type { ContextoResolucion } from "@/types/plantillas";
+import { formatearFecha } from "@/lib/fecha";
 
 export interface ResultadoCampo {
   valor?: string;
@@ -6,10 +7,7 @@ export interface ResultadoCampo {
 }
 
 function formatoFecha(iso?: string): string | undefined {
-  if (!iso) return undefined;
-  const fecha = new Date(iso);
-  if (Number.isNaN(fecha.getTime())) return iso;
-  return fecha.toLocaleDateString("es-CL");
+  return iso ? formatearFecha(iso) : undefined;
 }
 
 /**
@@ -114,12 +112,12 @@ export function resolverCamposEstudiante(estudianteId: string, ctx: ContextoReso
  */
 export function resolverCamposDocumento(): Record<string, ResultadoCampo> {
   return {
-    "documento.fechaCreacion": { valor: new Date().toLocaleDateString("es-CL") },
+    "documento.fechaCreacion": { valor: new Date().toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" }) },
     "documento.anio": { valor: String(new Date().getFullYear()) },
     // El Decreto N° 313 (Ministerio del Trabajo y Previsión Social) fue promulgado
-    // el 27-12-1972 y publicado en el Diario Oficial el 12-05-1973. Es un dato
-    // legal fijo, no depende del estudiante ni del liceo.
-    "documento.fechaPublicacionDecreto": { valor: "12-05-1973" },
+    // el 27 de diciembre de 1972 y publicado en el Diario Oficial el 12 de mayo
+    // de 1973. Es un dato legal fijo, no depende del estudiante ni del liceo.
+    "documento.fechaPublicacionDecreto": { valor: "12 de mayo de 1973" },
   };
 }
 
