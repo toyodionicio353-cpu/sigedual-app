@@ -50,6 +50,7 @@ export default function EvaluacionesPage() {
   async function eliminarCreado(item: ItemBiblioteca) {
     const doc = documentos.find((d) => d.id === item.id);
     if (!doc || !usuario) return;
+    if (!confirm(`¿Eliminar "${doc.nombre}"? Esta acción no se puede deshacer.`)) return;
     await eliminarDocumento({
       documentoId: doc.id, liceoId: usuario.liceoId, tipoModulo: TIPO_MODULO, nombre: doc.nombre,
     });
