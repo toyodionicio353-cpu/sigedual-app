@@ -5,7 +5,7 @@ import Link from "next/link";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import type { Asignacion, CentroDual, EstadoAsignacion, Estudiante, Usuario } from "@/types";
+import type { Asignacion, CentroDual, EstadoAsignacion, Estudiante, MaestroGuia, Usuario } from "@/types";
 import { ArrowLeft } from "lucide-react";
 
 const ESTADOS: EstadoAsignacion[] = ["pendiente", "en_proceso", "asignada", "activa", "finalizada", "cancelada"];
@@ -40,6 +40,7 @@ export default function FichaAsignacionPage() {
   const [asignacion, setAsignacion] = useState<Asignacion | null>(null);
   const [estudiante, setEstudiante] = useState<Estudiante | null>(null);
   const [centro, setCentro] = useState<CentroDual | null>(null);
+  const [maestroGuia, setMaestroGuia] = useState<MaestroGuia | null>(null);
   const [responsable, setResponsable] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(true);
   const [noEncontrada, setNoEncontrada] = useState(false);
@@ -60,14 +61,16 @@ export default function FichaAsignacionPage() {
       const a = { id: snapAsig.id, ...snapAsig.data() } as Asignacion;
       setAsignacion(a);
 
-      const [snapEst, snapCentro, snapResp] = await Promise.all([
+      const [snapEst, snapCentro, snapResp, snapMg] = await Promise.all([
         getDoc(doc(db, "estudiantes", a.estudianteId)),
         getDoc(doc(db, "centros_duales", a.centroDualId)),
         getDoc(doc(db, "usuarios", a.creadoPor)),
+        a.maestroGuiaId ? getDoc(doc(db, "maestros_guia", a.maestroGuiaId)) : Promise.resolve(null),
       ]);
       if (snapEst.exists()) setEstudiante({ id: snapEst.id, ...snapEst.data() } as Estudiante);
       if (snapCentro.exists()) setCentro({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
       if (snapResp.exists()) setResponsable(snapResp.data() as Usuario);
+      if (snapMg?.exists()) setMaestroGuia({ id: snapMg.id, ...snapMg.data() } as MaestroGuia);
       setLoading(false);
     }
     cargar();
@@ -168,7 +171,18 @@ export default function FichaAsignacionPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Dato label="Empresa" valor={centro.nombre} />
             <Dato label="Dirección" valor={`${centro.direccion}, ${centro.comuna}`} />
-            <Dato label="Maestro guía" valor={asignacion.maestroGuia || centro.maestroGuia || "—"} />
+            <Dato
+              label="Maestro guía"
+              valor={
+                maestroGuia ? (
+                  <Link href={`/dashboard/centros/maestros/${maestroGuia.id}`} style={{ color: "var(--accent-light)" }} className="hover:underline">
+                    {maestroGuia.nombres} {maestroGuia.apellidoPaterno}
+                  </Link>
+                ) : (
+                  asignacion.maestroGuia || centro.maestroGuia || "—"
+                )
+              }
+            />
           </div>
         ) : (
           <p style={{ color: "var(--text-muted)" }} className="text-sm">Centro dual no encontrado.</p>
