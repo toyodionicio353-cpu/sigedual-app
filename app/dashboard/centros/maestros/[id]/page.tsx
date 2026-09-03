@@ -44,6 +44,7 @@ export default function FichaMaestroGuiaPage() {
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [actualizando, setActualizando] = useState(false);
+  const [error, setError] = useState(false);
 
   const puedeEditar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
 
@@ -51,26 +52,33 @@ export default function FichaMaestroGuiaPage() {
     if (!usuario || !id) return;
     async function cargar() {
       setLoading(true);
-      const snapMg = await getDoc(doc(db, "maestros_guia", id));
-      if (!snapMg.exists()) {
-        setNoEncontrado(true);
-        setLoading(false);
-        return;
-      }
-      const m = { id: snapMg.id, ...snapMg.data() } as MaestroGuia;
-      setMg(m);
+      setError(false);
+      try {
+        const snapMg = await getDoc(doc(db, "maestros_guia", id));
+        if (!snapMg.exists()) {
+          setNoEncontrado(true);
+          setLoading(false);
+          return;
+        }
+        const m = { id: snapMg.id, ...snapMg.data() } as MaestroGuia;
+        setMg(m);
 
-      const [snapCentro, snapEsp, snapAsig, snapEst] = await Promise.all([
-        getDoc(doc(db, "centros_duales", m.centroDualId)),
-        getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
-        getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario!.liceoId))),
-        getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
-      ]);
-      if (snapCentro.exists()) setCentro({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
-      setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
-      setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
-      setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
-      setLoading(false);
+        const [snapCentro, snapEsp, snapAsig, snapEst] = await Promise.all([
+          getDoc(doc(db, "centros_duales", m.centroDualId)),
+          getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
+          getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario!.liceoId))),
+          getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
+        ]);
+        if (snapCentro.exists()) setCentro({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
+        setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
+        setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
+        setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
+      } catch (err) {
+        console.error("Error al cargar ficha de maestro guía:", err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
     }
     cargar();
   }, [usuario, id]);
@@ -99,6 +107,22 @@ export default function FichaMaestroGuiaPage() {
     return (
       <div className="p-4 md:p-8">
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 md:p-8 max-w-3xl">
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
+          <AlertCircle size={22} style={{ color: "var(--text-muted)" }} className="mx-auto mb-3" />
+          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No pudimos cargar este maestro guía</p>
+          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Ocurrió un problema de conexión. Intenta de nuevo.</p>
+          <Link href="/dashboard/centros/maestros" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
+            <ArrowLeft size={16} />
+            Volver a maestros guía
+          </Link>
+        </div>
       </div>
     );
   }
@@ -187,11 +211,11 @@ export default function FichaMaestroGuiaPage() {
       </Bloque>
 
       <Bloque titulo="Especialidades que puede guiar">
-        {mg.especialidades.length === 0 ? (
+        {(mg.especialidades ?? []).length === 0 ? (
           <p style={{ color: "var(--text-secondary)" }} className="text-sm">Sin especialidades registradas</p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
-            {mg.especialidades.map((espId) => (
+            {(mg.especialidades ?? []).map((espId) => (
               <span key={espId} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="px-2.5 py-1 rounded-full text-xs">
                 {especialidadNombre(espId)}
               </span>
