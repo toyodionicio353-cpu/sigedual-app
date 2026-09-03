@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, CheckCircle2, Search } from "lucide-react";
 import type { DocumentoGenerado, Estudiante, SegmentoDocumento, TipoModuloDocumento } from "@/types";
 import type { ContextoResolucion, PlantillaDocumento } from "@/types/plantillas";
-import { resolverCamposEstudiante, type ResultadoCampo } from "@/lib/plantillas/resolverCampos";
+import { resolverCamposEstudiante, resolverCamposDocumento, type ResultadoCampo } from "@/lib/plantillas/resolverCampos";
 import { crearDocumento, actualizarDocumento, NOMBRE_DUPLICADO } from "@/lib/documentos/guardarDocumento";
 
 const NOMBRE_MAX = 40;
@@ -109,17 +109,30 @@ export default function EditorDocumento({
   const [error, setError] = useState("");
   const [aviso, setAviso] = useState("");
 
-  const resultadoCampos = useMemo(
-    () => (estudianteId ? resolverCamposEstudiante(estudianteId, contexto) : {}),
-    [estudianteId, contexto]
-  );
+  // Campos a nivel de documento (ej. fecha del convenio): en un documento ya
+  // guardado se usa el valor congelado al crearlo, no se recalcula cada vez
+  // que se reabre para editar.
+  const resultadoCampos = useMemo(() => {
+    const base: Record<string, ResultadoCampo> = {
+      ...resolverCamposDocumento(),
+      ...(estudianteId ? resolverCamposEstudiante(estudianteId, contexto) : {}),
+    };
+    if (documentoExistente) {
+      for (const [clave, valor] of Object.entries(documentoExistente.campos)) {
+        if (clave.startsWith("documento.") && valor) base[clave] = { valor };
+      }
+    }
+    return base;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estudianteId, contexto, documentoExistente]);
 
   // Al elegir (o cambiar) el estudiante, se sellan los valores en los segmentos "campo" por su clave.
+  // Los campos de documento (ej. fecha del convenio) no se re-sellan acá: quedan fijos desde su creación.
   useEffect(() => {
     if (!estudianteId) return;
     setContenido((prev) => prev.map((parrafo) =>
       parrafo.map((s) =>
-        s.tipo === "campo" && s.clave
+        s.tipo === "campo" && s.clave && !s.clave.startsWith("documento.")
           ? { ...s, texto: resultadoCampos[s.clave]?.valor ?? "" }
           : s
       )
@@ -170,7 +183,9 @@ export default function EditorDocumento({
     const campos: Record<string, string> = {};
     for (const parrafo of contenido) {
       for (const s of parrafo) {
-        if (s.tipo === "campo" && s.clave && s.texto) campos[s.clave] = s.texto;
+        if (s.tipo !== "campo" || !s.clave) continue;
+        const valor = resultadoCampos[s.clave]?.valor;
+        if (valor) campos[s.clave] = valor;
       }
     }
 
