@@ -47,23 +47,26 @@ function normalizar(texto?: string): string {
 }
 
 export function VistaPreviaDocumento({ lineas }: { lineas?: string[] }) {
-  const contenido = lineas && lineas.length > 0 ? lineas : ["", "", "", "", ""];
   return (
     <div
-      style={{ background: "#f4f4f2", border: "1px solid var(--border)" }}
-      className="aspect-[3/4] w-full rounded-lg overflow-hidden flex flex-col p-3 gap-1.5"
+      style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
+      className="w-full rounded-lg overflow-hidden flex flex-col p-3 gap-1.5"
     >
       {lineas && lineas.length > 0 ? (
-        contenido.map((linea, i) => (
-          <p key={i} style={{ color: "#3a3a3a" }} className={`text-[9px] leading-tight ${i === 0 ? "font-bold text-[10px]" : ""}`}>
+        lineas.map((linea, i) => (
+          <p
+            key={i}
+            style={{ color: i === 0 ? "var(--text-primary)" : "var(--text-secondary)" }}
+            className={`text-[9px] leading-tight line-clamp-2 ${i === 0 ? "font-bold text-[10px]" : ""}`}
+          >
             {linea}
           </p>
         ))
       ) : (
-        <div className="flex-1 flex flex-col gap-1.5 pt-1">
-          <div style={{ background: "#d9d9d6" }} className="h-2 w-3/4 rounded-sm" />
-          {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} style={{ background: "#e4e4e1" }} className="h-1.5 rounded-sm" />
+        <div className="flex flex-col gap-1.5 py-0.5">
+          <div style={{ background: "var(--border)" }} className="h-2 w-3/4 rounded-sm" />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} style={{ background: "var(--border-light)" }} className="h-1.5 rounded-sm" />
           ))}
         </div>
       )}
