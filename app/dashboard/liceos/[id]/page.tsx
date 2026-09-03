@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { formatearFecha } from "@/lib/fecha";
 import type { Liceo, Especialidad } from "@/types";
 import {
-  ArrowLeft, Building2, UserCog, Phone, Globe2, GraduationCap, Pencil,
+  ArrowLeft, Building2, UserCog, Phone, Globe2, GraduationCap, Pencil, LogIn,
 } from "lucide-react";
 
 function Seccion({ icon, titulo, children }: { icon: React.ReactNode; titulo: string; children: React.ReactNode }) {
@@ -34,7 +34,8 @@ function Dato({ label, valor, span }: { label: string; valor?: string | null; sp
 
 export default function FichaLiceoPage() {
   const { id } = useParams<{ id: string }>();
-  const { usuario } = useAuth();
+  const router = useRouter();
+  const { usuario, entrarALiceo } = useAuth();
   const [liceo, setLiceo] = useState<Liceo | null>(null);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,6 +96,11 @@ export default function FichaLiceoPage() {
   const activo = liceo.estado !== "inactivo";
   const especialidadesActivas = especialidades.filter((e) => e.estado !== "inactiva");
 
+  function ingresarAlLiceo() {
+    entrarALiceo({ id: liceo!.id, nombre: liceo!.nombre });
+    router.push("/dashboard");
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-4xl">
       <div className="flex items-center justify-between gap-3 mb-6">
@@ -107,14 +113,24 @@ export default function FichaLiceoPage() {
           Volver al listado
         </Link>
         {puedeGestionar && (
-          <Link
-            href={`/dashboard/liceos/${liceo.id}/editar`}
-            style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity"
-          >
-            <Pencil size={15} />
-            Editar liceo
-          </Link>
+          <div className="flex gap-3">
+            <button
+              onClick={ingresarAlLiceo}
+              style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:[border-color:var(--accent)] transition-colors"
+            >
+              <LogIn size={15} />
+              Ingresar al liceo
+            </button>
+            <Link
+              href={`/dashboard/liceos/${liceo.id}/editar`}
+              style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+            >
+              <Pencil size={15} />
+              Editar liceo
+            </Link>
+          </div>
         )}
       </div>
 
