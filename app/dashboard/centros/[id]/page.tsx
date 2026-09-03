@@ -6,7 +6,7 @@ import { doc, getDoc, deleteDoc, collection, query, where, getDocs } from "fireb
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { estadoEfectivo, disponibilidadDe, camposFaltantes } from "@/lib/compatibilidad";
-import type { Asignacion, CentroDual, EstadoAsignacion, Especialidad, Estudiante } from "@/types";
+import type { Asignacion, CentroDual, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia } from "@/types";
 import { AlertCircle, ArrowLeft, Pencil, Trash2 } from "lucide-react";
 
 const ESTADO_CENTRO_LABEL: Record<string, string> = {
@@ -50,6 +50,7 @@ export default function FichaCentroDualPage() {
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [maestrosGuia, setMaestrosGuia] = useState<MaestroGuia[]>([]);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
 
@@ -68,14 +69,16 @@ export default function FichaCentroDualPage() {
       const c = { id: snapCentro.id, ...snapCentro.data() } as CentroDual;
       setCentro(c);
 
-      const [snapEsp, snapAsig, snapEst] = await Promise.all([
+      const [snapEsp, snapAsig, snapEst, snapMg] = await Promise.all([
         getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
         getDocs(query(collection(db, "asignaciones"), where("centroDualId", "==", id))),
         getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
+        getDocs(query(collection(db, "maestros_guia"), where("centroDualId", "==", id))),
       ]);
       setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
       setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
       setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
+      setMaestrosGuia(snapMg.docs.map((d) => ({ id: d.id, ...d.data() } as MaestroGuia)));
       setLoading(false);
     }
     cargar();
@@ -275,15 +278,37 @@ export default function FichaCentroDualPage() {
       </Bloque>
 
       <Bloque titulo="Maestros guía">
-        {centro.maestroGuia ? (
+        {maestrosGuia.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {maestrosGuia.map((mg) => (
+              <Link
+                key={mg.id}
+                href={`/dashboard/centros/maestros/${mg.id}`}
+                style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
+                className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:[border-color:var(--accent)] transition-colors"
+              >
+                <div className="min-w-0">
+                  <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium truncate">{mg.nombres} {mg.apellidoPaterno} {mg.apellidoMaterno}</p>
+                  <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5 truncate">{mg.cargo}</p>
+                </div>
+                <span style={{ color: mg.estado === "activo" ? "var(--success)" : "var(--danger)", background: (mg.estado === "activo" ? "var(--success)" : "var(--danger)") + "22" }} className="text-xs px-2 py-1 rounded-full flex-shrink-0">
+                  {mg.estado === "activo" ? "Activo" : "Inactivo"}
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : centro.maestroGuia ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Dato label="Nombre" valor={centro.maestroGuia} />
             <Dato label="Teléfono" valor={centro.telefonoMaestro || "No registrado"} />
           </div>
         ) : (
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm">
-            Sin maestros guía asociados. Gestiona los maestros guía desde Centros Duales → Lista de maestro guía.
-          </p>
+          <p style={{ color: "var(--text-secondary)" }} className="text-sm">Sin maestros guía asociados.</p>
+        )}
+        {puedeEditar && (
+          <Link href="/dashboard/centros/maestros/nuevo" style={{ color: "var(--accent-light)" }} className="inline-block text-xs font-medium hover:underline mt-3">
+            + Agregar maestro guía
+          </Link>
         )}
       </Bloque>
 

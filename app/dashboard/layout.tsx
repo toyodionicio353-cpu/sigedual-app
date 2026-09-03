@@ -17,6 +17,7 @@ const TITULOS: Record<string, string> = {
   "/dashboard/centros": "Centros Duales",
   "/dashboard/centros/nuevo": "Agregar Centro",
   "/dashboard/centros/maestros": "Maestros Guía",
+  "/dashboard/centros/maestros/nuevo": "Agregar maestro guía",
   "/dashboard/profesores": "Profesores",
   "/dashboard/profesores/asignaciones": "Asignaciones de Profesores",
   "/dashboard/especialidades": "Especialidades",
