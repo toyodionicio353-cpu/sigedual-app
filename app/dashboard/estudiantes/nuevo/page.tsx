@@ -65,6 +65,7 @@ export default function AgregarEstudiantePage() {
         apellidoMaterno: form.apellidoMaterno.trim(),
         fechaNacimiento: form.fechaNacimiento,
         sexo: form.sexo,
+        nacionalidad: form.nacionalidad.trim(),
         email: form.email.trim(),
         telefono: form.telefono.trim(),
         direccion: form.direccion.trim(),
@@ -88,6 +89,8 @@ export default function AgregarEstudiantePage() {
         apoderadoParentesco: form.apoderadoParentesco,
         apoderadoTelefono: form.apoderadoTelefono.trim(),
         apoderadoEmail: form.apoderadoEmail.trim(),
+        apoderadoDomicilio: form.apoderadoDomicilio.trim(),
+        apoderadoCiudad: form.apoderadoCiudad.trim(),
         observaciones: form.observaciones.trim(),
         creadoEn: new Date().toISOString(),
       };

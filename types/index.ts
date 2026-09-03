@@ -63,6 +63,7 @@ export interface Estudiante {
   apellidoMaterno?: string;
   fechaNacimiento?: string;
   sexo?: string;
+  nacionalidad?: string;
   email?: string;
   telefono?: string;
   direccion?: string;
@@ -89,6 +90,8 @@ export interface Estudiante {
   apoderadoParentesco?: string;
   apoderadoTelefono?: string;
   apoderadoEmail?: string;
+  apoderadoDomicilio?: string;
+  apoderadoCiudad?: string;
   observaciones?: string;
   historialCursos?: HistorialCurso[];
   creadoEn: string;

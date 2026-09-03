@@ -49,7 +49,7 @@ export default function EditarEstudiantePage() {
       setValores({
         run: e.run ?? "", nombres: e.nombres ?? "",
         apellidoPaterno: e.apellidoPaterno ?? "", apellidoMaterno: e.apellidoMaterno ?? "",
-        fechaNacimiento: e.fechaNacimiento ?? "", sexo: e.sexo ?? "",
+        fechaNacimiento: e.fechaNacimiento ?? "", sexo: e.sexo ?? "", nacionalidad: e.nacionalidad ?? "",
         email: e.email ?? "", telefono: e.telefono ?? "", direccion: e.direccion ?? "",
         comuna: e.comuna ?? "", ciudad: e.ciudad ?? "",
         anioAcademico: e.anioAcademico ?? String(new Date(e.creadoEn).getFullYear()),
@@ -58,7 +58,9 @@ export default function EditarEstudiantePage() {
         enfermedadesCronicas: e.enfermedadesCronicas ?? "", alergias: e.alergias ?? "",
         apoderadoNombre: e.apoderadoNombre ?? "", apoderadoRun: e.apoderadoRun ?? "",
         apoderadoParentesco: e.apoderadoParentesco ?? "", apoderadoTelefono: e.apoderadoTelefono ?? "",
-        apoderadoEmail: e.apoderadoEmail ?? "", observaciones: e.observaciones ?? "",
+        apoderadoEmail: e.apoderadoEmail ?? "",
+        apoderadoDomicilio: e.apoderadoDomicilio ?? "", apoderadoCiudad: e.apoderadoCiudad ?? "",
+        observaciones: e.observaciones ?? "",
       });
       setOtrosMedicos(e.informacionMedicaAdicional ?? []);
       setRasgos(e.rasgos ?? []);
@@ -91,6 +93,7 @@ export default function EditarEstudiantePage() {
         apellidoMaterno: form.apellidoMaterno.trim(),
         fechaNacimiento: form.fechaNacimiento,
         sexo: form.sexo,
+        nacionalidad: form.nacionalidad.trim(),
         email: form.email.trim(),
         telefono: form.telefono.trim(),
         direccion: form.direccion.trim(),
@@ -112,6 +115,8 @@ export default function EditarEstudiantePage() {
         apoderadoParentesco: form.apoderadoParentesco,
         apoderadoTelefono: form.apoderadoTelefono.trim(),
         apoderadoEmail: form.apoderadoEmail.trim(),
+        apoderadoDomicilio: form.apoderadoDomicilio.trim(),
+        apoderadoCiudad: form.apoderadoCiudad.trim(),
         observaciones: form.observaciones.trim(),
         actualizadoEn: new Date().toISOString(),
       });
