@@ -26,6 +26,20 @@ export const AMBIENTES_CENTRO = [
   "Ambiente dinámico y cambiante",
 ];
 
+// Áreas dentro del centro en las que un estudiante podría desempeñarse
+// durante su práctica dual.
+export const AREAS_DESEMPENO = [
+  "Administración",
+  "Recursos Humanos",
+  "Atención al cliente",
+  "Contabilidad",
+  "Logística",
+  "Bodega",
+  "Informática",
+  "Ventas",
+  "Producción",
+];
+
 // Vocabulario compartido entre estudiante (habilidades) y centro (habilidades
 // valoradas): al usar el mismo texto en ambos lados, la comparación es directa.
 export const HABILIDADES = [

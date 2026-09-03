@@ -66,16 +66,38 @@ export function calcularCompatibilidad(estudiante: Estudiante, centro: CentroDua
   return { puntaje, limitada: false, coincidencias, advertencias };
 }
 
+// Centros creados antes de agregar el campo `estado`/`capacidad` solo tienen
+// el booleano `activo` y `cuposDisponibles` — estos helpers leen el campo
+// nuevo cuando existe y si no, derivan el equivalente del campo antiguo, para
+// que ningún centro ya creado cambie de comportamiento.
+export function estadoEfectivo(centro: CentroDual): "activo" | "inactivo" | "en_revision" {
+  if (centro.estado) return centro.estado;
+  return centro.activo === false ? "inactivo" : "activo";
+}
+
+export function capacidadDe(centro: CentroDual): number | undefined {
+  return centro.capacidad ?? centro.cuposDisponibles;
+}
+
+export function disponibilidadDe(centro: CentroDual, asignaciones: Asignacion[]) {
+  const ocupados = asignaciones.filter(
+    (a) => a.centroDualId === centro.id && (a.estado === "asignada" || a.estado === "activa")
+  ).length;
+  const capacidad = capacidadDe(centro);
+  return { capacidad, ocupados, disponibles: capacidad == null ? undefined : Math.max(0, capacidad - ocupados) };
+}
+
 // Un centro es "recomendable" (aparece en la lista de recomendados) si está
-// activo y, cuando declara cupos, todavía tiene cupos libres. Esto NO excluye
-// al centro de la selección manual ("todos los centros") — solo prioriza la
-// lista automática, tal como pide el requerimiento: la recomendación es una
-// herramienta de apoyo, no una restricción.
+// activo y, cuando declara capacidad, todavía tiene cupos libres. Esto NO
+// excluye al centro de la selección manual ("todos los centros") — solo
+// prioriza la lista automática, tal como pide el requerimiento: la
+// recomendación es una herramienta de apoyo, no una restricción.
 export function disponibleParaRecomendar(centro: CentroDual, asignacionesActivas: Asignacion[]): boolean {
-  if (centro.activo === false) return false;
-  if (centro.cuposDisponibles == null) return true;
+  if (estadoEfectivo(centro) !== "activo") return false;
+  const capacidad = capacidadDe(centro);
+  if (capacidad == null) return true;
   const cuposUsados = asignacionesActivas.filter(
     (a) => a.centroDualId === centro.id && (a.estado === "asignada" || a.estado === "activa")
   ).length;
-  return cuposUsados < centro.cuposDisponibles;
+  return cuposUsados < capacidad;
 }
