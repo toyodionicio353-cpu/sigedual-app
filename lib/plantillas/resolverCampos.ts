@@ -62,6 +62,9 @@ export function resolverCamposEstudiante(estudianteId: string, ctx: ContextoReso
       : { mensajeAusente: "Este estudiante no tiene el RUN del representante legal registrado." },
     "estudiante.apoderadoDomicilio": { mensajeAusente: "El domicilio del representante legal no está registrado en SIGEDUAL." },
     "estudiante.apoderadoCiudad": { mensajeAusente: "La ciudad del representante legal no está registrada en SIGEDUAL." },
+    "estudiante.nivel": estudiante.nivel
+      ? { valor: estudiante.nivel }
+      : { mensajeAusente: "Este estudiante no tiene nivel/año de estudio registrado." },
     "especialidad.nombre": especialidad ? { valor: especialidad.nombre } : { mensajeAusente: "No se encontró la especialidad del estudiante." },
     "centro.nombre": centro ? { valor: centro.nombre } : { mensajeAusente: "Este estudiante no tiene un centro dual asignado." },
     "centro.direccion": centro
@@ -106,6 +109,7 @@ export function resolverCamposEstudiante(estudianteId: string, ctx: ContextoReso
 export function resolverCamposDocumento(): Record<string, ResultadoCampo> {
   return {
     "documento.fechaCreacion": { valor: new Date().toLocaleDateString("es-CL") },
+    "documento.anio": { valor: String(new Date().getFullYear()) },
     "documento.fechaPublicacionDecreto": {
       mensajeAusente: "Este dato todavía no está configurado en SIGEDUAL.",
     },
