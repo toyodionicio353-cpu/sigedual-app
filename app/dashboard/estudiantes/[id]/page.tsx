@@ -146,6 +146,7 @@ export default function FichaEstudiantePage() {
           <Dato label="Apellido materno" valor={estudiante.apellidoMaterno} />
           <Dato label="Fecha de nacimiento" valor={estudiante.fechaNacimiento} />
           <Dato label="Sexo/Género" valor={estudiante.sexo} />
+          <Dato label="Nacionalidad" valor={estudiante.nacionalidad} />
         </Seccion>
 
         <Seccion icon={<Phone size={16} />} titulo="Información de contacto">
@@ -212,6 +213,8 @@ export default function FichaEstudiantePage() {
           <Dato label="Parentesco" valor={estudiante.apoderadoParentesco} />
           <Dato label="Teléfono" valor={estudiante.apoderadoTelefono} />
           <Dato label="Correo electrónico" valor={estudiante.apoderadoEmail} span />
+          <Dato label="Domicilio" valor={estudiante.apoderadoDomicilio} />
+          <Dato label="Ciudad" valor={estudiante.apoderadoCiudad} />
         </Seccion>
 
         {(estudiante.rasgos?.length ?? 0) > 0 && (

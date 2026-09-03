@@ -22,6 +22,7 @@ export interface EstudianteFormValues {
   apellidoMaterno: string;
   fechaNacimiento: string;
   sexo: string;
+  nacionalidad: string;
   email: string;
   telefono: string;
   direccion: string;
@@ -40,18 +41,20 @@ export interface EstudianteFormValues {
   apoderadoParentesco: string;
   apoderadoTelefono: string;
   apoderadoEmail: string;
+  apoderadoDomicilio: string;
+  apoderadoCiudad: string;
   observaciones: string;
 }
 
 export const ESTUDIANTE_FORM_VACIO: EstudianteFormValues = {
   run: "", nombres: "", apellidoPaterno: "", apellidoMaterno: "",
-  fechaNacimiento: "", sexo: "",
+  fechaNacimiento: "", sexo: "", nacionalidad: "",
   email: "", telefono: "", direccion: "", comuna: "", ciudad: "",
   anioAcademico: String(ANIO_ACTUAL), nivel: "", curso: "",
   especialidadId: "", jornada: "", estado: "activo",
   enfermedadesCronicas: "", alergias: "",
   apoderadoNombre: "", apoderadoRun: "", apoderadoParentesco: "",
-  apoderadoTelefono: "", apoderadoEmail: "",
+  apoderadoTelefono: "", apoderadoEmail: "", apoderadoDomicilio: "", apoderadoCiudad: "",
   observaciones: "",
 };
 
@@ -223,6 +226,9 @@ export default function EstudianteForm({
               <option value="Otro">Otro</option>
             </select>
           </Campo>
+          <Campo label="Nacionalidad" error={errores.nacionalidad}>
+            <input value={form.nacionalidad} onChange={(e) => set("nacionalidad", e.target.value)} placeholder="Chilena" style={inputStyle} className={inputClass} />
+          </Campo>
         </Seccion>
 
         <Seccion icon={<Phone size={16} />} titulo="Información de contacto">
@@ -344,6 +350,12 @@ export default function EstudianteForm({
           </Campo>
           <Campo label="Correo electrónico" error={errores.apoderadoEmail} span>
             <input type="email" value={form.apoderadoEmail} onChange={(e) => set("apoderadoEmail", e.target.value)} placeholder="apoderado@email.com" style={inputStyle} className={inputClass} />
+          </Campo>
+          <Campo label="Domicilio" error={errores.apoderadoDomicilio}>
+            <input value={form.apoderadoDomicilio} onChange={(e) => set("apoderadoDomicilio", e.target.value)} placeholder="Calle, número" style={inputStyle} className={inputClass} />
+          </Campo>
+          <Campo label="Ciudad" error={errores.apoderadoCiudad}>
+            <input value={form.apoderadoCiudad} onChange={(e) => set("apoderadoCiudad", e.target.value)} placeholder="Ciudad" style={inputStyle} className={inputClass} />
           </Campo>
         </Seccion>
 

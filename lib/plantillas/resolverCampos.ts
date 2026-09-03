@@ -53,15 +53,21 @@ export function resolverCamposEstudiante(estudianteId: string, ctx: ContextoReso
     "estudiante.fechaNacimiento": formatoFecha(estudiante.fechaNacimiento)
       ? { valor: formatoFecha(estudiante.fechaNacimiento) }
       : { mensajeAusente: "Este estudiante no tiene fecha de nacimiento registrada." },
-    "estudiante.nacionalidad": { mensajeAusente: "Este estudiante no tiene nacionalidad registrada en SIGEDUAL." },
+    "estudiante.nacionalidad": estudiante.nacionalidad
+      ? { valor: estudiante.nacionalidad }
+      : { mensajeAusente: "Este estudiante no tiene nacionalidad registrada en SIGEDUAL." },
     "estudiante.apoderadoNombre": estudiante.apoderadoNombre
       ? { valor: estudiante.apoderadoNombre }
       : { mensajeAusente: "Este estudiante no tiene un representante legal registrado." },
     "estudiante.apoderadoRun": estudiante.apoderadoRun
       ? { valor: estudiante.apoderadoRun }
       : { mensajeAusente: "Este estudiante no tiene el RUN del representante legal registrado." },
-    "estudiante.apoderadoDomicilio": { mensajeAusente: "El domicilio del representante legal no está registrado en SIGEDUAL." },
-    "estudiante.apoderadoCiudad": { mensajeAusente: "La ciudad del representante legal no está registrada en SIGEDUAL." },
+    "estudiante.apoderadoDomicilio": estudiante.apoderadoDomicilio
+      ? { valor: estudiante.apoderadoDomicilio }
+      : { mensajeAusente: "El domicilio del representante legal no está registrado en SIGEDUAL." },
+    "estudiante.apoderadoCiudad": estudiante.apoderadoCiudad
+      ? { valor: estudiante.apoderadoCiudad }
+      : { mensajeAusente: "La ciudad del representante legal no está registrada en SIGEDUAL." },
     "estudiante.nivel": estudiante.nivel
       ? { valor: estudiante.nivel }
       : { mensajeAusente: "Este estudiante no tiene nivel/año de estudio registrado." },
@@ -110,9 +116,10 @@ export function resolverCamposDocumento(): Record<string, ResultadoCampo> {
   return {
     "documento.fechaCreacion": { valor: new Date().toLocaleDateString("es-CL") },
     "documento.anio": { valor: String(new Date().getFullYear()) },
-    "documento.fechaPublicacionDecreto": {
-      mensajeAusente: "Este dato todavía no está configurado en SIGEDUAL.",
-    },
+    // El Decreto N° 313 (Ministerio del Trabajo y Previsión Social) fue promulgado
+    // el 27-12-1972 y publicado en el Diario Oficial el 12-05-1973. Es un dato
+    // legal fijo, no depende del estudiante ni del liceo.
+    "documento.fechaPublicacionDecreto": { valor: "12-05-1973" },
   };
 }
 
