@@ -6,6 +6,7 @@ export interface Usuario {
   nombre: string;
   rol: Rol;
   especialidad?: string;
+  run?: string;
   liceoId: string;
   activo: boolean;
   creadoEn: string;
