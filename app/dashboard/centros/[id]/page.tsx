@@ -5,9 +5,9 @@ import Link from "next/link";
 import { doc, getDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import { estadoEfectivo, disponibilidadDe } from "@/lib/compatibilidad";
+import { estadoEfectivo, disponibilidadDe, camposFaltantes } from "@/lib/compatibilidad";
 import type { Asignacion, CentroDual, EstadoAsignacion, Especialidad, Estudiante } from "@/types";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Pencil, Trash2 } from "lucide-react";
 
 const ESTADO_CENTRO_LABEL: Record<string, string> = {
   activo: "Activo", inactivo: "Inactivo", en_revision: "En revisión",
@@ -92,6 +92,10 @@ export default function FichaCentroDualPage() {
 
   async function eliminar() {
     if (!centro) return;
+    if (asignaciones.length > 0) {
+      alert("Este centro tiene asignaciones asociadas y no se puede eliminar, para proteger la trazabilidad histórica. Si ya no debe recibir estudiantes, cámbialo a \"Inactivo\" desde Editar.");
+      return;
+    }
     if (!confirm("¿Eliminar este centro dual? Esta acción no se puede deshacer.")) return;
     await deleteDoc(doc(db, "centros_duales", centro.id));
     router.push("/dashboard/centros");
@@ -122,6 +126,7 @@ export default function FichaCentroDualPage() {
   const estado = estadoEfectivo(centro);
   const disponibilidad = disponibilidadDe(centro, asignaciones);
   const asignacionesVigentes = asignaciones.filter((a) => a.estado === "asignada" || a.estado === "activa");
+  const faltantes = camposFaltantes(centro);
 
   return (
     <div className="p-4 md:p-8 max-w-3xl">
@@ -157,6 +162,16 @@ export default function FichaCentroDualPage() {
           </>
         )}
       </div>
+
+      {faltantes.length > 0 && (
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-xl px-4 py-3 mb-6 flex items-start gap-2">
+          <AlertCircle size={15} style={{ color: "var(--text-muted)" }} className="flex-shrink-0 mt-0.5" />
+          <p style={{ color: "var(--text-secondary)" }} className="text-xs">
+            <span style={{ color: "var(--text-primary)" }} className="font-medium">Información incompleta. </span>
+            Falta: {faltantes.join(", ")}.
+          </p>
+        </div>
+      )}
 
       <Bloque titulo="Información general">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

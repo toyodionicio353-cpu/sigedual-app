@@ -101,3 +101,16 @@ export function disponibleParaRecomendar(centro: CentroDual, asignacionesActivas
   ).length;
   return cuposUsados < capacidad;
 }
+
+// Campos importantes que, si faltan, hacen que un centro quede marcado como
+// "Información incompleta" en el listado y la ficha.
+export function camposFaltantes(centro: CentroDual): string[] {
+  const faltantes: string[] = [];
+  if (centro.especialidades.length === 0) faltantes.push("Especialidad");
+  if (capacidadDe(centro) == null) faltantes.push("Capacidad");
+  if (!centro.contactoNombre && !centro.contactoEmail && !centro.contactoTelefono) faltantes.push("Contacto");
+  if (!centro.region) faltantes.push("Ubicación completa");
+  if ((centro.caracteristicas ?? []).length === 0) faltantes.push("Características");
+  if ((centro.habilidadesValoradas ?? []).length === 0) faltantes.push("Habilidades");
+  return faltantes;
+}
