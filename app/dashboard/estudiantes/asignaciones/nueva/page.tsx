@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, addDoc, doc, updateDoc, writeBatch }
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { calcularCompatibilidad, disponibleParaRecomendar, estadoEfectivo, capacidadDe } from "@/lib/compatibilidad";
-import type { Asignacion, CentroDual, Compatibilidad, EstadoAsignacion, Especialidad, Estudiante, Usuario } from "@/types";
+import type { Asignacion, CentroDual, Compatibilidad, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia, Usuario } from "@/types";
 import {
   ArrowLeft, ArrowRight, Search, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, User, Users,
 } from "lucide-react";
@@ -44,6 +44,7 @@ export default function NuevaAsignacionPage() {
   const [centros, setCentros] = useState<CentroDual[]>([]);
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [profesores, setProfesores] = useState<Usuario[]>([]);
+  const [maestrosGuia, setMaestrosGuia] = useState<MaestroGuia[]>([]);
 
   const [modo, setModo] = useState<"individual" | "grupo">("individual");
 
@@ -70,7 +71,7 @@ export default function NuevaAsignacionPage() {
   const [fechaTermino, setFechaTermino] = useState("");
   const [jornada, setJornada] = useState("");
   const [profesorSupervisorId, setProfesorSupervisorId] = useState("");
-  const [maestroGuia, setMaestroGuia] = useState("");
+  const [maestroGuiaId, setMaestroGuiaId] = useState("");
   const [estadoInicial, setEstadoInicial] = useState<EstadoAsignacion>("pendiente");
   const [observaciones, setObservaciones] = useState("");
 
@@ -81,18 +82,20 @@ export default function NuevaAsignacionPage() {
     if (!usuario) return;
     async function cargar() {
       setCargando(true);
-      const [snapEst, snapEsp, snapCentros, snapAsig, snapUsuarios] = await Promise.all([
+      const [snapEst, snapEsp, snapCentros, snapAsig, snapUsuarios, snapMg] = await Promise.all([
         getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
         getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
         getDocs(query(collection(db, "centros_duales"), where("liceoId", "==", usuario!.liceoId))),
         getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario!.liceoId))),
         getDocs(query(collection(db, "usuarios"), where("liceoId", "==", usuario!.liceoId), where("rol", "==", "profesor"))),
+        getDocs(query(collection(db, "maestros_guia"), where("liceoId", "==", usuario!.liceoId))),
       ]);
       setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
       setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
       setCentros(snapCentros.docs.map((d) => ({ id: d.id, ...d.data() } as CentroDual)));
       setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
       setProfesores(snapUsuarios.docs.map((d) => ({ ...d.data() } as Usuario)));
+      setMaestrosGuia(snapMg.docs.map((d) => ({ id: d.id, ...d.data() } as MaestroGuia)));
       setCargando(false);
     }
     cargar();
@@ -140,6 +143,11 @@ export default function NuevaAsignacionPage() {
 
   const listaCentrosVisible = tabCentros === "recomendados" ? recomendadosDisponibles : recomendaciones;
   const centroSeleccionado = useMemo(() => centros.find((c) => c.id === centroId) ?? null, [centros, centroId]);
+  const maestrosGuiaDelCentro = useMemo(
+    () => maestrosGuia.filter((m) => m.centroDualId === centroSeleccionado?.id && m.estado === "activo"),
+    [maestrosGuia, centroSeleccionado]
+  );
+  const maestroGuiaSeleccionado = useMemo(() => maestrosGuia.find((m) => m.id === maestroGuiaId) ?? null, [maestrosGuia, maestroGuiaId]);
   const compatibilidadSeleccionada = useMemo(() => {
     if (!estudianteSeleccionado || !centroSeleccionado) return null;
     return calcularCompatibilidad(estudianteSeleccionado, centroSeleccionado);
@@ -268,8 +276,8 @@ export default function NuevaAsignacionPage() {
 
   function seleccionarCentro(id: string) {
     setCentroId(id);
-    const centro = centros.find((c) => c.id === id);
-    setMaestroGuia(centro?.maestroGuia ?? "");
+    const disponibles = maestrosGuia.filter((m) => m.centroDualId === id && m.estado === "activo");
+    setMaestroGuiaId(disponibles.length === 1 ? disponibles[0].id : "");
     setPaso(3);
   }
 
@@ -278,21 +286,22 @@ export default function NuevaAsignacionPage() {
     setGuardando(true);
     setErrorSistema("");
     try {
-      const nueva: Omit<Asignacion, "id"> = {
+      const nueva: Record<string, unknown> = {
         estudianteId: estudianteSeleccionado.id,
         centroDualId: centroSeleccionado.id,
         liceoId: usuario.liceoId,
         estado: estadoInicial,
-        fechaInicio: fechaInicio || undefined,
-        fechaTermino: fechaTermino || undefined,
-        jornada: jornada || undefined,
-        profesorSupervisorId: profesorSupervisorId || undefined,
-        maestroGuia: maestroGuia || undefined,
-        observaciones: observaciones.trim() || undefined,
         compatibilidad: compatibilidadSeleccionada,
         creadoPor: usuario.uid,
         creadoEn: new Date().toISOString(),
       };
+      if (fechaInicio) nueva.fechaInicio = fechaInicio;
+      if (fechaTermino) nueva.fechaTermino = fechaTermino;
+      if (jornada) nueva.jornada = jornada;
+      if (profesorSupervisorId) nueva.profesorSupervisorId = profesorSupervisorId;
+      if (maestroGuiaId) nueva.maestroGuiaId = maestroGuiaId;
+      if (maestroGuiaSeleccionado) nueva.maestroGuia = `${maestroGuiaSeleccionado.nombres} ${maestroGuiaSeleccionado.apellidoPaterno}`;
+      if (observaciones.trim()) nueva.observaciones = observaciones.trim();
       const ref = await addDoc(collection(db, "asignaciones"), nueva);
       if (estadoInicial === "asignada" || estadoInicial === "activa") {
         await updateDoc(doc(db, "estudiantes", estudianteSeleccionado.id), { centroDualId: centroSeleccionado.id });
@@ -314,21 +323,25 @@ export default function NuevaAsignacionPage() {
       for (const { estudiante, centro, compatibilidad } of filasGrupoListas) {
         if (!centro || !compatibilidad) continue;
         const ref = doc(collection(db, "asignaciones"));
-        const nueva: Omit<Asignacion, "id"> = {
+        const nueva: Record<string, unknown> = {
           estudianteId: estudiante.id,
           centroDualId: centro.id,
           liceoId: usuario.liceoId,
           estado: estadoInicial,
-          fechaInicio: fechaInicio || undefined,
-          fechaTermino: fechaTermino || undefined,
-          jornada: jornada || undefined,
-          profesorSupervisorId: profesorSupervisorId || undefined,
-          maestroGuia: centro.maestroGuia || undefined,
-          observaciones: observaciones.trim() || undefined,
           compatibilidad,
           creadoPor: usuario.uid,
           creadoEn: new Date().toISOString(),
         };
+        if (fechaInicio) nueva.fechaInicio = fechaInicio;
+        if (fechaTermino) nueva.fechaTermino = fechaTermino;
+        if (jornada) nueva.jornada = jornada;
+        if (profesorSupervisorId) nueva.profesorSupervisorId = profesorSupervisorId;
+        const mgDelCentro = maestrosGuia.filter((m) => m.centroDualId === centro.id && m.estado === "activo");
+        if (mgDelCentro.length === 1) {
+          nueva.maestroGuiaId = mgDelCentro[0].id;
+          nueva.maestroGuia = `${mgDelCentro[0].nombres} ${mgDelCentro[0].apellidoPaterno}`;
+        }
+        if (observaciones.trim()) nueva.observaciones = observaciones.trim();
         batch.set(ref, nueva);
         if (estadoInicial === "asignada" || estadoInicial === "activa") {
           batch.update(doc(db, "estudiantes", estudiante.id), { centroDualId: centro.id });
@@ -873,9 +886,20 @@ export default function NuevaAsignacionPage() {
             {modo === "individual" && (
               <div>
                 <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Maestro guía</label>
-                <input value={maestroGuia} onChange={(e) => setMaestroGuia(e.target.value)}
+                <select value={maestroGuiaId} onChange={(e) => setMaestroGuiaId(e.target.value)}
+                  disabled={maestrosGuiaDelCentro.length === 0}
                   style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors disabled:opacity-50">
+                  <option value="">{maestrosGuiaDelCentro.length === 0 ? "Sin maestros guía en este centro" : "Selecciona un maestro guía"}</option>
+                  {maestrosGuiaDelCentro.map((m) => (
+                    <option key={m.id} value={m.id}>{m.nombres} {m.apellidoPaterno} — {m.cargo}</option>
+                  ))}
+                </select>
+                {maestrosGuiaDelCentro.length === 0 && (
+                  <p style={{ color: "var(--text-muted)" }} className="text-xs mt-1">
+                    {centroSeleccionado?.nombre} no tiene maestros guía registrados. <Link href="/dashboard/centros/maestros/nuevo" style={{ color: "var(--accent-light)" }} className="hover:underline">Agregar uno</Link>.
+                  </p>
+                )}
               </div>
             )}
             <div>
@@ -955,7 +979,7 @@ export default function NuevaAsignacionPage() {
             <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Fecha de término: </span>{fechaTermino || "No definida"}</p>
             <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Jornada: </span>{jornada || "No definida"}</p>
             <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Profesor supervisor: </span>{profesores.find((p) => p.uid === profesorSupervisorId)?.nombre || "No definido"}</p>
-            <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Maestro guía: </span>{maestroGuia || "No definido"}</p>
+            <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Maestro guía: </span>{maestroGuiaSeleccionado ? `${maestroGuiaSeleccionado.nombres} ${maestroGuiaSeleccionado.apellidoPaterno}` : "No definido"}</p>
             <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Estado: </span>{ESTADO_LABEL[estadoInicial]}</p>
           </div>
 
