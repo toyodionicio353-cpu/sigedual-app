@@ -264,9 +264,9 @@ export default function BibliotecaDocumental({
                     <VistaPreviaDocumento lineas={item.previewLineas} />
                   </div>
                   <div className="p-4 flex flex-col gap-2">
-                    <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold leading-snug line-clamp-2">{item.nombre}</p>
+                    <p style={{ color: "var(--text-primary)" }} className="text-lg font-bold leading-snug line-clamp-2">{item.nombre}</p>
                     {item.subtitulo && (
-                      <p style={{ color: "var(--text-muted)" }} className="text-xs line-clamp-2">{item.subtitulo}</p>
+                      <p style={{ color: "var(--text-secondary)" }} className="text-sm leading-snug line-clamp-4">{item.subtitulo}</p>
                     )}
                     <button
                       onClick={(e) => { e.stopPropagation(); onUsarPlantilla?.(item); }}
