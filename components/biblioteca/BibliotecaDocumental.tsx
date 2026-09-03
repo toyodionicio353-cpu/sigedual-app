@@ -57,7 +57,7 @@ export function VistaPreviaDocumento({ lineas }: { lineas?: string[] }) {
           <p
             key={i}
             style={{ color: i === 0 ? "var(--text-primary)" : "var(--text-secondary)" }}
-            className={`text-[9px] leading-tight line-clamp-2 ${i === 0 ? "font-bold text-[10px]" : ""}`}
+            className={`text-sm leading-snug line-clamp-3 ${i === 0 ? "font-bold text-base" : ""}`}
           >
             {linea}
           </p>
