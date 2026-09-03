@@ -3,16 +3,19 @@ import { useEffect, useState } from "react";
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import type { CentroDual } from "@/types";
+import { AMBIENTES_CENTRO, HABILIDADES } from "@/lib/caracteristicas";
+import type { CentroDual, Especialidad } from "@/types";
 
 const EMPTY: Omit<CentroDual, "id" | "liceoId" | "activo"> = {
   nombre: "", rut: "", direccion: "", comuna: "", telefono: "",
-  email: "", maestroGuia: "", telefonoMaestro: "", emailMaestro: "", especialidades: [],
+  email: "", maestroGuia: "", telefonoMaestro: "", emailMaestro: "",
+  especialidades: [], caracteristicas: [], habilidadesValoradas: [], cuposDisponibles: undefined,
 };
 
 export default function CentrosPage() {
   const { usuario } = useAuth();
   const [centros, setCentros] = useState<CentroDual[]>([]);
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState("");
   const [modal, setModal] = useState(false);
@@ -27,10 +30,25 @@ export default function CentrosPage() {
   async function cargar() {
     if (!usuario) return;
     setLoading(true);
-    const q = query(collection(db, "centros_duales"), where("liceoId", "==", usuario.liceoId));
-    const snap = await getDocs(q);
-    setCentros(snap.docs.map((d) => ({ id: d.id, ...d.data() } as CentroDual)));
+    const [snapCentros, snapEsp] = await Promise.all([
+      getDocs(query(collection(db, "centros_duales"), where("liceoId", "==", usuario.liceoId))),
+      getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId))),
+    ]);
+    setCentros(snapCentros.docs.map((d) => ({ id: d.id, ...d.data() } as CentroDual)));
+    setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
     setLoading(false);
+  }
+
+  function toggleEspecialidad(id: string) {
+    setForm((f) => ({ ...f, especialidades: f.especialidades.includes(id) ? f.especialidades.filter((e) => e !== id) : [...f.especialidades, id] }));
+  }
+
+  function toggleCaracteristica(valor: string) {
+    setForm((f) => ({ ...f, caracteristicas: (f.caracteristicas ?? []).includes(valor) ? (f.caracteristicas ?? []).filter((c) => c !== valor) : [...(f.caracteristicas ?? []), valor] }));
+  }
+
+  function toggleHabilidadValorada(valor: string) {
+    setForm((f) => ({ ...f, habilidadesValoradas: (f.habilidadesValoradas ?? []).includes(valor) ? (f.habilidadesValoradas ?? []).filter((h) => h !== valor) : [...(f.habilidadesValoradas ?? []), valor] }));
   }
 
   async function guardar() {
@@ -49,7 +67,12 @@ export default function CentrosPage() {
   }
 
   function abrirEditar(c: CentroDual) {
-    setForm({ nombre: c.nombre, rut: c.rut, direccion: c.direccion, comuna: c.comuna, telefono: c.telefono ?? "", email: c.email ?? "", maestroGuia: c.maestroGuia, telefonoMaestro: c.telefonoMaestro ?? "", emailMaestro: c.emailMaestro ?? "", especialidades: c.especialidades });
+    setForm({
+      nombre: c.nombre, rut: c.rut, direccion: c.direccion, comuna: c.comuna, telefono: c.telefono ?? "",
+      email: c.email ?? "", maestroGuia: c.maestroGuia, telefonoMaestro: c.telefonoMaestro ?? "", emailMaestro: c.emailMaestro ?? "",
+      especialidades: c.especialidades, caracteristicas: c.caracteristicas ?? [], habilidadesValoradas: c.habilidadesValoradas ?? [],
+      cuposDisponibles: c.cuposDisponibles,
+    });
     setEditId(c.id); setModal(true);
   }
 
@@ -140,7 +163,73 @@ export default function CentrosPage() {
                     className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
                 </div>
               ))}
+              <div className="sm:col-span-2">
+                <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Cupos disponibles (opcional)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.cuposDisponibles ?? ""}
+                  onChange={(e) => setForm((f) => ({ ...f, cuposDisponibles: e.target.value === "" ? undefined : Number(e.target.value) }))}
+                  placeholder="Sin límite si se deja vacío"
+                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
+                />
+              </div>
             </div>
+
+            <div className="mt-6">
+              <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold mb-1">Especialidades que recibe</p>
+              <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">Determina qué estudiantes puede recibir este centro según su especialidad.</p>
+              <div className="flex flex-wrap gap-2">
+                {especialidades.length === 0 ? (
+                  <p style={{ color: "var(--text-muted)" }} className="text-xs">No hay especialidades registradas en tu liceo aún.</p>
+                ) : especialidades.map((esp) => {
+                  const activo = form.especialidades.includes(esp.id);
+                  return (
+                    <button key={esp.id} type="button" onClick={() => toggleEspecialidad(esp.id)}
+                      style={{ background: activo ? "var(--accent)" : "var(--bg-surface)", border: `1px solid ${activo ? "var(--accent)" : "var(--border)"}`, color: activo ? "var(--text-on-accent)" : "var(--text-secondary)" }}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors">
+                      {esp.nombre}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold mb-1">Características del centro</p>
+              <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">Describen el ambiente y las condiciones de trabajo, para recomendar el centro a estudiantes compatibles.</p>
+              <div className="flex flex-wrap gap-2">
+                {AMBIENTES_CENTRO.map((a) => {
+                  const activo = (form.caracteristicas ?? []).includes(a);
+                  return (
+                    <button key={a} type="button" onClick={() => toggleCaracteristica(a)}
+                      style={{ background: activo ? "var(--accent)" : "var(--bg-surface)", border: `1px solid ${activo ? "var(--accent)" : "var(--border)"}`, color: activo ? "var(--text-on-accent)" : "var(--text-secondary)" }}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors">
+                      {a}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold mb-1">Habilidades valoradas</p>
+              <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">Habilidades que este centro busca o valora en sus estudiantes en práctica.</p>
+              <div className="flex flex-wrap gap-2">
+                {HABILIDADES.map((h) => {
+                  const activo = (form.habilidadesValoradas ?? []).includes(h);
+                  return (
+                    <button key={h} type="button" onClick={() => toggleHabilidadValorada(h)}
+                      style={{ background: activo ? "var(--accent)" : "var(--bg-surface)", border: `1px solid ${activo ? "var(--accent)" : "var(--border)"}`, color: activo ? "var(--text-on-accent)" : "var(--text-secondary)" }}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors">
+                      {h}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex gap-3 mt-6">
               <button onClick={() => { setModal(false); setEditId(null); }} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex-1 py-2.5 rounded-xl text-sm font-medium">Cancelar</button>
               <button onClick={guardar} disabled={guardando} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50">

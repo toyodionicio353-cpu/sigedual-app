@@ -52,7 +52,7 @@ export default function AgregarEstudiantePage() {
 
   const runsOcupados = useMemo(() => estudiantes.map((e) => e.run), [estudiantes]);
 
-  async function guardar(form: EstudianteFormValues, otrosMedicos: string[], rasgos: string[]) {
+  async function guardar(form: EstudianteFormValues, otrosMedicos: string[], rasgos: string[], habilidades: string[]) {
     if (!usuario || guardando) return;
     setGuardando(true);
     setErrorSistema("");
@@ -82,6 +82,7 @@ export default function AgregarEstudiantePage() {
         alergias: form.alergias.trim(),
         informacionMedicaAdicional: otrosMedicos.map((v) => v.trim()).filter(Boolean),
         rasgos,
+        habilidades,
         apoderadoNombre: form.apoderadoNombre.trim(),
         apoderadoRun: form.apoderadoRun.trim() ? normalizarRut(form.apoderadoRun) : "",
         apoderadoParentesco: form.apoderadoParentesco,
@@ -169,6 +170,7 @@ export default function AgregarEstudiantePage() {
           valoresIniciales={ESTUDIANTE_FORM_VACIO}
           otrosMedicosIniciales={[]}
           rasgosIniciales={[]}
+          habilidadesIniciales={[]}
           especialidades={especialidades}
           runsOcupados={runsOcupados}
           guardando={guardando}

@@ -12,6 +12,7 @@ const TITULOS: Record<string, string> = {
   "/dashboard/estudiantes": "Estudiantes",
   "/dashboard/estudiantes/nuevo": "Agregar Estudiante",
   "/dashboard/estudiantes/asignaciones": "Asignaciones",
+  "/dashboard/estudiantes/asignaciones/nueva": "Nueva asignación",
   "/dashboard/estudiantes/historial": "Historial",
   "/dashboard/centros": "Centros Duales",
   "/dashboard/centros/nuevo": "Agregar Centro",
