@@ -5,6 +5,7 @@ import Link from "next/link";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { formatearFecha } from "@/lib/fecha";
 import type { Estudiante, Especialidad } from "@/types";
 import {
   ArrowLeft, BadgeCheck, Phone, GraduationCap, HeartPulse,
@@ -144,7 +145,7 @@ export default function FichaEstudiantePage() {
           <Dato label="Nombres" valor={estudiante.nombres} />
           <Dato label="Apellido paterno" valor={estudiante.apellidoPaterno} />
           <Dato label="Apellido materno" valor={estudiante.apellidoMaterno} />
-          <Dato label="Fecha de nacimiento" valor={estudiante.fechaNacimiento} />
+          <Dato label="Fecha de nacimiento" valor={formatearFecha(estudiante.fechaNacimiento)} />
           <Dato label="Sexo/Género" valor={estudiante.sexo} />
           <Dato label="Nacionalidad" valor={estudiante.nacionalidad} />
         </Seccion>

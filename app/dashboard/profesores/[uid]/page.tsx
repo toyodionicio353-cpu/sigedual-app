@@ -5,6 +5,7 @@ import Link from "next/link";
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { formatearFecha } from "@/lib/fecha";
 import type { Asignacion, EstadoAsignacion, Estudiante, Usuario } from "@/types";
 import { ArrowLeft, Pencil, Power, MapPin, ClipboardCheck } from "lucide-react";
 
@@ -199,7 +200,7 @@ export default function FichaProfesorPage() {
                 >
                   <div className="min-w-0">
                     <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium truncate">{est ? `${est.nombres} ${est.apellidos}` : "Estudiante no encontrado"}</p>
-                    <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{est?.curso || "Sin curso"} · Asignado desde: {a.fechaInicio || "No definida"}</p>
+                    <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{est?.curso || "Sin curso"} · Asignado desde: {a.fechaInicio ? formatearFecha(a.fechaInicio) : "No definida"}</p>
                   </div>
                   <span style={{ color: "var(--text-secondary)" }} className="text-xs flex-shrink-0">{ESTADO_ASIGNACION_LABEL[a.estado]}</span>
                 </Link>

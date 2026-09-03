@@ -6,6 +6,7 @@ import { collection, query, where, getDocs, addDoc, doc, updateDoc, writeBatch }
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { calcularCompatibilidad, disponibleParaRecomendar, estadoEfectivo, capacidadDe } from "@/lib/compatibilidad";
+import { formatearFecha } from "@/lib/fecha";
 import type { Asignacion, CentroDual, Compatibilidad, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia, Usuario } from "@/types";
 import {
   ArrowLeft, ArrowRight, Search, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, User, Users,
@@ -975,8 +976,8 @@ export default function NuevaAsignacionPage() {
           </div>
 
           <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="rounded-xl p-4 mb-6 text-sm flex flex-col gap-1.5">
-            <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Fecha de inicio: </span>{fechaInicio || "No definida"}</p>
-            <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Fecha de término: </span>{fechaTermino || "No definida"}</p>
+            <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Fecha de inicio: </span>{fechaInicio ? formatearFecha(fechaInicio) : "No definida"}</p>
+            <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Fecha de término: </span>{fechaTermino ? formatearFecha(fechaTermino) : "No definida"}</p>
             <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Jornada: </span>{jornada || "No definida"}</p>
             <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Profesor supervisor: </span>{profesores.find((p) => p.uid === profesorSupervisorId)?.nombre || "No definido"}</p>
             <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Maestro guía: </span>{maestroGuiaSeleccionado ? `${maestroGuiaSeleccionado.nombres} ${maestroGuiaSeleccionado.apellidoPaterno}` : "No definido"}</p>
@@ -1026,8 +1027,8 @@ export default function NuevaAsignacionPage() {
           </div>
 
           <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="rounded-xl p-4 mb-6 text-sm flex flex-col gap-1.5">
-            <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Fecha de inicio: </span>{fechaInicio || "No definida"}</p>
-            <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Fecha de término: </span>{fechaTermino || "No definida"}</p>
+            <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Fecha de inicio: </span>{fechaInicio ? formatearFecha(fechaInicio) : "No definida"}</p>
+            <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Fecha de término: </span>{fechaTermino ? formatearFecha(fechaTermino) : "No definida"}</p>
             <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Jornada: </span>{jornada || "No definida"}</p>
             <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Profesor supervisor: </span>{profesores.find((p) => p.uid === profesorSupervisorId)?.nombre || "No definido"}</p>
             <p style={{ color: "var(--text-primary)" }}><span style={{ color: "var(--text-muted)" }}>Estado: </span>{ESTADO_LABEL[estadoInicial]}</p>

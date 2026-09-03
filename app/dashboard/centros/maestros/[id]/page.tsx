@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs } 
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { disponibilidadMaestroGuiaDe, camposFaltantesMaestroGuia } from "@/lib/maestro-guia";
+import { formatearFecha } from "@/lib/fecha";
 import type { Asignacion, CentroDual, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia } from "@/types";
 import { AlertCircle, ArrowLeft, Pencil, Power, Trash2 } from "lucide-react";
 
@@ -286,7 +287,7 @@ export default function FichaMaestroGuiaPage() {
                 >
                   <div className="min-w-0">
                     <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium truncate">{est ? `${est.nombres} ${est.apellidos}` : "Estudiante no encontrado"}</p>
-                    <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{est?.curso || "Sin curso"} · Asignado desde: {a.fechaInicio || "No definida"}</p>
+                    <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{est?.curso || "Sin curso"} · Asignado desde: {a.fechaInicio ? formatearFecha(a.fechaInicio) : "No definida"}</p>
                   </div>
                   <span style={{ color: "var(--text-secondary)" }} className="text-xs flex-shrink-0">{ESTADO_ASIGNACION_LABEL[a.estado]}</span>
                 </Link>

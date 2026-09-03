@@ -5,6 +5,7 @@ import Link from "next/link";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { formatearFecha } from "@/lib/fecha";
 import type { Liceo, Especialidad } from "@/types";
 import {
   ArrowLeft, Building2, UserCog, Phone, Globe2, GraduationCap, Pencil,
@@ -183,8 +184,8 @@ export default function FichaLiceoPage() {
         </Seccion>
 
         <Seccion icon={<Building2 size={16} />} titulo="Registro">
-          <Dato label="Fecha de registro" valor={liceo.creadoEn ? new Date(liceo.creadoEn).toLocaleDateString("es-CL") : ""} />
-          <Dato label="Última modificación" valor={liceo.actualizadoEn ? new Date(liceo.actualizadoEn).toLocaleDateString("es-CL") : ""} />
+          <Dato label="Fecha de registro" valor={formatearFecha(liceo.creadoEn)} />
+          <Dato label="Última modificación" valor={formatearFecha(liceo.actualizadoEn)} />
         </Seccion>
       </div>
     </div>

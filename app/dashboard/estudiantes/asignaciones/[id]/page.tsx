@@ -5,6 +5,7 @@ import Link from "next/link";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { formatearFecha } from "@/lib/fecha";
 import type { Asignacion, CentroDual, EstadoAsignacion, Estudiante, MaestroGuia, Usuario } from "@/types";
 import { ArrowLeft } from "lucide-react";
 
@@ -217,8 +218,8 @@ export default function FichaAsignacionPage() {
       <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6 mb-5">
         <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold mb-4">Datos de la asignación</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Dato label="Fecha de inicio" valor={asignacion.fechaInicio || "No definida"} />
-          <Dato label="Fecha de término" valor={asignacion.fechaTermino || "No definida"} />
+          <Dato label="Fecha de inicio" valor={asignacion.fechaInicio ? formatearFecha(asignacion.fechaInicio) : "No definida"} />
+          <Dato label="Fecha de término" valor={asignacion.fechaTermino ? formatearFecha(asignacion.fechaTermino) : "No definida"} />
           <Dato label="Jornada" valor={asignacion.jornada || "No definida"} />
         </div>
         {asignacion.observaciones && (
@@ -232,7 +233,7 @@ export default function FichaAsignacionPage() {
       <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6">
         <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold mb-4">Trazabilidad</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Dato label="Asignación creada" valor={new Date(asignacion.creadoEn).toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" })} />
+          <Dato label="Asignación creada" valor={formatearFecha(asignacion.creadoEn)} />
           <Dato label="Responsable" valor={responsable?.nombre || "No disponible"} />
         </div>
       </div>
