@@ -23,16 +23,18 @@ function SegmentoProtegidoView({ texto }: { texto: string }) {
   );
 }
 
+const FUENTE_CAMPO = "var(--font-sans), sans-serif";
+
 function SegmentoCampoView({ resultado, etiqueta }: { resultado?: ResultadoCampo; etiqueta?: string }) {
   if (resultado?.valor) {
     return (
-      <span style={{ color: "var(--accent-light)" }} className="font-medium">
+      <span style={{ color: "var(--accent-light)", fontFamily: FUENTE_CAMPO }} className="font-medium">
         {resultado.valor}
       </span>
     );
   }
   return (
-    <span style={{ color: "var(--text-muted)" }} className="italic text-[13px]">
+    <span style={{ color: "var(--text-muted)", fontFamily: FUENTE_CAMPO }} className="italic text-[13px]">
       ({resultado?.mensajeAusente ?? `falta ${etiqueta ?? "este dato"}`})
     </span>
   );
@@ -315,7 +317,11 @@ export default function EditorDocumento({
       <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-8 mb-6">
         <div className="flex flex-col gap-5">
           {contenido.map((parrafo, pi) => (
-            <p key={pi} style={{ color: "var(--text-primary)", lineHeight: 1.7 }} className="text-sm text-justify">
+            <p
+              key={pi}
+              style={{ color: "var(--text-primary)", lineHeight: 1.7, fontFamily: "'Times New Roman', Times, serif" }}
+              className="text-sm text-justify"
+            >
               {parrafo.map((s, si) => {
                 if (s.tipo === "protegido") return <SegmentoProtegidoView key={si} texto={s.texto} />;
                 if (s.tipo === "campo") return <SegmentoCampoView key={si} resultado={resultadoCampos[s.clave ?? ""]} etiqueta={etiquetaCampo(s.clave)} />;
