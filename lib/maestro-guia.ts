@@ -26,3 +26,27 @@ export function disponibleParaAsignarMaestroGuia(mg: MaestroGuia, centro: Centro
   const { capacidad, asignados } = disponibilidadMaestroGuiaDe(mg, asignaciones);
   return capacidad == null || asignados < capacidad;
 }
+
+export type EstadoDisponibilidadMaestroGuia = "disponible" | "sin_capacidad" | "no_disponible";
+
+// Etiqueta de disponibilidad de tres estados para mostrar en listado/ficha:
+// distingue "no disponible" (el maestro guía o su centro están inactivos)
+// de "sin capacidad" (ambos activos, pero ya alcanzó su máximo).
+export function estadoDisponibilidadMaestroGuia(mg: MaestroGuia, centro: CentroDual | undefined, asignaciones: Asignacion[]): EstadoDisponibilidadMaestroGuia {
+  if (mg.estado !== "activo" || !centro || estadoEfectivo(centro) !== "activo") return "no_disponible";
+  const { capacidad, asignados } = disponibilidadMaestroGuiaDe(mg, asignaciones);
+  if (capacidad != null && asignados >= capacidad) return "sin_capacidad";
+  return "disponible";
+}
+
+// Campos importantes que, si faltan, marcan al maestro guía como
+// "Información incompleta" en el listado y la ficha.
+export function camposFaltantesMaestroGuia(mg: MaestroGuia, centroExiste: boolean): string[] {
+  const faltantes: string[] = [];
+  if (!centroExiste) faltantes.push("Centro dual");
+  if (mg.especialidades.length === 0) faltantes.push("Especialidad");
+  if (!mg.email) faltantes.push("Correo");
+  if (!mg.telefono) faltantes.push("Teléfono");
+  if (mg.capacidad == null) faltantes.push("Capacidad");
+  return faltantes;
+}
