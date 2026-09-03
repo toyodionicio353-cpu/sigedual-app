@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteField, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
@@ -79,7 +79,7 @@ export default function EditarMaestroGuiaPage() {
     setErrorSistema("");
     setMensaje("");
     try {
-      await updateDoc(doc(db, "maestros_guia", id), {
+      const cambios: Record<string, unknown> = {
         nombres: form.nombres.trim(),
         apellidoPaterno: form.apellidoPaterno.trim(),
         apellidoMaterno: form.apellidoMaterno.trim(),
@@ -88,14 +88,15 @@ export default function EditarMaestroGuiaPage() {
         telefono: form.telefono.trim(),
         cargo: form.cargo.trim(),
         area: form.area.trim(),
-        aniosExperiencia: form.aniosExperiencia.trim() ? Number(form.aniosExperiencia) : undefined,
         especialidades: nuevasEspecialidades,
         areasSupervision: nuevasAreas,
-        capacidad: form.capacidad.trim() ? Number(form.capacidad) : undefined,
         estado: form.estado,
         observaciones: form.observaciones.trim(),
         actualizadoEn: new Date().toISOString(),
-      });
+        aniosExperiencia: form.aniosExperiencia.trim() ? Number(form.aniosExperiencia) : deleteField(),
+        capacidad: form.capacidad.trim() ? Number(form.capacidad) : deleteField(),
+      };
+      await updateDoc(doc(db, "maestros_guia", id), cambios);
       setMensaje("Cambios guardados correctamente.");
     } catch (err) {
       const detalle = err instanceof Error ? err.message : String(err);
