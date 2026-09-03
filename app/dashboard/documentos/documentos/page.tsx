@@ -18,6 +18,7 @@ export default function DocumentosPage() {
   const { usuario } = useAuth();
   const [aviso, setAviso] = useState("");
   const [vista, setVista] = useState<Vista>({ modo: "biblioteca" });
+  const [tabBiblioteca, setTabBiblioteca] = useState<"plantillas" | "creados">("plantillas");
 
   const plantillasDefinidas = plantillasParaModulo(TIPO_MODULO);
   const { contexto, cargando: cargandoContexto } = useContextoDocumentos();
@@ -93,6 +94,8 @@ export default function DocumentosPage() {
         cargando={cargandoContexto || cargandoCreados}
         onUsarPlantilla={usarPlantilla}
         onAbrirCreado={abrirCreado}
+        tabInicial={tabBiblioteca}
+        onCambiarTab={setTabBiblioteca}
         acciones={[
           { label: "Editar", onClick: abrirCreado },
           { label: "Eliminar", onClick: eliminarCreado },
