@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { disponibilidadMaestroGuiaDe, camposFaltantesMaestroGuia } from "@/lib/maestro-guia";
 import type { Asignacion, CentroDual, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia } from "@/types";
-import { AlertCircle, ArrowLeft, Pencil, Power } from "lucide-react";
+import { AlertCircle, ArrowLeft, Pencil, Power, Trash2 } from "lucide-react";
 
 const ESTADO_ASIGNACION_LABEL: Record<EstadoAsignacion, string> = {
   pendiente: "Pendiente", en_proceso: "En proceso", asignada: "Asignada",
@@ -35,6 +35,7 @@ function Dato({ label, valor }: { label: string; valor: React.ReactNode }) {
 export default function FichaMaestroGuiaPage() {
   const { id } = useParams<{ id: string }>();
   const { usuario } = useAuth();
+  const router = useRouter();
 
   const [mg, setMg] = useState<MaestroGuia | null>(null);
   const [centro, setCentro] = useState<CentroDual | null>(null);
@@ -45,6 +46,7 @@ export default function FichaMaestroGuiaPage() {
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [actualizando, setActualizando] = useState(false);
   const [error, setError] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
 
   const puedeEditar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
 
@@ -100,6 +102,18 @@ export default function FichaMaestroGuiaPage() {
       setMg({ ...mg, estado: nuevoEstado });
     } finally {
       setActualizando(false);
+    }
+  }
+
+  async function eliminar() {
+    if (!mg || eliminando) return;
+    if (!confirm(`¿Eliminar a ${mg.nombres} ${mg.apellidoPaterno} como maestro guía? Esta acción no se puede deshacer.`)) return;
+    setEliminando(true);
+    try {
+      await deleteDoc(doc(db, "maestros_guia", mg.id));
+      router.replace("/dashboard/centros/maestros");
+    } finally {
+      setEliminando(false);
     }
   }
 
@@ -180,9 +194,21 @@ export default function FichaMaestroGuiaPage() {
               <Power size={13} />
               {mg.estado === "activo" ? "Marcar inactivo" : "Marcar activo"}
             </button>
+            {asignacionesDeEsteGuia.length === 0 && (
+              <button onClick={eliminar} disabled={eliminando} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--danger)" }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--danger)] transition-colors disabled:opacity-50">
+                <Trash2 size={13} />
+                Eliminar
+              </button>
+            )}
           </>
         )}
       </div>
+
+      {puedeEditar && asignacionesDeEsteGuia.length > 0 && (
+        <p style={{ color: "var(--text-muted)" }} className="text-xs -mt-4 mb-6">
+          No se puede eliminar: tiene historial de asignaciones. Usa &quot;Marcar inactivo&quot; para desvincularlo conservando el historial.
+        </p>
+      )}
 
       {faltantes.length > 0 && (
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-xl px-4 py-3 mb-6 flex items-start gap-2">
