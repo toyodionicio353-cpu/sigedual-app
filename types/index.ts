@@ -241,3 +241,26 @@ export interface MaestroGuia {
   creadoEn: string;
   actualizadoEn?: string;
 }
+
+export type TipoModuloDocumento = "convenio" | "evaluacion" | "documento";
+export type TipoSegmentoPlantilla = "protegido" | "editable" | "campo";
+
+export interface SegmentoDocumento {
+  tipo: TipoSegmentoPlantilla;
+  texto: string;
+  clave?: string;
+}
+
+export interface DocumentoGenerado {
+  id: string;
+  tipoModulo: TipoModuloDocumento;
+  plantillaId: string;
+  liceoId: string;
+  nombre: string;
+  estudianteId?: string;
+  campos: Record<string, string>;
+  contenido: SegmentoDocumento[][];
+  creadoPor: string;
+  creadoEn: string;
+  actualizadoEn?: string;
+}

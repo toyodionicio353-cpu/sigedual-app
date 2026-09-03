@@ -29,6 +29,8 @@ interface BibliotecaDocumentalProps {
   cargando?: boolean;
   accionPrincipal?: { label: string; onClick: () => void };
   acciones?: AccionMenu[];
+  onUsarPlantilla?: (item: ItemBiblioteca) => void;
+  onAbrirCreado?: (item: ItemBiblioteca) => void;
 }
 
 type Orden = "recientes" | "antiguos" | "az" | "za";
@@ -107,6 +109,7 @@ function MenuTarjeta({ item, acciones, abierto, onToggle }: { item: ItemBibliote
 export default function BibliotecaDocumental({
   titulo, descripcion, placeholderBusqueda, labelTabCreados, labelPlural,
   plantillas, creados, cargando = false, accionPrincipal, acciones = [],
+  onUsarPlantilla, onAbrirCreado,
 }: BibliotecaDocumentalProps) {
   const [tab, setTab] = useState<"plantillas" | "creados">("plantillas");
   const [busqueda, setBusqueda] = useState("");
@@ -246,34 +249,61 @@ export default function BibliotecaDocumental({
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {ordenados.map((item) => (
-              <div
-                key={item.id}
-                style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
-                className="rounded-2xl overflow-hidden hover:[border-color:var(--accent)] transition-colors flex flex-col"
-              >
-                <div className="p-3 pb-0">
-                  <VistaPreviaDocumento lineas={item.previewLineas} />
-                </div>
-                <div className="p-4 flex flex-col gap-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold leading-snug line-clamp-2 flex-1">{item.nombre}</p>
-                    <MenuTarjeta
-                      item={item}
-                      acciones={acciones}
-                      abierto={menuAbierto === item.id}
-                      onToggle={() => setMenuAbierto((prev) => (prev === item.id ? null : item.id))}
-                    />
+            {ordenados.map((item) =>
+              tab === "plantillas" ? (
+                <div
+                  key={item.id}
+                  onClick={() => onUsarPlantilla?.(item)}
+                  style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+                  className="rounded-2xl overflow-hidden hover:[border-color:var(--accent)] transition-colors flex flex-col cursor-pointer"
+                >
+                  <div className="p-3 pb-0">
+                    <VistaPreviaDocumento lineas={item.previewLineas} />
                   </div>
-                  <p style={{ color: "var(--text-muted)" }} className="text-xs truncate">
-                    {[item.tipo, item.fecha, item.estado].filter(Boolean).join(" · ") || "Sin información adicional"}
-                  </p>
-                  {item.autor && (
-                    <p style={{ color: "var(--text-muted)" }} className="text-xs truncate">{item.autor}</p>
-                  )}
+                  <div className="p-4 flex flex-col gap-2">
+                    <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold leading-snug line-clamp-2">{item.nombre}</p>
+                    {item.subtitulo && (
+                      <p style={{ color: "var(--text-muted)" }} className="text-xs line-clamp-2">{item.subtitulo}</p>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onUsarPlantilla?.(item); }}
+                      style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+                      className="mt-1 px-3 py-2 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+                    >
+                      Usar plantilla
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ) : (
+                <div
+                  key={item.id}
+                  onClick={() => onAbrirCreado?.(item)}
+                  style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+                  className={`rounded-2xl overflow-hidden hover:[border-color:var(--accent)] transition-colors flex flex-col ${onAbrirCreado ? "cursor-pointer" : ""}`}
+                >
+                  <div className="p-3 pb-0">
+                    <VistaPreviaDocumento lineas={item.previewLineas} />
+                  </div>
+                  <div className="p-4 flex flex-col gap-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold leading-snug line-clamp-2 flex-1">{item.nombre}</p>
+                      <MenuTarjeta
+                        item={item}
+                        acciones={acciones}
+                        abierto={menuAbierto === item.id}
+                        onToggle={() => setMenuAbierto((prev) => (prev === item.id ? null : item.id))}
+                      />
+                    </div>
+                    <p style={{ color: "var(--text-muted)" }} className="text-xs truncate">
+                      {[item.tipo, item.fecha, item.estado].filter(Boolean).join(" · ") || "Sin información adicional"}
+                    </p>
+                    {item.autor && (
+                      <p style={{ color: "var(--text-muted)" }} className="text-xs truncate">{item.autor}</p>
+                    )}
+                  </div>
+                </div>
+              )
+            )}
           </div>
         </>
       )}
