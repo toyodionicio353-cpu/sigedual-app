@@ -10,10 +10,10 @@ import { useEffect, useState } from "react";
 import type { Rol } from "@/types";
 import {
   LayoutDashboard, Users, Building2, GraduationCap,
-  FileText, MessageSquare, Settings, LogOut, BookOpen,
+  MessageSquare, Settings, LogOut, BookOpen,
   ChevronDown, UserPlus, ClipboardList,
-  FolderOpen, UsersRound, Building, ShieldCheck,
-  CalendarCheck, Handshake, ClipboardCheck,
+  UsersRound, Building, ShieldCheck,
+  CalendarCheck,
   UserCog, School, SlidersHorizontal, LifeBuoy,
 } from "lucide-react";
 
@@ -90,18 +90,6 @@ const MENUS: NavGroup[] = [
     sub: [
       { href: "/dashboard/especialidades", label: "Lista de especialidades", icon: <GraduationCap size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director"] },
       { href: "/dashboard/especialidades/nueva", label: "Agregar especialidad", icon: <UserPlus size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director"] },
-    ],
-  },
-  {
-    id: "documentos",
-    label: "Documentos",
-    icon: <FileText size={20} strokeWidth={2.25} />,
-    color: "#f59e0b",
-    roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"],
-    sub: [
-      { href: "/dashboard/documentos/convenios", label: "Convenios", icon: <Handshake size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-      { href: "/dashboard/documentos/evaluaciones", label: "Evaluaciones", icon: <ClipboardCheck size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-      { href: "/dashboard/documentos", label: "Documentos", icon: <FolderOpen size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
     ],
   },
   {

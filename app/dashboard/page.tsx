@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useEffect, useState } from "react";
 import { collection, query, where, getCountFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Users, Building2, FileText, MessageSquare, BookOpen, GraduationCap, Settings, ArrowRight } from "lucide-react";
+import { Users, Building2, MessageSquare, BookOpen, GraduationCap, Settings, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import type { Rol } from "@/types";
 
@@ -27,23 +27,21 @@ interface Stat {
 
 export default function DashboardPage() {
   const { usuario } = useAuth();
-  const [counts, setCounts] = useState({ estudiantes: 0, centros: 0, documentos: 0, mensajes: 0, profesores: 0, especialidades: 0 });
+  const [counts, setCounts] = useState({ estudiantes: 0, centros: 0, mensajes: 0, profesores: 0, especialidades: 0 });
 
   useEffect(() => {
     if (!usuario) return;
     async function cargar() {
       const liceoId = usuario!.liceoId;
-      const [e, c, d, p, esp] = await Promise.all([
+      const [e, c, p, esp] = await Promise.all([
         getCountFromServer(query(collection(db, "estudiantes"), where("liceoId", "==", liceoId))),
         getCountFromServer(query(collection(db, "centros_duales"), where("liceoId", "==", liceoId))),
-        getCountFromServer(query(collection(db, "documentos"), where("liceoId", "==", liceoId))),
         getCountFromServer(query(collection(db, "usuarios"), where("liceoId", "==", liceoId), where("rol", "==", "profesor"))),
         getCountFromServer(query(collection(db, "especialidades"), where("liceoId", "==", liceoId))),
       ]);
       setCounts({
         estudiantes: e.data().count,
         centros: c.data().count,
-        documentos: d.data().count,
         mensajes: 0,
         profesores: p.data().count,
         especialidades: esp.data().count,
@@ -55,7 +53,6 @@ export default function DashboardPage() {
   const stats: Stat[] = [
     { label: "Estudiantes", value: counts.estudiantes, icon: <Users size={22} />, color: "#2563eb", href: "/dashboard/estudiantes", roles: ["administrador", "coordinador", "director", "profesor"] },
     { label: "Centros Duales", value: counts.centros, icon: <Building2 size={22} />, color: "#22c55e", href: "/dashboard/centros", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] },
-    { label: "Documentos", value: counts.documentos, icon: <FileText size={22} />, color: "#f59e0b", href: "/dashboard/documentos", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
     { label: "Profesores", value: counts.profesores, icon: <BookOpen size={22} />, color: "#8b5cf6", href: "/dashboard/profesores", roles: ["administrador", "coordinador", "director"] },
     { label: "Especialidades", value: counts.especialidades, icon: <GraduationCap size={22} />, color: "#06b6d4", href: "/dashboard/especialidades", roles: ["administrador", "coordinador", "director"] },
     { label: "Mensajes", value: 0, icon: <MessageSquare size={22} />, color: "#ec4899", href: "/dashboard/mensajes", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
@@ -65,7 +62,6 @@ export default function DashboardPage() {
     { label: "Gestionar Usuarios", icon: <Settings size={16} />, href: "/dashboard/usuarios", roles: ["administrador"] as Rol[] },
     { label: "Ver Estudiantes", icon: <Users size={16} />, href: "/dashboard/estudiantes", roles: ["administrador", "coordinador", "director", "profesor"] as Rol[] },
     { label: "Ver Centros", icon: <Building2 size={16} />, href: "/dashboard/centros", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] as Rol[] },
-    { label: "Subir Documento", icon: <FileText size={16} />, href: "/dashboard/documentos", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] as Rol[] },
   ];
 
   const visibleStats = stats.filter((s) => usuario && s.roles.includes(usuario.rol));
