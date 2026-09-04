@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import Sidebar from "@/components/Sidebar";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -9,6 +10,8 @@ import CommandPalette from "@/components/CommandPalette";
 import ShortcutsProvider from "@/components/ShortcutsProvider";
 import { usePreferencias } from "@/lib/preferencias/context";
 import type { ClaveTraduccion } from "@/lib/preferencias/i18n";
+import { useNotificaciones } from "@/lib/notificaciones/useNotificaciones";
+import ListaNotificaciones from "@/components/notificaciones/ListaNotificaciones";
 import { Bell, Building2, LogOut, ArrowLeft } from "lucide-react";
 
 const TITULOS: Record<string, string> = {
@@ -41,6 +44,14 @@ const TITULOS: Record<string, string> = {
   "/dashboard/administracion/configuracion": "Configuración",
   "/dashboard/administracion/privacidad": "Políticas",
   "/dashboard/administracion/aviso-legal": "Aviso legal",
+  "/dashboard/administracion/tickets": "Tickets",
+  "/dashboard/soporte": "Soporte",
+  "/dashboard/soporte/tickets": "Mis tickets",
+  "/dashboard/soporte/tickets/nuevo": "Crear ticket",
+  "/dashboard/visitas": "Visitas",
+  "/dashboard/visitas/nueva": "Registrar visita",
+  "/dashboard/notificaciones": "Notificaciones",
+  "/dashboard/calendario": "Calendario",
 };
 
 // Solo se traduce el título del encabezado para las rutas que ya tienen una
@@ -69,6 +80,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [panelNotifAbierto, setPanelNotifAbierto] = useState(false);
+  const panelNotifRef = useRef<HTMLDivElement>(null);
+  const { notificaciones, noLeidas, cargando: cargandoNotif, marcarLeida } = useNotificaciones();
+
+  useEffect(() => {
+    if (!panelNotifAbierto) return;
+    function alHacerClickFuera(e: MouseEvent) {
+      if (panelNotifRef.current && !panelNotifRef.current.contains(e.target as Node)) setPanelNotifAbierto(false);
+    }
+    window.addEventListener("mousedown", alHacerClickFuera);
+    return () => window.removeEventListener("mousedown", alHacerClickFuera);
+  }, [panelNotifAbierto]);
 
   function toggleSidebar() {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -148,12 +171,44 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <button
-              style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 8 }}
-              className="w-8 h-8 flex items-center justify-center hover:[border-color:var(--accent)] transition-colors"
-            >
-              <Bell size={15} style={{ color: "var(--text-muted)" }} />
-            </button>
+            <div className="relative" ref={panelNotifRef}>
+              <button
+                onClick={() => setPanelNotifAbierto((v) => !v)}
+                style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 8 }}
+                className="w-8 h-8 flex items-center justify-center hover:[border-color:var(--accent)] transition-colors relative"
+                title="Notificaciones"
+              >
+                <Bell size={15} style={{ color: "var(--text-muted)" }} />
+                {noLeidas > 0 && (
+                  <span
+                    style={{ background: "var(--danger)", color: "#fff" }}
+                    className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
+                  >
+                    {noLeidas > 9 ? "9+" : noLeidas}
+                  </span>
+                )}
+              </button>
+
+              {panelNotifAbierto && (
+                <div
+                  style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", borderRadius: 14 }}
+                  className="absolute right-0 top-full mt-2 z-50 w-80 max-h-[70vh] overflow-y-auto shadow-2xl"
+                >
+                  <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+                    <p style={{ color: "var(--text-primary)" }} className="text-sm font-bold">Notificaciones</p>
+                    <Link href="/dashboard/notificaciones" onClick={() => setPanelNotifAbierto(false)} style={{ color: "var(--accent-light)" }} className="text-xs font-semibold hover:underline">
+                      Ver todas
+                    </Link>
+                  </div>
+                  <ListaNotificaciones
+                    notificaciones={notificaciones}
+                    cargando={cargandoNotif}
+                    onMarcarLeida={marcarLeida}
+                    onItemClick={() => setPanelNotifAbierto(false)}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
