@@ -10,9 +10,7 @@ export type Idioma = "es" | "en";
 export type FormatoHora = "12" | "24";
 export type ZonaHorariaModo = "dispositivo" | "manual";
 export type FrecuenciaResumenEmail = "desactivado" | "diario" | "semanal";
-export type AcentoId =
-  | "amarillo" | "ambar" | "dorado" | "mostaza"
-  | "teal" | "amarillo-marca" | "morado" | "rojo-coral" | "azul-suave";
+export type AcentoId = "amarillo" | "teal" | "morado" | "rojo-coral" | "azul-suave";
 
 export interface NotificacionesCategorias {
   mensajes: boolean;
