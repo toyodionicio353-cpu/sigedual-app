@@ -7,7 +7,7 @@ import { limpiarPreferencias } from "@/lib/preferencias/storage";
 import { limpiarTodosLosBorradores } from "@/lib/borradores/useBorradorAutomatico";
 import SettingRow from "@/components/ui/SettingRow";
 import Switch from "@/components/ui/Switch";
-import { ShieldAlert, FileSignature, Scale, ScrollText, Trash2, AlertTriangle } from "lucide-react";
+import { ShieldAlert, Scale, ScrollText, Trash2, AlertTriangle } from "lucide-react";
 
 export default function PrivacidadSeccion() {
   const { preferencias, actualizarVarias } = usePreferencias();
@@ -67,10 +67,7 @@ export default function PrivacidadSeccion() {
       <SettingRow id="set-legal" titulo="Información legal" descripcion="Documentos legales de SIGEDUAL." vertical>
         <div className="flex flex-col gap-1 mt-1">
           <Link href="/dashboard/administracion/privacidad" className="inline-flex items-center gap-2 text-sm hover:underline w-fit" style={{ color: "var(--accent-light)" }}>
-            <ScrollText size={14} /> Política de privacidad
-          </Link>
-          <Link href="/dashboard/administracion/terminos" className="inline-flex items-center gap-2 text-sm hover:underline w-fit" style={{ color: "var(--accent-light)" }}>
-            <FileSignature size={14} /> Términos y condiciones
+            <ScrollText size={14} /> Políticas (privacidad y términos de uso)
           </Link>
           <Link href="/dashboard/administracion/aviso-legal" className="inline-flex items-center gap-2 text-sm hover:underline w-fit" style={{ color: "var(--accent-light)" }}>
             <Scale size={14} /> Aviso legal
