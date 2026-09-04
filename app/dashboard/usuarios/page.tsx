@@ -8,7 +8,7 @@ import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import { RefreshCw, Trash2, UserCog } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
-import type { Usuario, Rol, Liceo } from "@/types";
+import type { Usuario, Rol, Liceo, Especialidad } from "@/types";
 
 const ROLES: { value: Rol; label: string }[] = [
   { value: "coordinador", label: "Coordinador" },
@@ -30,6 +30,7 @@ export default function UsuariosPage() {
   const { usuario } = useAuth();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [liceos, setLiceos] = useState<Liceo[]>([]);
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(EMPTY);
@@ -49,12 +50,19 @@ export default function UsuariosPage() {
     // El administrador ve a todos los usuarios de la plataforma, sin
     // filtrar por liceo (a diferencia de otros roles, que solo verían
     // el suyo si esta pantalla se habilitara para ellos).
-    const [snapUsuarios, snapLiceos] = await Promise.all([
+    const [snapUsuarios, snapLiceos, snapEspecialidades] = await Promise.all([
       getDocs(collection(db, "usuarios")),
       getDocs(collection(db, "liceos")),
+      getDocs(collection(db, "especialidades")),
     ]);
     setUsuarios(snapUsuarios.docs.map((d) => ({ ...d.data() } as Usuario)));
     setLiceos(snapLiceos.docs.map((d) => ({ id: d.id, ...d.data() } as Liceo)));
+    setEspecialidades(
+      snapEspecialidades.docs
+        .map((d) => ({ id: d.id, ...d.data() } as Especialidad))
+        .filter((e) => e.estado !== "inactiva")
+        .sort((a, b) => a.nombre.localeCompare(b.nombre))
+    );
     setLoading(false);
   }
 
@@ -299,7 +307,6 @@ export default function UsuariosPage() {
                 { key: "nombre", label: "Nombre completo", placeholder: "María González", type: "text" },
                 { key: "email", label: "Correo electrónico", placeholder: "usuario@liceo.cl", type: "email" },
                 { key: "password", label: "Contraseña temporal", placeholder: "••••••••", type: "password" },
-                { key: "especialidad", label: "Especialidad (si aplica)", placeholder: "Contabilidad", type: "text" },
               ].map(({ key, label, placeholder, type }) => (
                 <div key={key}>
                   <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">{label}</label>
@@ -308,6 +315,11 @@ export default function UsuariosPage() {
                     className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
                 </div>
               ))}
+              <div>
+                <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Especialidad (si aplica)</label>
+                <Select value={form.especialidad} onChange={(v) => setForm((f) => ({ ...f, especialidad: v }))} ariaLabel="Especialidad"
+                  opciones={[{ value: "", label: "Sin especialidad" }, ...especialidades.map((esp) => ({ value: esp.nombre, label: esp.nombre }))]} />
+              </div>
               <div>
                 <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
                 <Select value={form.liceoId} onChange={(v) => setForm((f) => ({ ...f, liceoId: v }))} ariaLabel="Liceo"
@@ -338,7 +350,6 @@ export default function UsuariosPage() {
             <div className="flex flex-col gap-4">
               {[
                 { key: "nombre", label: "Nombre completo", placeholder: "María González" },
-                { key: "especialidad", label: "Especialidad (si aplica)", placeholder: "Contabilidad" },
               ].map(({ key, label, placeholder }) => (
                 <div key={key}>
                   <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">{label}</label>
@@ -347,6 +358,11 @@ export default function UsuariosPage() {
                     className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
                 </div>
               ))}
+              <div>
+                <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Especialidad (si aplica)</label>
+                <Select value={formHuerfano.especialidad} onChange={(v) => setFormHuerfano((f) => ({ ...f, especialidad: v }))} ariaLabel="Especialidad"
+                  opciones={[{ value: "", label: "Sin especialidad" }, ...especialidades.map((esp) => ({ value: esp.nombre, label: esp.nombre }))]} />
+              </div>
               <div>
                 <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
                 <Select value={formHuerfano.liceoId} onChange={(v) => setFormHuerfano((f) => ({ ...f, liceoId: v }))} ariaLabel="Liceo"
