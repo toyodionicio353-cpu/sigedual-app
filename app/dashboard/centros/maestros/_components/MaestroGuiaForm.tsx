@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { formatearRut, normalizarRut, validarRut, validarEmail, validarTelefonoChileno } from "@/lib/rut";
 import { AREAS_DESEMPENO } from "@/lib/caracteristicas";
+import Select from "@/components/ui/Select";
 import type { CentroDual, Especialidad, EstadoMaestroGuia } from "@/types";
 
 function normalizar(texto?: string): string {
@@ -315,9 +316,8 @@ export default function MaestroGuiaForm({
         <input type="number" min={0} value={form.capacidad} onChange={(e) => set("capacidad", e.target.value)} placeholder="Sin límite si se deja vacío" style={inputStyle} className={inputClass} />
       </Campo>
       <Campo label="Estado" error={errores.estado}>
-        <select value={form.estado} onChange={(e) => set("estado", e.target.value as EstadoMaestroGuia)} style={inputStyle} className={inputClass}>
-          {ESTADOS_MG.map((es) => <option key={es.value} value={es.value}>{es.label}</option>)}
-        </select>
+        <Select value={form.estado} onChange={(v) => set("estado", v as EstadoMaestroGuia)} ariaLabel="Estado"
+          opciones={ESTADOS_MG} />
       </Campo>
       <Campo label="Observaciones (opcional)" error={errores.observaciones} span>
         <textarea value={form.observaciones} onChange={(e) => set("observaciones", e.target.value)} rows={3} placeholder="Información adicional que no tenga un campo propio..." style={inputStyle} className={`${inputClass} resize-none`} />

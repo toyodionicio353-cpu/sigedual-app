@@ -8,6 +8,7 @@ import { useFeedback } from "@/lib/preferencias/useFeedback";
 import { ROL_LABEL } from "@/lib/roles";
 import { validarRut, formatearRut, validarTelefonoChileno } from "@/lib/rut";
 import TituloPagina from "@/components/TituloPagina";
+import Select from "@/components/ui/Select";
 import AvatarUsuario from "./_components/AvatarUsuario";
 import CampoBloqueado from "./_components/CampoBloqueado";
 import ModalSolicitud from "./_components/ModalSolicitud";
@@ -216,15 +217,12 @@ export default function MiPerfilPage() {
             />
           </Campo>
           <Campo label="Nacionalidad">
-            <select
+            <Select
               value={form.nacionalidad}
-              onChange={(e) => set("nacionalidad", e.target.value)}
-              style={estiloInput(false)}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
-            >
-              <option value="">Sin especificar</option>
-              {NACIONALIDADES.map((n) => <option key={n} value={n}>{n}</option>)}
-            </select>
+              onChange={(v) => set("nacionalidad", v)}
+              ariaLabel="Nacionalidad"
+              opciones={[{ value: "", label: "Sin especificar" }, ...NACIONALIDADES.map((n) => ({ value: n, label: n }))]}
+            />
           </Campo>
         </div>
 

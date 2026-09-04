@@ -4,6 +4,7 @@ import { addDoc, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useFeedback } from "@/lib/preferencias/useFeedback";
+import Select from "@/components/ui/Select";
 import type { TipoDatoSolicitud } from "@/types";
 import { X } from "lucide-react";
 
@@ -78,14 +79,12 @@ export default function ModalSolicitud({ datoSugerido, valorActual, onCerrar }: 
         <div className="flex flex-col gap-4">
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Dato que deseas modificar</label>
-            <select
+            <Select
               value={tipoDato}
-              onChange={(e) => setTipoDato(e.target.value as TipoDatoSolicitud)}
-              style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
-            >
-              {OPCIONES_DATO.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+              onChange={(v) => setTipoDato(v as TipoDatoSolicitud)}
+              ariaLabel="Dato que deseas modificar"
+              opciones={OPCIONES_DATO}
+            />
           </div>
 
           <div>

@@ -5,6 +5,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import TituloPagina from "@/components/TituloPagina";
+import Select from "@/components/ui/Select";
 import type { Estudiante, Especialidad } from "@/types";
 import {
   Search, SlidersHorizontal, X, LayoutList, LayoutGrid,
@@ -59,9 +60,6 @@ function soloAlfanumerico(texto?: string): string {
 function iniciales(nombres: string, apellidos: string): string {
   return `${(nombres[0] || "").toUpperCase()}${(apellidos[0] || "").toUpperCase()}`;
 }
-
-const selectStyle = { background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" };
-const selectClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors disabled:opacity-50";
 
 export default function EstudiantesPage() {
   const { usuario } = useAuth();
@@ -354,15 +352,13 @@ export default function EstudiantesPage() {
         </button>
 
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          <select
+          <Select
             value={orden}
-            onChange={(e) => setOrden(e.target.value)}
-            style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-            className="pl-3 pr-2 py-3 rounded-xl text-sm outline-none"
-            title="Ordenar"
-          >
-            {ORDEN_OPCIONES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
+            onChange={setOrden}
+            ariaLabel="Ordenar"
+            className="w-44"
+            opciones={ORDEN_OPCIONES}
+          />
         </div>
 
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="flex items-center gap-1 p-1 rounded-xl flex-shrink-0">
@@ -391,52 +387,48 @@ export default function EstudiantesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Año académico</label>
-              <select value={filtros.anio} onChange={(e) => actualizarFiltro("anio", e.target.value)} style={selectStyle} className={selectClass}>
-                <option value="">Todos los años</option>
-                {aniosDisponibles.map((a) => <option key={a} value={a}>{a}</option>)}
-              </select>
+              <Select value={filtros.anio} onChange={(v) => actualizarFiltro("anio", v)} ariaLabel="Año académico"
+                opciones={[{ value: "", label: "Todos los años" }, ...aniosDisponibles.map((a) => ({ value: a, label: a }))]} />
             </div>
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Nivel</label>
-              <select value={filtros.nivel} onChange={(e) => actualizarFiltro("nivel", e.target.value)} style={selectStyle} className={selectClass}>
-                <option value="">Todos los niveles</option>
-                {nivelesDisponibles.map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
+              <Select value={filtros.nivel} onChange={(v) => actualizarFiltro("nivel", v)} ariaLabel="Nivel"
+                opciones={[{ value: "", label: "Todos los niveles" }, ...nivelesDisponibles.map((n) => ({ value: n, label: n }))]} />
             </div>
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Curso</label>
-              <select value={filtros.curso} onChange={(e) => actualizarFiltro("curso", e.target.value)} disabled={cursosDisponibles.length === 0} style={selectStyle} className={selectClass}>
-                <option value="">{cursosDisponibles.length === 0 ? "Sin cursos registrados" : "Todos los cursos"}</option>
-                {cursosDisponibles.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Select value={filtros.curso} onChange={(v) => actualizarFiltro("curso", v)} disabled={cursosDisponibles.length === 0} ariaLabel="Curso"
+                opciones={[
+                  { value: "", label: cursosDisponibles.length === 0 ? "Sin cursos registrados" : "Todos los cursos" },
+                  ...cursosDisponibles.map((c) => ({ value: c, label: c })),
+                ]} />
             </div>
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Especialidad</label>
-              <select value={filtros.especialidadId} onChange={(e) => actualizarFiltro("especialidadId", e.target.value)} disabled={especialidades.length === 0} style={selectStyle} className={selectClass}>
-                <option value="">{especialidades.length === 0 ? "Sin especialidades" : "Todas las especialidades"}</option>
-                {especialidades.map((esp) => <option key={esp.id} value={esp.id}>{esp.nombre}</option>)}
-              </select>
+              <Select value={filtros.especialidadId} onChange={(v) => actualizarFiltro("especialidadId", v)} disabled={especialidades.length === 0} ariaLabel="Especialidad"
+                opciones={[
+                  { value: "", label: especialidades.length === 0 ? "Sin especialidades" : "Todas las especialidades" },
+                  ...especialidades.map((esp) => ({ value: esp.id, label: esp.nombre })),
+                ]} />
             </div>
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Estado</label>
-              <select value={filtros.estado} onChange={(e) => actualizarFiltro("estado", e.target.value)} style={selectStyle} className={selectClass}>
-                <option value="">Todos los estados</option>
-                {ESTADOS.map((es) => <option key={es} value={es}>{es.charAt(0).toUpperCase() + es.slice(1)}</option>)}
-              </select>
+              <Select value={filtros.estado} onChange={(v) => actualizarFiltro("estado", v)} ariaLabel="Estado"
+                opciones={[{ value: "", label: "Todos los estados" }, ...ESTADOS.map((es) => ({ value: es, label: es.charAt(0).toUpperCase() + es.slice(1) }))]} />
             </div>
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Formación dual</label>
-              <select value={filtros.dual} onChange={(e) => actualizarFiltro("dual", e.target.value)} style={selectStyle} className={selectClass}>
-                <option value="">Todos</option>
-                <option value="si">En formación dual</option>
-                <option value="no">Sin formación dual</option>
-              </select>
+              <Select value={filtros.dual} onChange={(v) => actualizarFiltro("dual", v)} ariaLabel="Formación dual"
+                opciones={[
+                  { value: "", label: "Todos" },
+                  { value: "si", label: "En formación dual" },
+                  { value: "no", label: "Sin formación dual" },
+                ]} />
             </div>
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Empresa asignada</label>
-              <select disabled value="" style={selectStyle} className={selectClass}>
-                <option value="">Disponible próximamente</option>
-              </select>
+              <Select disabled value="" onChange={() => {}} ariaLabel="Empresa asignada"
+                opciones={[{ value: "", label: "Disponible próximamente" }]} />
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { usePreferencias } from "@/lib/preferencias/context";
 import { useFeedback } from "@/lib/preferencias/useFeedback";
 import TituloPagina from "@/components/TituloPagina";
+import Select from "@/components/ui/Select";
 import { INDICE_BUSQUEDA, type CategoriaConfig } from "./_data/indiceBusqueda";
 import AparienciaSeccion from "./_components/AparienciaSeccion";
 import InteraccionSeccion from "./_components/InteraccionSeccion";
@@ -108,14 +109,12 @@ export default function ConfiguracionPage() {
 
       {/* Selector de categoría en móvil/tablet */}
       <div className="lg:hidden mb-5">
-        <select
+        <Select
           value={categoriaActiva}
-          onChange={(e) => setCategoriaActiva(e.target.value as CategoriaConfig)}
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-          className="w-full px-4 py-3 rounded-xl text-sm font-medium outline-none focus:[border-color:var(--accent)] transition-colors"
-        >
-          {CATEGORIAS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-        </select>
+          onChange={(v) => setCategoriaActiva(v as CategoriaConfig)}
+          ariaLabel="Categoría de configuración"
+          opciones={CATEGORIAS.map((c) => ({ value: c.id, label: c.label }))}
+        />
       </div>
 
       <div className="flex gap-6 items-start">

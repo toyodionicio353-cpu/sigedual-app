@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import type { Asignacion, CentroDual, EstadoAsignacion, Estudiante } from "@/types";
 import { CalendarCheck, Search, Eye, Handshake, CheckCircle2, Clock } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import Select from "@/components/ui/Select";
 
 const ESTADOS: EstadoAsignacion[] = ["pendiente", "en_proceso", "asignada", "activa", "finalizada", "cancelada"];
 
@@ -140,15 +141,13 @@ export default function AsignacionesPage() {
             className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
           />
         </div>
-        <select
+        <Select
           value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-          className="px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
-        >
-          <option value="">Todos los estados</option>
-          {ESTADOS.map((es) => <option key={es} value={es}>{ESTADO_LABEL[es]}</option>)}
-        </select>
+          onChange={setFiltroEstado}
+          ariaLabel="Filtrar por estado"
+          className="w-full sm:w-56 flex-shrink-0"
+          opciones={[{ value: "", label: "Todos los estados" }, ...ESTADOS.map((es) => ({ value: es, label: ESTADO_LABEL[es] }))]}
+        />
       </div>
 
       {/* Contenido */}

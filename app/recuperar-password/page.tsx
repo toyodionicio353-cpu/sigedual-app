@@ -6,6 +6,7 @@ import { auth, db } from "@/lib/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { ArrowLeft, MailCheck } from "lucide-react";
+import Select from "@/components/ui/Select";
 import type { Rol } from "@/types";
 
 const ROLES: { value: Rol; label: string }[] = [
@@ -27,6 +28,10 @@ export default function RecuperarPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!rol) {
+      setError("Selecciona tu rol.");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -110,26 +115,13 @@ export default function RecuperarPasswordPage() {
                 <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
                   Rol
                 </label>
-                <select
+                <Select
                   value={rol}
-                  onChange={(e) => setRol(e.target.value as Rol)}
-                  required
-                  style={{
-                    background: "var(--bg-base)",
-                    border: "1px solid var(--border-light)",
-                    color: rol ? "var(--text-primary)" : "var(--text-muted)",
-                  }}
-                  className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
-                >
-                  <option value="" disabled>
-                    Selecciona tu rol
-                  </option>
-                  {ROLES.map((r) => (
-                    <option key={r.value} value={r.value} style={{ background: "var(--bg-card)" }}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setRol(v as Rol)}
+                  ariaLabel="Rol"
+                  placeholder="Selecciona tu rol"
+                  opciones={ROLES}
+                />
               </div>
 
               {error && (

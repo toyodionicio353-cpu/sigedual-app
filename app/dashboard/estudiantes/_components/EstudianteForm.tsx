@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { formatearRut, normalizarRut, validarRut, validarEmail, validarTelefonoChileno } from "@/lib/rut";
 import { RASGOS_ESTUDIANTE, HABILIDADES } from "@/lib/caracteristicas";
+import Select from "@/components/ui/Select";
 import type { Estudiante, Especialidad } from "@/types";
 
 const NIVELES = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
@@ -225,12 +226,13 @@ export default function EstudianteForm({
             <input type="date" value={form.fechaNacimiento} onChange={(e) => set("fechaNacimiento", e.target.value)} style={inputStyle} className={inputClass} />
           </Campo>
           <Campo label="Sexo/Género" error={errores.sexo}>
-            <select value={form.sexo} onChange={(e) => set("sexo", e.target.value)} style={inputStyle} className={inputClass}>
-              <option value="">Selecciona una opción</option>
-              <option value="Femenino">Femenino</option>
-              <option value="Masculino">Masculino</option>
-              <option value="Otro">Otro</option>
-            </select>
+            <Select value={form.sexo} onChange={(v) => set("sexo", v)} ariaLabel="Sexo/Género"
+              opciones={[
+                { value: "", label: "Selecciona una opción" },
+                { value: "Femenino", label: "Femenino" },
+                { value: "Masculino", label: "Masculino" },
+                { value: "Otro", label: "Otro" },
+              ]} />
           </Campo>
           <Campo label="Nacionalidad" error={errores.nacionalidad}>
             <input value={form.nacionalidad} onChange={(e) => set("nacionalidad", e.target.value)} placeholder="Chilena" style={inputStyle} className={inputClass} />
@@ -257,38 +259,34 @@ export default function EstudianteForm({
 
         <Seccion icon={<GraduationCap size={16} />} titulo="Información académica">
           <Campo label="Año académico" error={errores.anioAcademico}>
-            <select value={form.anioAcademico} onChange={(e) => set("anioAcademico", e.target.value)} style={inputStyle} className={inputClass}>
-              {ANIOS_ACADEMICOS.map((a) => <option key={a} value={a}>{a}</option>)}
-            </select>
+            <Select value={form.anioAcademico} onChange={(v) => set("anioAcademico", v)} ariaLabel="Año académico"
+              opciones={ANIOS_ACADEMICOS.map((a) => ({ value: String(a), label: String(a) }))} />
           </Campo>
           <Campo label="Nivel" error={errores.nivel}>
-            <select value={form.nivel} onChange={(e) => cambiarNivel(e.target.value)} style={inputStyle} className={inputClass}>
-              <option value="">Selecciona un nivel</option>
-              {NIVELES.map((n) => <option key={n} value={n}>{n}</option>)}
-            </select>
+            <Select value={form.nivel} onChange={cambiarNivel} ariaLabel="Nivel"
+              opciones={[{ value: "", label: "Selecciona un nivel" }, ...NIVELES.map((n) => ({ value: n, label: n }))]} />
           </Campo>
           <Campo label="Curso (opcional)" error={errores.curso}>
-            <select value={form.curso} onChange={(e) => set("curso", e.target.value)} disabled={!form.nivel} style={inputStyle} className={inputClass}>
-              <option value="">{form.nivel ? "Selecciona un curso (opcional)" : "Selecciona primero un nivel"}</option>
-              {cursosDisponibles.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <Select value={form.curso} onChange={(v) => set("curso", v)} disabled={!form.nivel} ariaLabel="Curso"
+              opciones={[
+                { value: "", label: form.nivel ? "Selecciona un curso (opcional)" : "Selecciona primero un nivel" },
+                ...cursosDisponibles.map((c) => ({ value: c, label: c })),
+              ]} />
           </Campo>
           <Campo label="Especialidad" error={errores.especialidadId}>
-            <select value={form.especialidadId} onChange={(e) => set("especialidadId", e.target.value)} style={inputStyle} className={inputClass}>
-              <option value="">{especialidades.length === 0 ? "No hay especialidades registradas" : "Selecciona una especialidad"}</option>
-              {especialidades.map((esp) => <option key={esp.id} value={esp.id}>{esp.nombre}</option>)}
-            </select>
+            <Select value={form.especialidadId} onChange={(v) => set("especialidadId", v)} ariaLabel="Especialidad"
+              opciones={[
+                { value: "", label: especialidades.length === 0 ? "No hay especialidades registradas" : "Selecciona una especialidad" },
+                ...especialidades.map((esp) => ({ value: esp.id, label: esp.nombre })),
+              ]} />
           </Campo>
           <Campo label="Jornada" error={errores.jornada}>
-            <select value={form.jornada} onChange={(e) => set("jornada", e.target.value)} style={inputStyle} className={inputClass}>
-              <option value="">Selecciona una jornada</option>
-              {JORNADAS.map((j) => <option key={j} value={j}>{j}</option>)}
-            </select>
+            <Select value={form.jornada} onChange={(v) => set("jornada", v)} ariaLabel="Jornada"
+              opciones={[{ value: "", label: "Selecciona una jornada" }, ...JORNADAS.map((j) => ({ value: j, label: j }))]} />
           </Campo>
           <Campo label="Estado del estudiante" error={errores.estado}>
-            <select value={form.estado} onChange={(e) => set("estado", e.target.value as Estudiante["estado"])} style={inputStyle} className={inputClass}>
-              {ESTADOS.map((es) => <option key={es} value={es}>{es.charAt(0).toUpperCase() + es.slice(1)}</option>)}
-            </select>
+            <Select value={form.estado} onChange={(v) => set("estado", v as Estudiante["estado"])} ariaLabel="Estado del estudiante"
+              opciones={ESTADOS.map((es) => ({ value: es, label: es.charAt(0).toUpperCase() + es.slice(1) }))} />
           </Campo>
         </Seccion>
 
@@ -346,10 +344,8 @@ export default function EstudianteForm({
             <input value={form.apoderadoRun} onChange={(e) => set("apoderadoRun", formatearRut(e.target.value))} placeholder="12.345.678-9" style={inputStyle} className={inputClass} />
           </Campo>
           <Campo label="Parentesco" error={errores.apoderadoParentesco}>
-            <select value={form.apoderadoParentesco} onChange={(e) => set("apoderadoParentesco", e.target.value)} style={inputStyle} className={inputClass}>
-              <option value="">Selecciona una opción</option>
-              {PARENTESCOS.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
+            <Select value={form.apoderadoParentesco} onChange={(v) => set("apoderadoParentesco", v)} ariaLabel="Parentesco"
+              opciones={[{ value: "", label: "Selecciona una opción" }, ...PARENTESCOS.map((p) => ({ value: p, label: p }))]} />
           </Campo>
           <Campo label="Teléfono" error={errores.apoderadoTelefono}>
             <input value={form.apoderadoTelefono} onChange={(e) => set("apoderadoTelefono", e.target.value)} placeholder="+56 9 1234 5678" style={inputStyle} className={inputClass} />

@@ -11,6 +11,7 @@ import {
   BadgeCheck, CircleSlash, CalendarClock, MapPin, GraduationCap, Power, Trash2, School,
 } from "lucide-react";
 import { REGIONES } from "./_components/LiceoForm";
+import Select from "@/components/ui/Select";
 
 const RECIENTE_DIAS = 30;
 
@@ -18,8 +19,6 @@ function normalizar(texto?: string): string {
   return (texto || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-const selectStyle = { background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" };
-const selectClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors disabled:opacity-50";
 
 interface Filtros {
   estado: string;
@@ -265,33 +264,26 @@ export default function LiceosPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Estado</label>
-              <select value={filtros.estado} onChange={(e) => actualizarFiltro("estado", e.target.value)} style={selectStyle} className={selectClass}>
-                <option value="">Todos</option>
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
-              </select>
+              <Select value={filtros.estado} onChange={(v) => actualizarFiltro("estado", v)} ariaLabel="Estado"
+                opciones={[{ value: "", label: "Todos" }, { value: "activo", label: "Activo" }, { value: "inactivo", label: "Inactivo" }]} />
             </div>
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Región</label>
-              <select value={filtros.region} onChange={(e) => actualizarFiltro("region", e.target.value)} style={selectStyle} className={selectClass}>
-                <option value="">Todas las regiones</option>
-                {regionesDisponibles.map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
+              <Select value={filtros.region} onChange={(v) => actualizarFiltro("region", v)} ariaLabel="Región"
+                opciones={[{ value: "", label: "Todas las regiones" }, ...regionesDisponibles.map((r) => ({ value: r, label: r }))]} />
             </div>
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Comuna</label>
-              <select value={filtros.comuna} onChange={(e) => actualizarFiltro("comuna", e.target.value)} disabled={comunasDisponibles.length === 0} style={selectStyle} className={selectClass}>
-                <option value="">{comunasDisponibles.length === 0 ? "Sin comunas registradas" : "Todas las comunas"}</option>
-                {comunasDisponibles.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Select value={filtros.comuna} onChange={(v) => actualizarFiltro("comuna", v)} disabled={comunasDisponibles.length === 0} ariaLabel="Comuna"
+                opciones={[
+                  { value: "", label: comunasDisponibles.length === 0 ? "Sin comunas registradas" : "Todas las comunas" },
+                  ...comunasDisponibles.map((c) => ({ value: c, label: c })),
+                ]} />
             </div>
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Especialidades</label>
-              <select value={filtros.especialidades} onChange={(e) => actualizarFiltro("especialidades", e.target.value)} style={selectStyle} className={selectClass}>
-                <option value="">Todos</option>
-                <option value="con">Con especialidades</option>
-                <option value="sin">Sin especialidades</option>
-              </select>
+              <Select value={filtros.especialidades} onChange={(v) => actualizarFiltro("especialidades", v)} ariaLabel="Especialidades"
+                opciones={[{ value: "", label: "Todos" }, { value: "con", label: "Con especialidades" }, { value: "sin", label: "Sin especialidades" }]} />
             </div>
           </div>
         </div>

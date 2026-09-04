@@ -3,6 +3,7 @@ import { usePreferencias } from "@/lib/preferencias/context";
 import { useFeedback } from "@/lib/preferencias/useFeedback";
 import SettingRow from "@/components/ui/SettingRow";
 import RadioCards from "@/components/ui/RadioCards";
+import Select from "@/components/ui/Select";
 
 const ZONAS_COMUNES = [
   "America/Santiago", "America/Argentina/Buenos_Aires", "America/Lima", "America/Bogota",
@@ -55,14 +56,13 @@ export default function IdiomaSeccion() {
           ]}
         />
         {preferencias.zonaHorariaModo === "manual" && (
-          <select
+          <Select
             value={preferencias.zonaHorariaManual}
-            onChange={(e) => { actualizar("zonaHorariaManual", e.target.value); avisar("Configuración actualizada."); }}
-            style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-            className="mt-1 w-full max-w-xs px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
-          >
-            {ZONAS_COMUNES.map((z) => <option key={z} value={z}>{z}</option>)}
-          </select>
+            onChange={(v) => { actualizar("zonaHorariaManual", v); avisar("Configuración actualizada."); }}
+            ariaLabel="Zona horaria"
+            className="mt-1 max-w-xs"
+            opciones={ZONAS_COMUNES.map((z) => ({ value: z, label: z }))}
+          />
         )}
       </SettingRow>
     </div>

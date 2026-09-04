@@ -8,6 +8,7 @@ import { estadoDisponibilidadMaestroGuia, disponibilidadMaestroGuiaDe, camposFal
 import type { Asignacion, CentroDual, Especialidad, MaestroGuia } from "@/types";
 import { AlertCircle, ChevronRight, Search, SlidersHorizontal, X, UsersRound } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import Select from "@/components/ui/Select";
 
 const ESTADO_LABEL: Record<string, string> = { activo: "Activo", inactivo: "Inactivo" };
 const ESTADO_COLOR: Record<string, string> = { activo: "var(--success)", inactivo: "var(--danger)" };
@@ -201,47 +202,36 @@ export default function ListaMaestrosGuiaPage() {
             </span>
           )}
         </button>
-        <select
+        <Select
           value={orden}
-          onChange={(e) => setOrden(e.target.value)}
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-          className="px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors flex-shrink-0"
-        >
-          {ORDEN_OPCIONES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+          onChange={setOrden}
+          ariaLabel="Ordenar"
+          className="w-44 flex-shrink-0"
+          opciones={ORDEN_OPCIONES}
+        />
       </div>
 
       {filtrosAbiertos && (
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Estado</label>
-            <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }} className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-              <option value="">Todos</option>
-              <option value="activo">Activos</option>
-              <option value="inactivo">Inactivos</option>
-            </select>
+            <Select value={filtroEstado} onChange={setFiltroEstado} ariaLabel="Estado"
+              opciones={[{ value: "", label: "Todos" }, { value: "activo", label: "Activos" }, { value: "inactivo", label: "Inactivos" }]} />
           </div>
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Centro dual</label>
-            <select value={filtroCentroId} onChange={(e) => setFiltroCentroId(e.target.value)} style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }} className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-              <option value="">Todos</option>
-              {centros.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-            </select>
+            <Select value={filtroCentroId} onChange={setFiltroCentroId} ariaLabel="Centro dual"
+              opciones={[{ value: "", label: "Todos" }, ...centros.map((c) => ({ value: c.id, label: c.nombre }))]} />
           </div>
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Especialidad</label>
-            <select value={filtroEspecialidadId} onChange={(e) => setFiltroEspecialidadId(e.target.value)} style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }} className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-              <option value="">Todas</option>
-              {especialidades.map((esp) => <option key={esp.id} value={esp.id}>{esp.nombre}</option>)}
-            </select>
+            <Select value={filtroEspecialidadId} onChange={setFiltroEspecialidadId} ariaLabel="Especialidad"
+              opciones={[{ value: "", label: "Todas" }, ...especialidades.map((esp) => ({ value: esp.id, label: esp.nombre }))]} />
           </div>
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Disponibilidad</label>
-            <select value={filtroDisponibilidad} onChange={(e) => setFiltroDisponibilidad(e.target.value)} style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }} className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-              <option value="">Todos</option>
-              <option value="disponible">Disponible</option>
-              <option value="sin_capacidad">Sin capacidad</option>
-            </select>
+            <Select value={filtroDisponibilidad} onChange={setFiltroDisponibilidad} ariaLabel="Disponibilidad"
+              opciones={[{ value: "", label: "Todos" }, { value: "disponible", label: "Disponible" }, { value: "sin_capacidad", label: "Sin capacidad" }]} />
           </div>
         </div>
       )}

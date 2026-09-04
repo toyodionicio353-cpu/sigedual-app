@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { estudiantesAsignadosDe, especialidadesEnUso } from "@/lib/profesores";
 import TituloPagina from "@/components/TituloPagina";
+import Select from "@/components/ui/Select";
 import type { Asignacion, Usuario } from "@/types";
 import {
   Search, SlidersHorizontal, X, ChevronRight, ChevronLeft, MoreVertical,
@@ -211,18 +212,13 @@ export default function ProfesoresPage() {
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Especialidad</label>
-            <select value={filtroEspecialidad} onChange={(e) => { setFiltroEspecialidad(e.target.value); setPagina(1); }} style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }} className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-              <option value="">Todas las especialidades</option>
-              {especialidadesDisponibles.map((esp) => <option key={esp} value={esp}>{esp}</option>)}
-            </select>
+            <Select value={filtroEspecialidad} onChange={(v) => { setFiltroEspecialidad(v); setPagina(1); }} ariaLabel="Especialidad"
+              opciones={[{ value: "", label: "Todas las especialidades" }, ...especialidadesDisponibles.map((esp) => ({ value: esp, label: esp }))]} />
           </div>
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Estado</label>
-            <select value={filtroEstado} onChange={(e) => { setFiltroEstado(e.target.value); setPagina(1); }} style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }} className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-              <option value="">Todos</option>
-              <option value="activo">Activos</option>
-              <option value="inactivo">Inactivos</option>
-            </select>
+            <Select value={filtroEstado} onChange={(v) => { setFiltroEstado(v); setPagina(1); }} ariaLabel="Estado"
+              opciones={[{ value: "", label: "Todos" }, { value: "activo", label: "Activos" }, { value: "inactivo", label: "Inactivos" }]} />
           </div>
         </div>
       )}

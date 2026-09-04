@@ -6,6 +6,7 @@ import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { RefreshCw, Trash2, UserCog } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import Select from "@/components/ui/Select";
 import type { Usuario, Rol, Liceo } from "@/types";
 
 const ROLES: { value: Rol; label: string }[] = [
@@ -301,20 +302,13 @@ export default function UsuariosPage() {
               ))}
               <div>
                 <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
-                <select value={form.liceoId} onChange={(e) => setForm((f) => ({ ...f, liceoId: e.target.value }))}
-                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none">
-                  <option value="">Selecciona un liceo</option>
-                  {liceos.map((l) => <option key={l.id} value={l.id}>{l.nombre}</option>)}
-                </select>
+                <Select value={form.liceoId} onChange={(v) => setForm((f) => ({ ...f, liceoId: v }))} ariaLabel="Liceo"
+                  opciones={[{ value: "", label: "Selecciona un liceo" }, ...liceos.map((l) => ({ value: l.id, label: l.nombre }))]} />
               </div>
               <div>
                 <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Rol</label>
-                <select value={form.rol} onChange={(e) => setForm((f) => ({ ...f, rol: e.target.value as Rol }))}
-                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none">
-                  {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-                </select>
+                <Select value={form.rol} onChange={(v) => setForm((f) => ({ ...f, rol: v as Rol }))} ariaLabel="Rol"
+                  opciones={ROLES} />
               </div>
               {error && <p style={{ color: "var(--danger)" }} className="text-xs">{error}</p>}
             </div>
@@ -347,20 +341,13 @@ export default function UsuariosPage() {
               ))}
               <div>
                 <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
-                <select value={formHuerfano.liceoId} onChange={(e) => setFormHuerfano((f) => ({ ...f, liceoId: e.target.value }))}
-                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none">
-                  <option value="">Selecciona un liceo</option>
-                  {liceos.map((l) => <option key={l.id} value={l.id}>{l.nombre}</option>)}
-                </select>
+                <Select value={formHuerfano.liceoId} onChange={(v) => setFormHuerfano((f) => ({ ...f, liceoId: v }))} ariaLabel="Liceo"
+                  opciones={[{ value: "", label: "Selecciona un liceo" }, ...liceos.map((l) => ({ value: l.id, label: l.nombre }))]} />
               </div>
               <div>
                 <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Rol</label>
-                <select value={formHuerfano.rol} onChange={(e) => setFormHuerfano((f) => ({ ...f, rol: e.target.value as Rol }))}
-                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none">
-                  {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-                </select>
+                <Select value={formHuerfano.rol} onChange={(v) => setFormHuerfano((f) => ({ ...f, rol: v as Rol }))} ariaLabel="Rol"
+                  opciones={ROLES} />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
