@@ -11,6 +11,8 @@ import TituloPagina from "@/components/TituloPagina";
 import type { Estudiante, Especialidad } from "@/types";
 import { usePreferencias } from "@/lib/preferencias/context";
 import { useBorradorAutomatico } from "@/lib/borradores/useBorradorAutomatico";
+import { useAdvertenciaLiceoGlobal } from "@/lib/liceos/useAdvertenciaLiceoGlobal";
+import ModalAdvertenciaLiceo from "@/components/liceos/ModalAdvertenciaLiceo";
 import { Users, UserPlus, CalendarClock, BadgeCheck, CheckCircle2, Eye, FileClock } from "lucide-react";
 
 interface BorradorEstudiante {
@@ -25,6 +27,7 @@ const ANIO_ACTUAL = new Date().getFullYear();
 export default function AgregarEstudiantePage() {
   const { usuario } = useAuth();
   const { preferencias } = usePreferencias();
+  const { liceoPredeterminado, mostrarAdvertencia, conConfirmacion, confirmar, cancelar } = useAdvertenciaLiceoGlobal();
   const router = useRouter();
   const { guardar: guardarBorrador, restaurar: restaurarBorrador, limpiar: limpiarBorrador, borradorDisponible } =
     useBorradorAutomatico<BorradorEstudiante>("estudiantes-nuevo", preferencias.borradoresAutomaticos);
@@ -218,9 +221,13 @@ export default function AgregarEstudiantePage() {
           runsOcupados={runsOcupados}
           guardando={guardando}
           onCancelar={() => router.push("/dashboard/estudiantes")}
-          onGuardar={guardar}
+          onGuardar={(form, otrosMedicos, rasgos, habilidades) => conConfirmacion(() => guardar(form, otrosMedicos, rasgos, habilidades))}
           onCambio={(form, otrosMedicos, rasgos, habilidades) => guardarBorrador({ form, otrosMedicos, rasgos, habilidades })}
         />
+      )}
+
+      {mostrarAdvertencia && liceoPredeterminado && (
+        <ModalAdvertenciaLiceo entidad="un estudiante" liceoNombre={liceoPredeterminado.nombre} onConfirmar={confirmar} onCancelar={cancelar} />
       )}
 
       {/* Confirmación de éxito */}

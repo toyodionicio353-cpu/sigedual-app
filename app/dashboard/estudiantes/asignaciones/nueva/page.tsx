@@ -9,6 +9,8 @@ import { calcularCompatibilidad, disponibleParaRecomendar, estadoEfectivo, capac
 import { formatearFecha } from "@/lib/fecha";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
+import { useAdvertenciaLiceoGlobal } from "@/lib/liceos/useAdvertenciaLiceoGlobal";
+import ModalAdvertenciaLiceo from "@/components/liceos/ModalAdvertenciaLiceo";
 import type { Asignacion, CentroDual, Compatibilidad, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia, Usuario } from "@/types";
 import {
   ArrowLeft, ArrowRight, Search, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, User, Users, CalendarCheck,
@@ -40,6 +42,7 @@ interface Recomendacion {
 export default function NuevaAsignacionPage() {
   const { usuario } = useAuth();
   const router = useRouter();
+  const { liceoPredeterminado, mostrarAdvertencia, conConfirmacion, confirmar, cancelar } = useAdvertenciaLiceoGlobal();
 
   const [cargando, setCargando] = useState(true);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
@@ -970,7 +973,7 @@ export default function NuevaAsignacionPage() {
               Cancelar
             </button>
             <button
-              onClick={confirmarAsignacion}
+              onClick={() => conConfirmacion(confirmarAsignacion)}
               disabled={guardando}
               style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
@@ -1020,7 +1023,7 @@ export default function NuevaAsignacionPage() {
               Cancelar
             </button>
             <button
-              onClick={confirmarAsignacionesGrupo}
+              onClick={() => conConfirmacion(confirmarAsignacionesGrupo)}
               disabled={guardando}
               style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
@@ -1029,6 +1032,10 @@ export default function NuevaAsignacionPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {mostrarAdvertencia && liceoPredeterminado && (
+        <ModalAdvertenciaLiceo entidad="una asignación" liceoNombre={liceoPredeterminado.nombre} onConfirmar={confirmar} onCancelar={cancelar} />
       )}
     </div>
   );
