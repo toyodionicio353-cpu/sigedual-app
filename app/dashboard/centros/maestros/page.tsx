@@ -8,9 +8,17 @@ import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAd
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { estadoDisponibilidadMaestroGuia, disponibilidadMaestroGuiaDe, camposFaltantesMaestroGuia } from "@/lib/maestro-guia";
+import { useVistaListado } from "@/lib/preferencias/useVistaListado";
+import EncabezadoListado from "@/components/listado/EncabezadoListado";
+import TarjetasEstadisticas from "@/components/listado/TarjetasEstadisticas";
+import BarraControles from "@/components/listado/BarraControles";
+import PanelFiltros from "@/components/listado/PanelFiltros";
+import ChipsFiltros from "@/components/listado/ChipsFiltros";
+import EstadoVacio from "@/components/listado/EstadoVacio";
+import EstadoError from "@/components/listado/EstadoError";
+import ContadorResultados from "@/components/listado/ContadorResultados";
 import type { Asignacion, CentroDual, Especialidad, MaestroGuia } from "@/types";
-import { AlertCircle, ChevronRight, Search, SlidersHorizontal, X, UsersRound, School } from "lucide-react";
-import TituloPagina from "@/components/TituloPagina";
+import { AlertCircle, ChevronRight, Search, UsersRound, School, BadgeCheck, Handshake, Building2 } from "lucide-react";
 import Select from "@/components/ui/Select";
 
 const ESTADO_LABEL: Record<string, string> = { activo: "Activo", inactivo: "Inactivo" };
@@ -65,6 +73,7 @@ export default function ListaMaestrosGuiaPage() {
   const [filtroLiceoId, setFiltroLiceoId] = useState("");
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   const [orden, setOrden] = useState("recomendado");
+  const [vista, setVista] = useVistaListado("maestros-guia");
 
   const puedeAgregar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
 
@@ -180,71 +189,80 @@ export default function ListaMaestrosGuiaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtrados, orden, asignaciones, centros]);
 
-  const hayFiltrosActivos = Boolean(busqueda.trim() || filtroEstado || filtroCentroId || filtroEspecialidadId || filtroDisponibilidad || filtroLiceoId);
   const cantidadFiltrosActivos = [filtroEstado, filtroCentroId, filtroEspecialidadId, filtroDisponibilidad, filtroLiceoId].filter(Boolean).length;
+
+  const filtrosActivosChips = useMemo(() => {
+    const chips: { key: string; label: string; onQuitar: () => void }[] = [];
+    if (filtroLiceoId) chips.push({ key: "liceo", label: liceoNombrePorId[filtroLiceoId] || "Liceo", onQuitar: () => setFiltroLiceoId("") });
+    if (filtroEstado) chips.push({ key: "estado", label: ESTADO_LABEL[filtroEstado] || filtroEstado, onQuitar: () => setFiltroEstado("") });
+    if (filtroCentroId) chips.push({ key: "centro", label: centroNombre(filtroCentroId), onQuitar: () => setFiltroCentroId("") });
+    if (filtroEspecialidadId) chips.push({ key: "especialidad", label: especialidadNombre(filtroEspecialidadId), onQuitar: () => setFiltroEspecialidadId("") });
+    if (filtroDisponibilidad) chips.push({ key: "disponibilidad", label: filtroDisponibilidad === "disponible" ? "Disponible" : "Sin capacidad", onQuitar: () => setFiltroDisponibilidad("") });
+    return chips;
+  }, [filtroLiceoId, filtroEstado, filtroCentroId, filtroEspecialidadId, filtroDisponibilidad, liceoNombrePorId, centros, especialidades]);
 
   function limpiarFiltros() {
     setBusqueda(""); setFiltroEstado(""); setFiltroCentroId(""); setFiltroEspecialidadId(""); setFiltroDisponibilidad(""); setFiltroLiceoId("");
   }
 
+  const stats = useMemo(() => {
+    let conEstudiantes = 0;
+    maestros.forEach((m) => {
+      if (disponibilidadMaestroGuiaDe(m, asignaciones).asignados > 0) conEstudiantes += 1;
+    });
+    return {
+      total: maestros.length,
+      activos: maestros.filter((m) => m.estado === "activo").length,
+      conEstudiantes,
+      centrosAsociados: new Set(maestros.map((m) => m.centroDualId).filter(Boolean)).size,
+    };
+  }, [maestros, asignaciones]);
+
   return (
     <div className="p-4 md:p-8">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-        <div>
-          <TituloPagina icon={<UsersRound size={28} />}>Maestros guía</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-            {modoGlobal
-              ? "Maestros guía de todos los liceos. Usa el filtro \"Liceo\" para acotar a uno en particular."
-              : "Administra las personas responsables de acompañar a los estudiantes en los centros duales."}
-          </p>
-        </div>
-        {puedeAgregar && (
-          <Link href="/dashboard/centros/maestros/nuevo" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity text-center flex-shrink-0">
-            + Agregar maestro guía
-          </Link>
-        )}
-      </div>
+      <EncabezadoListado
+        icon={<UsersRound size={28} />}
+        titulo="Maestros guía"
+        descripcion={
+          modoGlobal
+            ? "Maestros guía de todos los liceos. Usa el filtro \"Liceo\" para acotar a uno en particular."
+            : "Administra las personas responsables de acompañar a los estudiantes en los centros duales."
+        }
+        acciones={
+          puedeAgregar && (
+            <Link href="/dashboard/centros/maestros/nuevo" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity text-center flex-shrink-0">
+              + Agregar maestro guía
+            </Link>
+          )
+        }
+      />
 
-      {/* Buscador y filtros */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1">
-          <Search size={16} style={{ color: "var(--text-muted)" }} className="absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre, RUT o centro dual..."
-            style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-            className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
-          />
-        </div>
-        <button
-          onClick={() => setFiltrosAbiertos((v) => !v)}
-          style={{
-            background: filtrosAbiertos ? "var(--accent)" : "var(--bg-card)",
-            border: "1px solid var(--border-light)",
-            color: filtrosAbiertos ? "var(--text-on-accent)" : "var(--text-secondary)",
-          }}
-          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors flex-shrink-0 relative"
-        >
-          <SlidersHorizontal size={16} />
-          Filtros
-          {cantidadFiltrosActivos > 0 && (
-            <span style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="w-5 h-5 rounded-full text-xs flex items-center justify-center">
-              {cantidadFiltrosActivos}
-            </span>
-          )}
-        </button>
-        <Select
-          value={orden}
-          onChange={setOrden}
-          ariaLabel="Ordenar"
-          className="w-44 flex-shrink-0"
-          opciones={ORDEN_OPCIONES}
-        />
-      </div>
+      <TarjetasEstadisticas
+        loading={loading}
+        estadisticas={[
+          { label: "Total de Maestros Guía", value: stats.total, icon: <UsersRound size={18} />, color: "#2563eb" },
+          { label: "Maestros activos", value: stats.activos, icon: <BadgeCheck size={18} />, color: "#22c55e" },
+          { label: "Con estudiantes asignados", value: stats.conEstudiantes, icon: <Handshake size={18} />, color: "#f59e0b" },
+          { label: "Centros duales asociados", value: stats.centrosAsociados, icon: <Building2 size={18} />, color: "#06b6d4" },
+        ]}
+      />
+
+      <BarraControles
+        busqueda={busqueda}
+        onBusqueda={setBusqueda}
+        placeholderBusqueda="Buscar por nombre, RUT o centro dual..."
+        filtrosAbiertos={filtrosAbiertos}
+        onToggleFiltros={() => setFiltrosAbiertos((v) => !v)}
+        cantidadFiltrosActivos={cantidadFiltrosActivos}
+        orden={orden}
+        onOrden={setOrden}
+        opcionesOrden={ORDEN_OPCIONES}
+        vista={vista}
+        onVista={setVista}
+      />
 
       {filtrosAbiertos && (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-4 gap-3">
+        <PanelFiltros>
           {modoGlobal && (
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
@@ -272,59 +290,49 @@ export default function ListaMaestrosGuiaPage() {
             <Select value={filtroDisponibilidad} onChange={setFiltroDisponibilidad} ariaLabel="Disponibilidad"
               opciones={[{ value: "", label: "Todos" }, { value: "disponible", label: "Disponible" }, { value: "sin_capacidad", label: "Sin capacidad" }]} />
           </div>
-        </div>
+        </PanelFiltros>
       )}
 
-      {hayFiltrosActivos && (
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          {busqueda.trim() && (
-            <span style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-xs font-medium">
-              &quot;{busqueda.trim()}&quot;
-              <button onClick={() => setBusqueda("")} style={{ color: "var(--text-muted)" }}><X size={13} /></button>
-            </span>
-          )}
-          <button onClick={limpiarFiltros} style={{ color: "var(--accent-light)" }} className="text-xs font-semibold hover:underline">
-            Limpiar filtros
-          </button>
-        </div>
-      )}
+      <ChipsFiltros
+        busqueda={busqueda}
+        onQuitarBusqueda={() => setBusqueda("")}
+        chips={filtrosActivosChips}
+        onLimpiarTodo={limpiarFiltros}
+      />
 
       {/* Contenido */}
       {loading ? (
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
       ) : error ? (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
-          <AlertCircle size={22} style={{ color: "var(--text-muted)" }} className="mx-auto mb-3" />
-          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No pudimos cargar los maestros guía</p>
-          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Ocurrió un problema de conexión. Intenta de nuevo.</p>
-          <button onClick={cargar} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
-            Reintentar
-          </button>
-        </div>
+        <EstadoError titulo="No pudimos cargar los maestros guía" onReintentar={cargar} />
       ) : maestros.length === 0 ? (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
-          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No hay maestros guía registrados</p>
-          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Registra un maestro guía para comenzar a gestionar el acompañamiento de estudiantes en los centros duales.</p>
-          {puedeAgregar && (
+        <EstadoVacio
+          icon={<UsersRound size={24} style={{ color: "var(--accent-light)" }} />}
+          titulo="No hay maestros guía registrados"
+          descripcion="Registra un maestro guía para comenzar a gestionar el acompañamiento de estudiantes en los centros duales."
+          accion={puedeAgregar && (
             <Link href="/dashboard/centros/maestros/nuevo" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
               + Agregar maestro guía
             </Link>
           )}
-        </div>
+        />
       ) : ordenados.length === 0 ? (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
-          <div style={{ background: "var(--bg-surface)", borderRadius: "9999px" }} className="w-14 h-14 flex items-center justify-center mx-auto mb-4">
-            <Search size={22} style={{ color: "var(--text-muted)" }} />
-          </div>
-          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No encontramos maestros guía que coincidan con tu búsqueda.</p>
-          <button onClick={limpiarFiltros} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="px-5 py-2.5 rounded-xl text-sm font-medium mt-4">
-            Limpiar búsqueda
-          </button>
-        </div>
+        <EstadoVacio
+          icon={<Search size={22} style={{ color: "var(--text-muted)" }} />}
+          titulo="No encontramos maestros guía"
+          descripcion="Prueba modificando la búsqueda o eliminando algunos filtros."
+          accion={
+            <button onClick={limpiarFiltros} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="px-5 py-2.5 rounded-xl text-sm font-medium">
+              Limpiar filtros
+            </button>
+          }
+        />
       ) : (
         <>
-          <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">{ordenados.length} maestro(s) guía</p>
+          <ContadorResultados total={ordenados.length} entidadSingular="maestro guía" entidadPlural="maestros guía" />
 
+          {vista === "lista" ? (
+          <>
           {/* Tabla — escritorio */}
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden mb-4 hidden md:block">
             <div style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }} className="grid grid-cols-[1.8fr_1.4fr_1.3fr_1.4fr_1fr_1.1fr_0.9fr_0.6fr] gap-3 px-5 py-3 text-[11px] font-semibold tracking-wide uppercase">
@@ -430,6 +438,56 @@ export default function ListaMaestrosGuiaPage() {
               );
             })}
           </div>
+          </>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {ordenados.map((m) => {
+                const centro = centroDe(m.centroDualId);
+                const { capacidad, asignados, disponibles } = disponibilidadMaestroGuiaDe(m, asignaciones);
+                const disp = estadoDisponibilidadMaestroGuia(m, centro, asignaciones);
+                const especialidadesNombres = (m.especialidades ?? []).map((id) => especialidadNombre(id));
+                return (
+                  <Link
+                    key={m.id}
+                    href={`/dashboard/centros/maestros/${m.id}`}
+                    style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }}
+                    className="p-4 flex flex-col gap-3 hover:[border-color:var(--accent)] transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{m.nombres} {m.apellidoPaterno}</p>
+                        {modoGlobal && (
+                          <p style={{ color: "var(--text-muted)" }} className="flex items-center gap-1 text-[11px] mt-0.5 truncate">
+                            <School size={11} /> {liceoNombrePorId[m.liceoId] || "—"}
+                          </p>
+                        )}
+                      </div>
+                      <span style={{ color: ESTADO_COLOR[m.estado], background: ESTADO_COLOR[m.estado] + "22" }} className="px-3 py-1 rounded-full text-xs font-medium flex-shrink-0">
+                        {ESTADO_LABEL[m.estado]}
+                      </span>
+                    </div>
+                    <div style={{ borderTop: "1px solid var(--border)" }} className="pt-3 flex flex-col gap-1">
+                      <p style={{ color: "var(--text-secondary)" }} className="text-xs">{centroNombre(m.centroDualId)} · {m.cargo}</p>
+                      <p style={{ color: "var(--text-secondary)" }} className="text-xs">
+                        Estudiantes: {capacidad != null ? `${asignados} / ${capacidad}` : asignados}
+                      </p>
+                      <p style={{ color: DISPONIBILIDAD_COLOR[disp] }} className="text-xs font-medium">
+                        {disp === "disponible" && disponibles != null ? `${disponibles} disponible(s)` : DISPONIBILIDAD_LABEL[disp]}
+                      </p>
+                      <p style={{ color: "var(--text-secondary)" }} className="text-xs truncate">
+                        {especialidadesNombres.length === 0 ? "Sin especialidades" : especialidadesNombres.length <= 2
+                          ? especialidadesNombres.join(" · ")
+                          : `${especialidadesNombres.slice(0, 2).join(" · ")} +${especialidadesNombres.length - 2}`}
+                      </p>
+                    </div>
+                    <span style={{ color: "var(--accent-light)" }} className="flex items-center gap-1 text-xs font-semibold mt-1">
+                      Ver <ChevronRight size={13} />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </>
       )}
     </div>
