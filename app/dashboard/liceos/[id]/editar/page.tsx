@@ -3,31 +3,14 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, setDoc,
+  doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import LiceoForm, { type LiceoFormValues, type EspecialidadForm } from "../../_components/LiceoForm";
-import type { Liceo, Especialidad, CodigoAcceso } from "@/types";
-import { ArrowLeft, ShieldCheck, RefreshCw, Copy, Check, Pencil } from "lucide-react";
+import type { Liceo, Especialidad } from "@/types";
+import { ArrowLeft, Pencil } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
-
-const HORAS_VALIDEZ = 24;
-
-function generarCodigo() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for (let i = 0; i < 6; i++) out += chars[Math.floor(Math.random() * chars.length)];
-  return out;
-}
-
-function tiempoRestante(expiraEn: string): string {
-  const ms = new Date(expiraEn).getTime() - Date.now();
-  if (ms <= 0) return "Expirado";
-  const horas = Math.floor(ms / 3_600_000);
-  const minutos = Math.floor((ms % 3_600_000) / 60_000);
-  return `${horas} horas ${minutos} minutos`;
-}
 
 export default function EditarLiceoPage() {
   const { id } = useParams<{ id: string }>();
@@ -43,23 +26,15 @@ export default function EditarLiceoPage() {
   const [mensaje, setMensaje] = useState("");
   const [errorSistema, setErrorSistema] = useState("");
 
-  const [codigoActual, setCodigoActual] = useState<CodigoAcceso | null>(null);
-  const [generandoCodigo, setGenerandoCodigo] = useState(false);
-  const [confirmandoRegenerar, setConfirmandoRegenerar] = useState(false);
-  const [mostrarCodigo, setMostrarCodigo] = useState(false);
-  const [copiado, setCopiado] = useState(false);
-  const [, setTick] = useState(0);
-
   const puedeGestionar = usuario?.rol === "administrador";
 
   async function cargar() {
     if (!id) return;
     setLoading(true);
-    const [snapLiceo, snapEsp, snapTodos, snapCodigo] = await Promise.all([
+    const [snapLiceo, snapEsp, snapTodos] = await Promise.all([
       getDoc(doc(db, "liceos", id)),
       getDocs(query(collection(db, "especialidades"), where("liceoId", "==", id))),
       getDocs(collection(db, "liceos")),
-      getDoc(doc(db, "codigosAcceso", id)),
     ]);
     if (!snapLiceo.exists()) {
       setNoEncontrado(true);
@@ -92,7 +67,6 @@ export default function EditarLiceoPage() {
         .map((d) => (d.data().dominioCorreo as string | undefined)?.toLowerCase())
         .filter(Boolean) as string[]
     );
-    setCodigoActual(snapCodigo.exists() ? (snapCodigo.data() as CodigoAcceso) : null);
     setLoading(false);
   }
 
@@ -100,11 +74,6 @@ export default function EditarLiceoPage() {
     if (usuario && id) cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario, id]);
-
-  useEffect(() => {
-    const interval = setInterval(() => setTick((t) => t + 1), 30_000);
-    return () => clearInterval(interval);
-  }, []);
 
   async function guardar(nuevosValores: LiceoFormValues, nuevasEspecialidades: EspecialidadForm[]) {
     if (!usuario || !id || guardando) return;
@@ -157,33 +126,6 @@ export default function EditarLiceoPage() {
     return "eliminada";
   }
 
-  async function confirmarRegenerar() {
-    if (!usuario || !id) return;
-    setGenerandoCodigo(true);
-    try {
-      const nuevo: CodigoAcceso = {
-        liceoId: id,
-        codigo: generarCodigo(),
-        generadoPor: usuario.uid,
-        expiraEn: new Date(Date.now() + HORAS_VALIDEZ * 60 * 60 * 1000).toISOString(),
-        actualizadoEn: new Date().toISOString(),
-      };
-      await setDoc(doc(db, "codigosAcceso", id), nuevo);
-      setCodigoActual(nuevo);
-      setMostrarCodigo(true);
-    } finally {
-      setGenerandoCodigo(false);
-      setConfirmandoRegenerar(false);
-    }
-  }
-
-  function copiarCodigo() {
-    if (!codigoActual) return;
-    navigator.clipboard.writeText(codigoActual.codigo);
-    setCopiado(true);
-    setTimeout(() => setCopiado(false), 1500);
-  }
-
   if (usuario && !puedeGestionar) {
     return (
       <div className="p-4 md:p-8">
@@ -214,8 +156,6 @@ export default function EditarLiceoPage() {
     );
   }
 
-  const expirado = codigoActual ? new Date(codigoActual.expiraEn).getTime() < Date.now() : true;
-
   return (
     <div className="p-4 md:p-8 max-w-4xl">
       <div className="mb-6">
@@ -244,117 +184,6 @@ export default function EditarLiceoPage() {
         onGuardar={guardar}
         onEliminarEspecialidad={eliminarEspecialidad}
       />
-
-      {/* Código de seguridad */}
-      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-8 mt-6">
-        <div className="flex items-center gap-2 mb-1">
-          <ShieldCheck size={16} style={{ color: "var(--accent-light)" }} />
-          <h3 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">Código de seguridad</h3>
-        </div>
-        <p style={{ color: "var(--text-muted)" }} className="text-xs mb-4">
-          Se utiliza para la creación de cuentas de este liceo. Código válido durante {HORAS_VALIDEZ} horas.
-        </p>
-
-        {!codigoActual ? (
-          <>
-            <p style={{ color: "var(--text-muted)" }} className="text-sm mb-4">No generado.</p>
-            <button
-              onClick={confirmarRegenerar}
-              disabled={generandoCodigo}
-              style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors disabled:opacity-50"
-            >
-              <RefreshCw size={15} className={generandoCodigo ? "animate-spin" : ""} />
-              Generar código de seguridad
-            </button>
-          </>
-        ) : expirado ? (
-          <>
-            <p style={{ color: "var(--danger)" }} className="text-sm font-medium mb-4">Código expirado.</p>
-            <button
-              onClick={confirmarRegenerar}
-              disabled={generandoCodigo}
-              style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors disabled:opacity-50"
-            >
-              <RefreshCw size={15} className={generandoCodigo ? "animate-spin" : ""} />
-              Generar nuevo código
-            </button>
-          </>
-        ) : (
-          <>
-            <p style={{ color: "var(--success)" }} className="text-sm font-medium mb-1">Código activo</p>
-            <p style={{ color: "var(--text-muted)" }} className="text-xs mb-4">Expira en: {tiempoRestante(codigoActual.expiraEn)}</p>
-
-            {mostrarCodigo ? (
-              <div style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)" }} className="rounded-xl p-4 flex items-center justify-between gap-3 mb-4">
-                <span style={{ color: "var(--text-primary)" }} className="text-2xl font-mono font-bold tracking-[0.2em]">{codigoActual.codigo}</span>
-                <button onClick={copiarCodigo} style={{ color: "var(--text-muted)" }} className="p-2 hover:[color:var(--text-primary)] transition-colors" title="Copiar código">
-                  {copiado ? <Check size={18} style={{ color: "var(--success)" }} /> : <Copy size={18} />}
-                </button>
-              </div>
-            ) : null}
-
-            <div className="flex flex-wrap gap-3">
-              {!mostrarCodigo && (
-                <button
-                  onClick={() => setMostrarCodigo(true)}
-                  style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors"
-                >
-                  Mostrar código
-                </button>
-              )}
-              {mostrarCodigo && (
-                <button
-                  onClick={copiarCodigo}
-                  style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors"
-                >
-                  <Copy size={15} />
-                  {copiado ? "Copiado" : "Copiar código"}
-                </button>
-              )}
-              <button
-                onClick={() => setConfirmandoRegenerar(true)}
-                disabled={generandoCodigo}
-                style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors disabled:opacity-50"
-              >
-                <RefreshCw size={15} className={generandoCodigo ? "animate-spin" : ""} />
-                Regenerar código
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-
-      {confirmandoRegenerar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
-          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="w-full max-w-md rounded-2xl p-6 shadow-2xl">
-            <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-2">¿Generar un nuevo código?</h2>
-            <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-6">Al generar un nuevo código, el código anterior dejará de ser válido.</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmandoRegenerar(false)}
-                disabled={generandoCodigo}
-                style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmarRegenerar}
-                disabled={generandoCodigo}
-                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
-                className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
-              >
-                {generandoCodigo ? "Generando..." : "Generar nuevo código"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
