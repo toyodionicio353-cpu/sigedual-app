@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
 import CentroDualForm, { CENTRO_FORM_VACIO, type CentroDualFormValues } from "../_components/CentroDualForm";
+import InvitacionEmpresaSeccion from "../_components/InvitacionEmpresaSeccion";
 import type { CentroDual, Especialidad } from "@/types";
 import { CheckCircle2, Eye, Building2 } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
@@ -127,6 +128,8 @@ export default function AgregarCentroDualPage() {
           onGuardar={(...args) => conConfirmacion(() => guardar(...args))}
         />
       )}
+
+      <InvitacionEmpresaSeccion />
 
       {mostrarAdvertencia && liceoPredeterminado && (
         <ModalAdvertenciaLiceo entidad="un centro dual" liceoNombre={liceoPredeterminado.nombre} onConfirmar={confirmar} onCancelar={cancelar} />
