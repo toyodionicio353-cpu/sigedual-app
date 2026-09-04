@@ -278,6 +278,20 @@ export async function updateDocumentFields(path: string, data: Record<string, un
   if (!res.ok) throw new Error(`No se pudo actualizar ${path}: ${await res.text()}`);
 }
 
+/** Crea un documento nuevo con ID autogenerado en la colección indicada (ej: "notificaciones"). Devuelve el ID creado. */
+export async function addDocument(collectionPath: string, data: Record<string, unknown>): Promise<string> {
+  const sa = getServiceAccount();
+  const token = await getAccessToken();
+  const fields = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, jsToFirestoreValue(v)]));
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${sa.project_id}/databases/(default)/documents/${collectionPath}`,
+    { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ fields }) }
+  );
+  if (!res.ok) throw new Error(`No se pudo crear el documento en ${collectionPath}: ${await res.text()}`);
+  const doc = (await res.json()) as { name: string };
+  return doc.name.split("/").pop() as string;
+}
+
 /** Crea o reemplaza por completo un documento en la ruta indicada (ej: "estudiantes_archivados/abc123"). */
 export async function setDocument(path: string, data: Record<string, unknown>): Promise<void> {
   const sa = getServiceAccount();
