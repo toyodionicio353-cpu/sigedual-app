@@ -2,8 +2,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { disponibilidadMaestroGuiaDe, camposFaltantesMaestroGuia } from "@/lib/maestro-guia";
 import { formatearFecha } from "@/lib/fecha";
@@ -11,7 +12,7 @@ import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import type { Asignacion, CentroDual, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia } from "@/types";
-import { AlertCircle, ArrowLeft, Pencil, Power, Trash2, ShieldAlert } from "lucide-react";
+import { AlertCircle, ArrowLeft, Pencil, Power, Trash2, ShieldAlert, KeyRound, CheckCircle2 } from "lucide-react";
 
 const ESTADO_ASIGNACION_LABEL: Record<EstadoAsignacion, string> = {
   pendiente: "Pendiente", en_proceso: "En proceso", asignada: "Asignada",
@@ -52,6 +53,12 @@ export default function FichaMaestroGuiaPage() {
   const [actualizando, setActualizando] = useState(false);
   const [error, setError] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [cuentaVinculada, setCuentaVinculada] = useState<{ email: string } | null | undefined>(undefined);
+  const [mostrarCrearAcceso, setMostrarCrearAcceso] = useState(false);
+  const [emailAcceso, setEmailAcceso] = useState("");
+  const [passwordAcceso, setPasswordAcceso] = useState("");
+  const [creandoAcceso, setCreandoAcceso] = useState(false);
+  const [errorAcceso, setErrorAcceso] = useState("");
 
   const puedeEditar = Boolean(usuario && (usuario.rol === "administrador" || usuario.rol === "profesor"));
   const puedeEliminar = usuario?.rol === "administrador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
@@ -89,6 +96,11 @@ export default function FichaMaestroGuiaPage() {
         ]);
         if (snapCentro?.exists()) setCentro({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
         setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
+
+        if (puedeEditar) {
+          const snapCuenta = await getDocs(query(collection(db, "usuarios"), where("maestroGuiaId", "==", id), limit(1)));
+          setCuentaVinculada(snapCuenta.empty ? null : { email: snapCuenta.docs[0].data().email as string });
+        }
 
         if (usuario!.rol === "profesor") {
           const asigDeEsteGuia = ambito.asignaciones.filter((a) => a.maestroGuiaId === id);
@@ -130,6 +142,37 @@ export default function FichaMaestroGuiaPage() {
       setMg({ ...mg, estado: nuevoEstado });
     } finally {
       setActualizando(false);
+    }
+  }
+
+  async function crearAcceso() {
+    if (!mg || !usuario || creandoAcceso) return;
+    if (!emailAcceso.trim() || passwordAcceso.length < 6) {
+      setErrorAcceso("Ingresa un correo válido y una contraseña de al menos 6 caracteres.");
+      return;
+    }
+    setCreandoAcceso(true);
+    setErrorAcceso("");
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, emailAcceso.trim(), passwordAcceso);
+      await setDoc(doc(db, "usuarios", cred.user.uid), {
+        uid: cred.user.uid,
+        email: emailAcceso.trim(),
+        nombre: `${mg.nombres} ${mg.apellidoPaterno} ${mg.apellidoMaterno ?? ""}`.trim(),
+        rol: "centro_dual",
+        maestroGuiaId: mg.id,
+        centroDualId: mg.centroDualId,
+        liceoId: usuario.liceoId,
+        activo: true,
+        creadoEn: new Date().toISOString(),
+      });
+      setCuentaVinculada({ email: emailAcceso.trim() });
+      setMostrarCrearAcceso(false);
+    } catch (err) {
+      const code = (err as { code?: string })?.code;
+      setErrorAcceso(code === "auth/email-already-in-use" ? "Ya existe una cuenta con ese correo." : "No fue posible crear el acceso. Intenta nuevamente.");
+    } finally {
+      setCreandoAcceso(false);
     }
   }
 
@@ -254,6 +297,30 @@ export default function FichaMaestroGuiaPage() {
         </div>
       )}
 
+      {puedeEditar && cuentaVinculada !== undefined && (
+        <Bloque titulo="Cuenta de acceso">
+          {cuentaVinculada ? (
+            <p style={{ color: "var(--text-secondary)" }} className="text-sm flex items-center gap-2">
+              <CheckCircle2 size={15} style={{ color: "var(--success)" }} />
+              Este maestro guía puede iniciar sesión con <strong style={{ color: "var(--text-primary)" }}>{cuentaVinculada.email}</strong>.
+            </p>
+          ) : (
+            <>
+              <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-3">
+                Este maestro guía todavía no tiene una cuenta para iniciar sesión en SIGEDUAL (por ejemplo, para realizar evaluaciones de sus estudiantes).
+              </p>
+              <button
+                onClick={() => setMostrarCrearAcceso(true)}
+                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+                className="px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5"
+              >
+                <KeyRound size={14} /> Crear acceso
+              </button>
+            </>
+          )}
+        </Bloque>
+      )}
+
       <Bloque titulo="Información personal">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Dato label="RUT" valor={mg.run} />
@@ -355,6 +422,54 @@ export default function FichaMaestroGuiaPage() {
         <Bloque titulo="Observaciones">
           <p style={{ color: "var(--text-primary)" }} className="text-sm">{mg.observaciones}</p>
         </Bloque>
+      )}
+
+      {mostrarCrearAcceso && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }} onClick={() => setMostrarCrearAcceso(false)}>
+          <div
+            role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }}
+            className="w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+          >
+            <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-1">Crear acceso</h2>
+            <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-4">
+              Se creará una cuenta con rol Centro Dual / Maestro Guía, vinculada a {mg.nombres} {mg.apellidoPaterno}. Comparte el correo y la contraseña con él o ella.
+            </p>
+            {errorAcceso && (
+              <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-3 py-2 mb-3">
+                <p style={{ color: "var(--danger)" }} className="text-xs font-medium">{errorAcceso}</p>
+              </div>
+            )}
+            <div className="flex flex-col gap-3 mb-5">
+              <div>
+                <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Correo electrónico</label>
+                <input
+                  type="email" value={emailAcceso} onChange={(e) => setEmailAcceso(e.target.value)}
+                  placeholder={mg.email || "correo@empresa.cl"}
+                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
+                />
+              </div>
+              <div>
+                <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Contraseña inicial</label>
+                <input
+                  type="password" value={passwordAcceso} onChange={(e) => setPasswordAcceso(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setMostrarCrearAcceso(false)} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex-1 py-2.5 rounded-xl text-sm font-medium">
+                Cancelar
+              </button>
+              <button onClick={crearAcceso} disabled={creandoAcceso} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="flex-1 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50">
+                {creandoAcceso ? "Creando..." : "Crear acceso"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
