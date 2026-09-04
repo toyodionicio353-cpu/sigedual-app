@@ -39,8 +39,7 @@ const TITULOS: Record<string, string> = {
   "/dashboard/administracion/seguridad": "Seguridad",
   "/dashboard/administracion/usuario": "Usuario",
   "/dashboard/administracion/configuracion": "Configuración",
-  "/dashboard/administracion/privacidad": "Políticas de privacidad",
-  "/dashboard/administracion/terminos": "Términos y condiciones",
+  "/dashboard/administracion/privacidad": "Políticas",
   "/dashboard/administracion/aviso-legal": "Aviso legal",
 };
 
