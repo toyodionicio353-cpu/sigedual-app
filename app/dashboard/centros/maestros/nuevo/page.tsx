@@ -9,9 +9,12 @@ import MaestroGuiaForm, { MAESTRO_GUIA_FORM_VACIO, type MaestroGuiaFormValues } 
 import type { CentroDual, Especialidad, MaestroGuia } from "@/types";
 import { CheckCircle2, Eye, UserPlus } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import { useAdvertenciaLiceoGlobal } from "@/lib/liceos/useAdvertenciaLiceoGlobal";
+import ModalAdvertenciaLiceo from "@/components/liceos/ModalAdvertenciaLiceo";
 
 export default function AgregarMaestroGuiaPage() {
   const { usuario } = useAuth();
+  const { liceoPredeterminado, mostrarAdvertencia, conConfirmacion, confirmar, cancelar } = useAdvertenciaLiceoGlobal();
 
   const [centros, setCentros] = useState<CentroDual[]>([]);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
@@ -123,8 +126,12 @@ export default function AgregarMaestroGuiaPage() {
           rutsOcupadosPorCentro={rutsOcupados}
           guardando={guardando}
           onCancelar={() => window.history.back()}
-          onGuardar={guardar}
+          onGuardar={(...args) => conConfirmacion(() => guardar(...args))}
         />
+      )}
+
+      {mostrarAdvertencia && liceoPredeterminado && (
+        <ModalAdvertenciaLiceo entidad="un maestro guía" liceoNombre={liceoPredeterminado.nombre} onConfirmar={confirmar} onCancelar={cancelar} />
       )}
 
       {creado && (

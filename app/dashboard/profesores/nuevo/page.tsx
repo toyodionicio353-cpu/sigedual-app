@@ -9,10 +9,13 @@ import { useAuth } from "@/lib/auth-context";
 import { formatearRut, validarRut } from "@/lib/rut";
 import TituloPagina from "@/components/TituloPagina";
 import { UserPlus } from "lucide-react";
+import { useAdvertenciaLiceoGlobal } from "@/lib/liceos/useAdvertenciaLiceoGlobal";
+import ModalAdvertenciaLiceo from "@/components/liceos/ModalAdvertenciaLiceo";
 
 export default function AgregarProfesorPage() {
   const { usuario } = useAuth();
   const router = useRouter();
+  const { liceoPredeterminado, mostrarAdvertencia, conConfirmacion, confirmar, cancelar } = useAdvertenciaLiceoGlobal();
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
@@ -109,7 +112,7 @@ export default function AgregarProfesorPage() {
 
         <div className="flex justify-end mt-2">
           <button
-            onClick={crearProfesor}
+            onClick={() => conConfirmacion(crearProfesor)}
             disabled={!puedeGuardar || guardando}
             style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
             className="px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
@@ -118,6 +121,10 @@ export default function AgregarProfesorPage() {
           </button>
         </div>
       </div>
+
+      {mostrarAdvertencia && liceoPredeterminado && (
+        <ModalAdvertenciaLiceo entidad="un profesor" liceoNombre={liceoPredeterminado.nombre} onConfirmar={confirmar} onCancelar={cancelar} />
+      )}
     </div>
   );
 }

@@ -10,10 +10,13 @@ import CentroDualForm, { CENTRO_FORM_VACIO, type CentroDualFormValues } from "..
 import type { CentroDual, Especialidad } from "@/types";
 import { CheckCircle2, Eye, Building2 } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import { useAdvertenciaLiceoGlobal } from "@/lib/liceos/useAdvertenciaLiceoGlobal";
+import ModalAdvertenciaLiceo from "@/components/liceos/ModalAdvertenciaLiceo";
 
 export default function AgregarCentroDualPage() {
   const { usuario } = useAuth();
   const router = useRouter();
+  const { liceoPredeterminado, mostrarAdvertencia, conConfirmacion, confirmar, cancelar } = useAdvertenciaLiceoGlobal();
 
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [rutsOcupados, setRutsOcupados] = useState<string[]>([]);
@@ -117,8 +120,12 @@ export default function AgregarCentroDualPage() {
           rutsOcupados={rutsOcupados}
           guardando={guardando}
           onCancelar={() => router.push("/dashboard/centros")}
-          onGuardar={guardar}
+          onGuardar={(...args) => conConfirmacion(() => guardar(...args))}
         />
+      )}
+
+      {mostrarAdvertencia && liceoPredeterminado && (
+        <ModalAdvertenciaLiceo entidad="un centro dual" liceoNombre={liceoPredeterminado.nombre} onConfirmar={confirmar} onCancelar={cancelar} />
       )}
 
       {creado && (

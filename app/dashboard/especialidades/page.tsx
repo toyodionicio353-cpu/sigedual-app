@@ -6,6 +6,8 @@ import { useAuth } from "@/lib/auth-context";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
+import { useAdvertenciaLiceoGlobal } from "@/lib/liceos/useAdvertenciaLiceoGlobal";
+import ModalAdvertenciaLiceo from "@/components/liceos/ModalAdvertenciaLiceo";
 import { GraduationCap, School } from "lucide-react";
 import type { Especialidad } from "@/types";
 
@@ -14,6 +16,7 @@ export default function EspecialidadesPage() {
   const modoGlobal = useModoGlobalAdmin();
   const { liceos } = useCatalogoLiceos(modoGlobal);
   const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
+  const { liceoPredeterminado, mostrarAdvertencia, conConfirmacion, confirmar, cancelar } = useAdvertenciaLiceoGlobal();
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [nombre, setNombre] = useState("");
@@ -78,12 +81,11 @@ export default function EspecialidadesPage() {
         </div>
       )}
 
-      {modoGlobal ? (
-        <p style={{ color: "var(--text-muted)" }} className="text-xs mb-6">
-          Para agregar o eliminar especialidades, entra al liceo correspondiente desde "Liceos".
-        </p>
-      ) : puedeEditar && (
-        <form onSubmit={agregar} className="flex flex-col sm:flex-row gap-3 mb-6">
+      {puedeEditar && (
+        <form
+          onSubmit={(e) => { e.preventDefault(); if (nombre.trim()) conConfirmacion(() => agregar(e)); }}
+          className="flex flex-col sm:flex-row gap-3 mb-6"
+        >
           <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre de la especialidad (ej: Contabilidad)"
             style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
             className="flex-1 px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
@@ -121,6 +123,10 @@ export default function EspecialidadesPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {mostrarAdvertencia && liceoPredeterminado && (
+        <ModalAdvertenciaLiceo entidad="una especialidad" liceoNombre={liceoPredeterminado.nombre} onConfirmar={confirmar} onCancelar={cancelar} />
       )}
     </div>
   );
