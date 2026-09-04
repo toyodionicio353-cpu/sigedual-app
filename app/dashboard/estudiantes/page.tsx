@@ -7,12 +7,19 @@ import { useAuth } from "@/lib/auth-context";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
-import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
+import { useVistaListado } from "@/lib/preferencias/useVistaListado";
+import EncabezadoListado from "@/components/listado/EncabezadoListado";
+import TarjetasEstadisticas from "@/components/listado/TarjetasEstadisticas";
+import BarraControles from "@/components/listado/BarraControles";
+import PanelFiltros from "@/components/listado/PanelFiltros";
+import ChipsFiltros from "@/components/listado/ChipsFiltros";
+import EstadoVacio from "@/components/listado/EstadoVacio";
+import ContadorResultados from "@/components/listado/ContadorResultados";
+import PaginacionListado from "@/components/listado/PaginacionListado";
 import type { Estudiante, Especialidad } from "@/types";
 import {
-  Search, SlidersHorizontal, X, LayoutList, LayoutGrid,
-  ChevronLeft, ChevronRight, Eye, UserPlus, Users2, BadgeCheck, Handshake,
+  Search, Eye, UserPlus, Users2, BadgeCheck, Handshake,
   AlertTriangle, GraduationCap, ClipboardList, School,
 } from "lucide-react";
 
@@ -78,7 +85,7 @@ export default function EstudiantesPage() {
   const [busqueda, setBusqueda] = useState("");
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VACIOS);
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
-  const [vista, setVista] = useState<"lista" | "tarjetas">("lista");
+  const [vista, setVista] = useVistaListado("estudiantes");
   const [orden, setOrden] = useState("nombre-asc");
   const [pagina, setPagina] = useState(1);
 
@@ -229,8 +236,6 @@ export default function EstudiantesPage() {
     };
   }, [estudiantes]);
 
-  const hayFiltrosActivos = filtrosActivos.length > 0 || busqueda.trim().length > 0;
-
   const { porVencer, vencidosPendientes } = useMemo(() => {
     const ahora = Date.now();
     const porVencerList: Estudiante[] = [];
@@ -259,43 +264,44 @@ export default function EstudiantesPage() {
   return (
     <div className="p-4 md:p-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-        <div>
-          <TituloPagina icon={<ClipboardList size={28} />}>Listado de estudiantes</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-            {modoGlobal
-              ? "Estudiantes de todos los liceos. Usa el filtro \"Liceo\" para acotar a uno en particular."
-              : usuario?.rol === "profesor"
-                ? "Estudiantes que tienes asignados como profesor supervisor."
-                : "Consulta y revisa los estudiantes registrados en SIGEDUAL."}
-          </p>
-        </div>
-        {puedeAgregar && (
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Link
-              href="/dashboard/estudiantes/promocion"
-              style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:[border-color:var(--accent)] transition-colors relative"
-            >
-              <GraduationCap size={16} />
-              Promoción de curso
-              {pendientesPromocion > 0 && (
-                <span style={{ background: "var(--warning)", color: "#1a1300" }} className="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center">
-                  {pendientesPromocion}
-                </span>
-              )}
-            </Link>
-            <Link
-              href="/dashboard/estudiantes/nuevo"
-              style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity"
-            >
-              <UserPlus size={16} />
-              Agregar estudiante
-            </Link>
-          </div>
-        )}
-      </div>
+      <EncabezadoListado
+        icon={<ClipboardList size={28} />}
+        titulo="Listado de estudiantes"
+        descripcion={
+          modoGlobal
+            ? "Estudiantes de todos los liceos. Usa el filtro \"Liceo\" para acotar a uno en particular."
+            : usuario?.rol === "profesor"
+              ? "Estudiantes que tienes asignados como profesor supervisor."
+              : "Consulta y revisa los estudiantes registrados en SIGEDUAL."
+        }
+        acciones={
+          puedeAgregar && (
+            <>
+              <Link
+                href="/dashboard/estudiantes/promocion"
+                style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:[border-color:var(--accent)] transition-colors relative"
+              >
+                <GraduationCap size={16} />
+                Promoción de curso
+                {pendientesPromocion > 0 && (
+                  <span style={{ background: "var(--warning)", color: "#1a1300" }} className="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center">
+                    {pendientesPromocion}
+                  </span>
+                )}
+              </Link>
+              <Link
+                href="/dashboard/estudiantes/nuevo"
+                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+              >
+                <UserPlus size={16} />
+                Agregar estudiante
+              </Link>
+            </>
+          )
+        }
+      />
 
       {/* Avisos de retención de datos (5 años) */}
       {!loading && porVencer.length > 0 && (
@@ -322,202 +328,131 @@ export default function EstudiantesPage() {
       )}
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {[
+      <TarjetasEstadisticas
+        loading={loading}
+        estadisticas={[
           { label: "Total de estudiantes", value: stats.total, icon: <Users2 size={18} />, color: "#2563eb" },
           { label: "Estudiantes activos", value: stats.activos, icon: <BadgeCheck size={18} />, color: "#22c55e" },
           { label: "Agregados este año", value: stats.agregadosEsteAnio, icon: <UserPlus size={18} />, color: "#f59e0b" },
           { label: "En formación dual", value: stats.enFormacionDual, icon: <Handshake size={18} />, color: "#06b6d4" },
-        ].map((s) => (
-          <div key={s.label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="p-4 flex flex-col gap-3">
-            <div style={{ background: "var(--accent)", borderRadius: 999 }} className="w-9 h-9 flex items-center justify-center">
-              <span style={{ color: "var(--text-on-accent)" }}>{s.icon}</span>
-            </div>
-            <div>
-              <p style={{ color: "var(--text-primary)" }} className="text-lg font-bold leading-tight">{loading ? "—" : s.value}</p>
-              <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-0.5">{s.label}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+        ]}
+      />
 
-      {/* Búsqueda + acciones */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-3">
-        <div className="relative flex-1">
-          <Search size={16} style={{ color: "var(--text-muted)" }} className="absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar estudiante por nombre, RUN o curso..."
-            style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-            className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
-          />
-        </div>
-
-        <button
-          onClick={() => setFiltrosAbiertos((v) => !v)}
-          style={{
-            background: filtrosAbiertos ? "var(--accent)" + "22" : "var(--bg-card)",
-            border: `1px solid ${filtrosAbiertos ? "var(--accent)" : "var(--border-light)"}`,
-            color: filtrosAbiertos ? "var(--accent-light)" : "var(--text-secondary)",
-          }}
-          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors flex-shrink-0"
-        >
-          <SlidersHorizontal size={16} />
-          Filtros
-          {filtrosActivos.length > 0 && (
-            <span style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="w-5 h-5 rounded-full text-white text-xs flex items-center justify-center">
-              {filtrosActivos.length}
-            </span>
-          )}
-        </button>
-
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          <Select
-            value={orden}
-            onChange={setOrden}
-            ariaLabel="Ordenar"
-            className="w-44"
-            opciones={ORDEN_OPCIONES}
-          />
-        </div>
-
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="flex items-center gap-1 p-1 rounded-xl flex-shrink-0">
-          <button
-            onClick={() => setVista("lista")}
-            title="Vista de lista"
-            style={{ background: vista === "lista" ? "var(--accent)" : "transparent", color: vista === "lista" ? "#fff" : "var(--text-muted)" }}
-            className="p-2 rounded-lg transition-colors"
-          >
-            <LayoutList size={16} />
-          </button>
-          <button
-            onClick={() => setVista("tarjetas")}
-            title="Vista de tarjetas"
-            style={{ background: vista === "tarjetas" ? "var(--accent)" : "transparent", color: vista === "tarjetas" ? "#fff" : "var(--text-muted)" }}
-            className="p-2 rounded-lg transition-colors"
-          >
-            <LayoutGrid size={16} />
-          </button>
-        </div>
-      </div>
+      {/* Búsqueda + filtros + orden + vista */}
+      <BarraControles
+        busqueda={busqueda}
+        onBusqueda={setBusqueda}
+        placeholderBusqueda="Buscar estudiante por nombre, RUN o curso..."
+        filtrosAbiertos={filtrosAbiertos}
+        onToggleFiltros={() => setFiltrosAbiertos((v) => !v)}
+        cantidadFiltrosActivos={filtrosActivos.length}
+        orden={orden}
+        onOrden={setOrden}
+        opcionesOrden={ORDEN_OPCIONES}
+        vista={vista}
+        onVista={setVista}
+      />
 
       {/* Panel de filtros */}
       {filtrosAbiertos && (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-4 sm:p-5 mb-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {modoGlobal && (
-              <div>
-                <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
-                <Select value={filtros.liceoId} onChange={(v) => actualizarFiltro("liceoId", v)} ariaLabel="Liceo"
-                  opciones={[{ value: "", label: "Todos los liceos" }, ...liceos.map((l) => ({ value: l.id, label: l.nombre }))]} />
-              </div>
-            )}
+        <PanelFiltros>
+          {modoGlobal && (
             <div>
-              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Año académico</label>
-              <Select value={filtros.anio} onChange={(v) => actualizarFiltro("anio", v)} ariaLabel="Año académico"
-                opciones={[{ value: "", label: "Todos los años" }, ...aniosDisponibles.map((a) => ({ value: a, label: a }))]} />
+              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
+              <Select value={filtros.liceoId} onChange={(v) => actualizarFiltro("liceoId", v)} ariaLabel="Liceo"
+                opciones={[{ value: "", label: "Todos los liceos" }, ...liceos.map((l) => ({ value: l.id, label: l.nombre }))]} />
             </div>
-            <div>
-              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Nivel</label>
-              <Select value={filtros.nivel} onChange={(v) => actualizarFiltro("nivel", v)} ariaLabel="Nivel"
-                opciones={[{ value: "", label: "Todos los niveles" }, ...nivelesDisponibles.map((n) => ({ value: n, label: n }))]} />
-            </div>
-            <div>
-              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Curso</label>
-              <Select value={filtros.curso} onChange={(v) => actualizarFiltro("curso", v)} disabled={cursosDisponibles.length === 0} ariaLabel="Curso"
-                opciones={[
-                  { value: "", label: cursosDisponibles.length === 0 ? "Sin cursos registrados" : "Todos los cursos" },
-                  ...cursosDisponibles.map((c) => ({ value: c, label: c })),
-                ]} />
-            </div>
-            <div>
-              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Especialidad</label>
-              <Select value={filtros.especialidadId} onChange={(v) => actualizarFiltro("especialidadId", v)} disabled={especialidades.length === 0} ariaLabel="Especialidad"
-                opciones={[
-                  { value: "", label: especialidades.length === 0 ? "Sin especialidades" : "Todas las especialidades" },
-                  ...especialidades.map((esp) => ({ value: esp.id, label: esp.nombre })),
-                ]} />
-            </div>
-            <div>
-              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Estado</label>
-              <Select value={filtros.estado} onChange={(v) => actualizarFiltro("estado", v)} ariaLabel="Estado"
-                opciones={[{ value: "", label: "Todos los estados" }, ...ESTADOS.map((es) => ({ value: es, label: es.charAt(0).toUpperCase() + es.slice(1) }))]} />
-            </div>
-            <div>
-              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Formación dual</label>
-              <Select value={filtros.dual} onChange={(v) => actualizarFiltro("dual", v)} ariaLabel="Formación dual"
-                opciones={[
-                  { value: "", label: "Todos" },
-                  { value: "si", label: "En formación dual" },
-                  { value: "no", label: "Sin formación dual" },
-                ]} />
-            </div>
-            <div>
-              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Empresa asignada</label>
-              <Select disabled value="" onChange={() => {}} ariaLabel="Empresa asignada"
-                opciones={[{ value: "", label: "Disponible próximamente" }]} />
-            </div>
+          )}
+          <div>
+            <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Año académico</label>
+            <Select value={filtros.anio} onChange={(v) => actualizarFiltro("anio", v)} ariaLabel="Año académico"
+              opciones={[{ value: "", label: "Todos los años" }, ...aniosDisponibles.map((a) => ({ value: a, label: a }))]} />
           </div>
-        </div>
+          <div>
+            <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Nivel</label>
+            <Select value={filtros.nivel} onChange={(v) => actualizarFiltro("nivel", v)} ariaLabel="Nivel"
+              opciones={[{ value: "", label: "Todos los niveles" }, ...nivelesDisponibles.map((n) => ({ value: n, label: n }))]} />
+          </div>
+          <div>
+            <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Curso</label>
+            <Select value={filtros.curso} onChange={(v) => actualizarFiltro("curso", v)} disabled={cursosDisponibles.length === 0} ariaLabel="Curso"
+              opciones={[
+                { value: "", label: cursosDisponibles.length === 0 ? "Sin cursos registrados" : "Todos los cursos" },
+                ...cursosDisponibles.map((c) => ({ value: c, label: c })),
+              ]} />
+          </div>
+          <div>
+            <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Especialidad</label>
+            <Select value={filtros.especialidadId} onChange={(v) => actualizarFiltro("especialidadId", v)} disabled={especialidades.length === 0} ariaLabel="Especialidad"
+              opciones={[
+                { value: "", label: especialidades.length === 0 ? "Sin especialidades" : "Todas las especialidades" },
+                ...especialidades.map((esp) => ({ value: esp.id, label: esp.nombre })),
+              ]} />
+          </div>
+          <div>
+            <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Estado</label>
+            <Select value={filtros.estado} onChange={(v) => actualizarFiltro("estado", v)} ariaLabel="Estado"
+              opciones={[{ value: "", label: "Todos los estados" }, ...ESTADOS.map((es) => ({ value: es, label: es.charAt(0).toUpperCase() + es.slice(1) }))]} />
+          </div>
+          <div>
+            <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Formación dual</label>
+            <Select value={filtros.dual} onChange={(v) => actualizarFiltro("dual", v)} ariaLabel="Formación dual"
+              opciones={[
+                { value: "", label: "Todos" },
+                { value: "si", label: "En formación dual" },
+                { value: "no", label: "Sin formación dual" },
+              ]} />
+          </div>
+          <div>
+            <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Empresa asignada</label>
+            <Select disabled value="" onChange={() => {}} ariaLabel="Empresa asignada"
+              opciones={[{ value: "", label: "Disponible próximamente" }]} />
+          </div>
+        </PanelFiltros>
       )}
 
       {/* Chips de filtros activos */}
-      {hayFiltrosActivos && (
-        <div className="flex flex-wrap items-center gap-2 mb-6">
-          {busqueda.trim() && (
-            <span style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-xs font-medium">
-              "{busqueda.trim()}"
-              <button onClick={() => setBusqueda("")} style={{ color: "var(--text-muted)" }}><X size={13} /></button>
-            </span>
-          )}
-          {filtrosActivos.map((chip) => (
-            <span key={chip.key} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-xs font-medium">
-              {chip.label}
-              <button onClick={() => actualizarFiltro(chip.key, "")} style={{ color: "var(--text-muted)" }}><X size={13} /></button>
-            </span>
-          ))}
-          <button onClick={limpiarFiltros} style={{ color: "var(--accent-light)" }} className="text-xs font-semibold hover:underline">
-            Limpiar filtros
-          </button>
-        </div>
-      )}
-
-      {!hayFiltrosActivos && <div className="mb-6" />}
+      <ChipsFiltros
+        busqueda={busqueda}
+        onQuitarBusqueda={() => setBusqueda("")}
+        chips={filtrosActivos.map((chip) => ({ key: chip.key, label: chip.label, onQuitar: () => actualizarFiltro(chip.key, "") }))}
+        onLimpiarTodo={limpiarFiltros}
+      />
 
       {/* Contenido */}
       {loading ? (
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
       ) : estudiantes.length === 0 ? (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
-          <div style={{ background: "var(--accent)22", borderRadius: "9999px" }} className="w-14 h-14 flex items-center justify-center mx-auto mb-4">
-            <Users2 size={24} style={{ color: "var(--accent-light)" }} />
-          </div>
-          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Aún no hay estudiantes registrados</p>
-          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Comienza agregando el primer estudiante a SIGEDUAL.</p>
-          {puedeAgregar && (
+        <EstadoVacio
+          icon={<Users2 size={24} style={{ color: "var(--accent-light)" }} />}
+          titulo="Aún no hay estudiantes registrados"
+          descripcion="Comienza agregando el primer estudiante a SIGEDUAL."
+          accion={puedeAgregar && (
             <Link href="/dashboard/estudiantes/nuevo" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
               <UserPlus size={16} />
               Agregar estudiante
             </Link>
           )}
-        </div>
+        />
       ) : ordenados.length === 0 ? (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
-          <div style={{ background: "var(--bg-surface)", borderRadius: "9999px" }} className="w-14 h-14 flex items-center justify-center mx-auto mb-4">
-            <Search size={22} style={{ color: "var(--text-muted)" }} />
-          </div>
-          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No encontramos estudiantes</p>
-          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Prueba modificando la búsqueda o eliminando algunos filtros.</p>
-          <button onClick={limpiarFiltros} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="px-5 py-2.5 rounded-xl text-sm font-medium">
-            Limpiar filtros
-          </button>
-        </div>
+        <EstadoVacio
+          icon={<Search size={22} style={{ color: "var(--text-muted)" }} />}
+          titulo="No encontramos estudiantes"
+          descripcion="Prueba modificando la búsqueda o eliminando algunos filtros."
+          accion={
+            <button onClick={limpiarFiltros} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="px-5 py-2.5 rounded-xl text-sm font-medium">
+              Limpiar filtros
+            </button>
+          }
+        />
       ) : (
         <>
-          <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">
-            Mostrando {inicio + 1}–{Math.min(inicio + PAGE_SIZE, ordenados.length)} de {ordenados.length} estudiante(s)
-          </p>
+          <ContadorResultados
+            total={ordenados.length}
+            entidadSingular="estudiante"
+            entidadPlural="estudiantes"
+            rango={{ inicio: inicio + 1, fin: Math.min(inicio + PAGE_SIZE, ordenados.length) }}
+          />
 
           {vista === "lista" ? (
             <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden">
@@ -597,46 +532,7 @@ export default function EstudiantesPage() {
           )}
 
           {/* Paginación */}
-          {totalPaginas > 1 && (
-            <div className="flex items-center justify-center gap-1.5 mt-6">
-              <button
-                onClick={() => setPagina((p) => Math.max(1, p - 1))}
-                disabled={paginaActual === 1}
-                style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-                className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-40 transition-opacity"
-              >
-                <ChevronLeft size={14} />
-                Anterior
-              </button>
-              {Array.from({ length: totalPaginas }, (_, i) => i + 1)
-                .filter((n) => n === 1 || n === totalPaginas || Math.abs(n - paginaActual) <= 1)
-                .map((n, idx, arr) => (
-                  <span key={n} className="flex items-center gap-1.5">
-                    {idx > 0 && arr[idx - 1] !== n - 1 && <span style={{ color: "var(--text-muted)" }} className="text-xs px-1">...</span>}
-                    <button
-                      onClick={() => setPagina(n)}
-                      style={{
-                        background: n === paginaActual ? "var(--accent)" : "var(--bg-card)",
-                        border: `1px solid ${n === paginaActual ? "var(--accent)" : "var(--border)"}`,
-                        color: n === paginaActual ? "#fff" : "var(--text-secondary)",
-                      }}
-                      className="w-8 h-8 rounded-lg text-xs font-medium transition-colors"
-                    >
-                      {n}
-                    </button>
-                  </span>
-                ))}
-              <button
-                onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-                disabled={paginaActual === totalPaginas}
-                style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-                className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-40 transition-opacity"
-              >
-                Siguiente
-                <ChevronRight size={14} />
-              </button>
-            </div>
-          )}
+          <PaginacionListado paginaActual={paginaActual} totalPaginas={totalPaginas} onCambiarPagina={setPagina} />
         </>
       )}
     </div>
