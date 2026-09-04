@@ -4,8 +4,9 @@ import Link from "next/link";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
 import type { Asignacion, CentroDual, EstadoAsignacion, Estudiante } from "@/types";
-import { CalendarCheck, Search, Eye, Handshake, CheckCircle2, Clock } from "lucide-react";
+import { CalendarCheck, Search, Eye, Handshake, CheckCircle2, Clock, School } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 
@@ -38,12 +39,16 @@ function normalizar(texto?: string): string {
 
 export default function AsignacionesPage() {
   const { usuario } = useAuth();
+  const modoGlobal = useModoGlobalAdmin();
+  const { liceos } = useCatalogoLiceos(modoGlobal);
+  const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [centros, setCentros] = useState<CentroDual[]>([]);
   const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
+  const [filtroLiceoId, setFiltroLiceoId] = useState("");
 
   const puedeAgregar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
 
@@ -51,18 +56,17 @@ export default function AsignacionesPage() {
     if (!usuario) return;
     async function cargar() {
       setLoading(true);
-      const [snapAsig, snapEst, snapCentros] = await Promise.all([
-        getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario!.liceoId))),
-        getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
-        getDocs(query(collection(db, "centros_duales"), where("liceoId", "==", usuario!.liceoId))),
-      ]);
+      const qAsig = modoGlobal ? collection(db, "asignaciones") : query(collection(db, "asignaciones"), where("liceoId", "==", usuario!.liceoId));
+      const qEst = modoGlobal ? collection(db, "estudiantes") : query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId));
+      const qCentros = modoGlobal ? collection(db, "centros_duales") : query(collection(db, "centros_duales"), where("liceoId", "==", usuario!.liceoId));
+      const [snapAsig, snapEst, snapCentros] = await Promise.all([getDocs(qAsig), getDocs(qEst), getDocs(qCentros)]);
       setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
       setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
       setCentros(snapCentros.docs.map((d) => ({ id: d.id, ...d.data() } as CentroDual)));
       setLoading(false);
     }
     cargar();
-  }, [usuario]);
+  }, [usuario, modoGlobal]);
 
   const estudiantePor = useMemo(() => new Map(estudiantes.map((e) => [e.id, e])), [estudiantes]);
   const centroPor = useMemo(() => new Map(centros.map((c) => [c.id, c])), [centros]);
@@ -76,6 +80,7 @@ export default function AsignacionesPage() {
 
   const filtradas = useMemo(() => {
     let base = asignaciones;
+    if (filtroLiceoId) base = base.filter((a) => a.liceoId === filtroLiceoId);
     if (filtroEstado) base = base.filter((a) => a.estado === filtroEstado);
     if (busqueda.trim()) {
       const q = normalizar(busqueda);
@@ -87,7 +92,7 @@ export default function AsignacionesPage() {
       });
     }
     return [...base].sort((a, b) => (b.creadoEn > a.creadoEn ? 1 : -1));
-  }, [asignaciones, busqueda, filtroEstado, estudiantePor, centroPor]);
+  }, [asignaciones, busqueda, filtroEstado, filtroLiceoId, estudiantePor, centroPor]);
 
   return (
     <div className="p-4 md:p-8">
@@ -95,7 +100,9 @@ export default function AsignacionesPage() {
         <div>
           <TituloPagina icon={<CalendarCheck size={28} />}>Asignaciones</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-            Asigna estudiantes a centros duales con recomendaciones de compatibilidad.
+            {modoGlobal
+              ? "Asignaciones de todos los liceos. Usa el filtro \"Liceo\" para acotar a uno en particular."
+              : "Asigna estudiantes a centros duales con recomendaciones de compatibilidad."}
           </p>
         </div>
         {puedeAgregar && (
@@ -148,6 +155,15 @@ export default function AsignacionesPage() {
           className="w-full sm:w-56 flex-shrink-0"
           opciones={[{ value: "", label: "Todos los estados" }, ...ESTADOS.map((es) => ({ value: es, label: ESTADO_LABEL[es] }))]}
         />
+        {modoGlobal && (
+          <Select
+            value={filtroLiceoId}
+            onChange={setFiltroLiceoId}
+            ariaLabel="Filtrar por liceo"
+            className="w-full sm:w-56 flex-shrink-0"
+            opciones={[{ value: "", label: "Todos los liceos" }, ...liceos.map((l) => ({ value: l.id, label: l.nombre }))]}
+          />
+        )}
       </div>
 
       {/* Contenido */}
@@ -198,6 +214,11 @@ export default function AsignacionesPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
+                  {modoGlobal && (
+                    <span style={{ color: "var(--text-secondary)", background: "var(--bg-surface)" }} className="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-full text-xs">
+                      <School size={11} /> {liceoNombrePorId[a.liceoId] || "—"}
+                    </span>
+                  )}
                   <span style={{ color: ESTADO_COLOR[a.estado], background: ESTADO_COLOR[a.estado] + "22" }} className="px-3 py-1 rounded-full text-xs font-medium">
                     {ESTADO_LABEL[a.estado]}
                   </span>

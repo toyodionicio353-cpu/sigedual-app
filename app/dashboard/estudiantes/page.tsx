@@ -4,13 +4,14 @@ import Link from "next/link";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 import type { Estudiante, Especialidad } from "@/types";
 import {
   Search, SlidersHorizontal, X, LayoutList, LayoutGrid,
   ChevronLeft, ChevronRight, Eye, UserPlus, Users2, BadgeCheck, Handshake,
-  AlertTriangle, GraduationCap, ClipboardList,
+  AlertTriangle, GraduationCap, ClipboardList, School,
 } from "lucide-react";
 
 const NIVELES = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
@@ -42,9 +43,10 @@ interface Filtros {
   especialidadId: string;
   estado: string;
   dual: string;
+  liceoId: string;
 }
 
-const FILTROS_VACIOS: Filtros = { anio: "", nivel: "", curso: "", especialidadId: "", estado: "", dual: "" };
+const FILTROS_VACIOS: Filtros = { anio: "", nivel: "", curso: "", especialidadId: "", estado: "", dual: "", liceoId: "" };
 
 function normalizar(texto?: string): string {
   return (texto || "")
@@ -63,6 +65,9 @@ function iniciales(nombres: string, apellidos: string): string {
 
 export default function EstudiantesPage() {
   const { usuario } = useAuth();
+  const modoGlobal = useModoGlobalAdmin();
+  const { liceos } = useCatalogoLiceos(modoGlobal);
+  const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,23 +84,25 @@ export default function EstudiantesPage() {
   useEffect(() => {
     if (!usuario) return;
     cargar();
-  }, [usuario]);
+  }, [usuario, modoGlobal]);
 
   async function cargar() {
     if (!usuario) return;
     setLoading(true);
     let q;
-    if (usuario.rol === "administrador" || usuario.rol === "coordinador" || usuario.rol === "director") {
+    if (modoGlobal) {
+      q = collection(db, "estudiantes");
+    } else if (usuario.rol === "administrador" || usuario.rol === "coordinador" || usuario.rol === "director") {
       q = query(collection(db, "estudiantes"), where("liceoId", "==", usuario.liceoId));
     } else if (usuario.rol === "profesor") {
       q = query(collection(db, "estudiantes"), where("profesorId", "==", usuario.uid));
     } else {
       q = query(collection(db, "estudiantes"), where("liceoId", "==", usuario.liceoId));
     }
-    const [snapEst, snapEsp] = await Promise.all([
-      getDocs(q),
-      getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId))),
-    ]);
+    const qEsp = modoGlobal
+      ? collection(db, "especialidades")
+      : query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId));
+    const [snapEst, snapEsp] = await Promise.all([getDocs(q), getDocs(qEsp)]);
     setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
     setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
     setLoading(false);
@@ -148,8 +155,9 @@ export default function EstudiantesPage() {
     if (filtros.especialidadId) chips.push({ key: "especialidadId", label: especialidadNombre(filtros.especialidadId) });
     if (filtros.estado) chips.push({ key: "estado", label: filtros.estado.charAt(0).toUpperCase() + filtros.estado.slice(1) });
     if (filtros.dual) chips.push({ key: "dual", label: filtros.dual === "si" ? "En formación dual" : "Sin formación dual" });
+    if (filtros.liceoId) chips.push({ key: "liceoId", label: liceoNombrePorId[filtros.liceoId] || "Liceo" });
     return chips;
-  }, [filtros, especialidades]);
+  }, [filtros, especialidades, liceoNombrePorId]);
 
   const filtrados = useMemo(() => {
     let base = estudiantes;
@@ -169,6 +177,7 @@ export default function EstudiantesPage() {
     if (filtros.especialidadId) base = base.filter((e) => e.especialidadId === filtros.especialidadId);
     if (filtros.estado) base = base.filter((e) => e.estado === filtros.estado);
     if (filtros.dual) base = base.filter((e) => (filtros.dual === "si") === Boolean(e.centroDualId));
+    if (filtros.liceoId) base = base.filter((e) => e.liceoId === filtros.liceoId);
     return base;
   }, [estudiantes, busqueda, filtros, especialidades]);
 
@@ -247,7 +256,11 @@ export default function EstudiantesPage() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <TituloPagina icon={<ClipboardList size={28} />}>Listado de estudiantes</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Consulta y revisa los estudiantes registrados en SIGEDUAL.</p>
+          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+            {modoGlobal
+              ? "Estudiantes de todos los liceos. Usa el filtro \"Liceo\" para acotar a uno en particular."
+              : "Consulta y revisa los estudiantes registrados en SIGEDUAL."}
+          </p>
         </div>
         {puedeAgregar && (
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -385,6 +398,13 @@ export default function EstudiantesPage() {
       {filtrosAbiertos && (
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-4 sm:p-5 mb-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {modoGlobal && (
+              <div>
+                <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
+                <Select value={filtros.liceoId} onChange={(v) => actualizarFiltro("liceoId", v)} ariaLabel="Liceo"
+                  opciones={[{ value: "", label: "Todos los liceos" }, ...liceos.map((l) => ({ value: l.id, label: l.nombre }))]} />
+              </div>
+            )}
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Año académico</label>
               <Select value={filtros.anio} onChange={(v) => actualizarFiltro("anio", v)} ariaLabel="Año académico"
@@ -507,6 +527,11 @@ export default function EstudiantesPage() {
                     <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{e.run} · {e.curso || "Sin curso"} · {especialidadNombre(e.especialidadId) || "Sin especialidad"}</p>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
+                    {modoGlobal && (
+                      <span style={{ color: "var(--text-secondary)", background: "var(--bg-surface)" }} className="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-full text-xs">
+                        <School size={11} /> {liceoNombrePorId[e.liceoId] || "—"}
+                      </span>
+                    )}
                     <span style={{ color: ESTADO_COLOR[e.estado], background: ESTADO_COLOR[e.estado] + "22" }} className="px-3 py-1 rounded-full text-xs font-medium capitalize">
                       {e.estado}
                     </span>
@@ -539,6 +564,11 @@ export default function EstudiantesPage() {
                   <div style={{ borderTop: "1px solid var(--border)" }} className="pt-3 flex flex-col gap-1">
                     <p style={{ color: "var(--text-secondary)" }} className="text-xs">{e.curso || "Sin curso"} · {anioDe(e)}</p>
                     <p style={{ color: "var(--text-secondary)" }} className="text-xs">{especialidadNombre(e.especialidadId) || "Sin especialidad"}</p>
+                    {modoGlobal && (
+                      <p style={{ color: "var(--accent-light)" }} className="text-xs flex items-center gap-1 mt-0.5">
+                        <School size={11} /> {liceoNombrePorId[e.liceoId] || "—"}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <span style={{ color: ESTADO_COLOR[e.estado], background: ESTADO_COLOR[e.estado] + "22" }} className="px-3 py-1 rounded-full text-xs font-medium capitalize">

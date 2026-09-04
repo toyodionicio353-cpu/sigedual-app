@@ -4,13 +4,14 @@ import Link from "next/link";
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
 import { estudiantesAsignadosDe, especialidadesEnUso } from "@/lib/profesores";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 import type { Asignacion, Usuario } from "@/types";
 import {
   Search, SlidersHorizontal, X, ChevronRight, ChevronLeft, MoreVertical,
-  Eye, Pencil, Users, ClipboardCheck, MapPin, Power, ClipboardList,
+  Eye, Pencil, Users, ClipboardCheck, MapPin, Power, ClipboardList, School,
 } from "lucide-react";
 
 const PAGE_SIZE = 20;
@@ -28,6 +29,9 @@ function soloAlfanumerico(texto?: string): string {
 
 export default function ProfesoresPage() {
   const { usuario } = useAuth();
+  const modoGlobal = useModoGlobalAdmin();
+  const { liceos } = useCatalogoLiceos(modoGlobal);
+  const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
   const [profesores, setProfesores] = useState<Usuario[]>([]);
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +39,7 @@ export default function ProfesoresPage() {
   const [busqueda, setBusqueda] = useState("");
   const [filtroEspecialidad, setFiltroEspecialidad] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
+  const [filtroLiceoId, setFiltroLiceoId] = useState("");
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   const [pagina, setPagina] = useState(1);
   const [menuAbierto, setMenuAbierto] = useState<string | null>(null);
@@ -46,21 +51,23 @@ export default function ProfesoresPage() {
   async function cargar() {
     if (!usuario) return;
     setLoading(true);
-    const [snapProf, snapAsig] = await Promise.all([
-      getDocs(query(collection(db, "usuarios"), where("liceoId", "==", usuario.liceoId), where("rol", "==", "profesor"))),
-      getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario.liceoId))),
-    ]);
+    const qProf = modoGlobal
+      ? query(collection(db, "usuarios"), where("rol", "==", "profesor"))
+      : query(collection(db, "usuarios"), where("liceoId", "==", usuario.liceoId), where("rol", "==", "profesor"));
+    const qAsig = modoGlobal ? collection(db, "asignaciones") : query(collection(db, "asignaciones"), where("liceoId", "==", usuario.liceoId));
+    const [snapProf, snapAsig] = await Promise.all([getDocs(qProf), getDocs(qAsig)]);
     setProfesores(snapProf.docs.map((d) => d.data() as Usuario));
     setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
     setLoading(false);
   }
 
-  useEffect(() => { if (usuario) cargar(); }, [usuario]);
+  useEffect(() => { if (usuario) cargar(); }, [usuario, modoGlobal]);
 
   const especialidadesDisponibles = useMemo(() => especialidadesEnUso(profesores), [profesores]);
 
   const filtrados = useMemo(() => {
     let base = profesores;
+    if (filtroLiceoId) base = base.filter((p) => p.liceoId === filtroLiceoId);
     if (filtroEstado) base = base.filter((p) => (p.activo ? "activo" : "inactivo") === filtroEstado);
     if (filtroEspecialidad) base = base.filter((p) => (p.especialidad || "").trim() === filtroEspecialidad);
     if (busqueda.trim()) {
@@ -77,18 +84,18 @@ export default function ProfesoresPage() {
       const activoB = b.activo ? 0 : 1;
       return activoA - activoB || a.nombre.localeCompare(b.nombre);
     });
-  }, [profesores, filtroEstado, filtroEspecialidad, busqueda]);
+  }, [profesores, filtroEstado, filtroEspecialidad, filtroLiceoId, busqueda]);
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE));
   const paginaSegura = Math.min(pagina, totalPaginas);
   const inicio = (paginaSegura - 1) * PAGE_SIZE;
   const paginaProfesores = filtrados.slice(inicio, inicio + PAGE_SIZE);
 
-  const hayFiltrosActivos = Boolean(busqueda.trim() || filtroEspecialidad || filtroEstado);
-  const cantidadFiltrosActivos = [filtroEspecialidad, filtroEstado].filter(Boolean).length;
+  const hayFiltrosActivos = Boolean(busqueda.trim() || filtroEspecialidad || filtroEstado || filtroLiceoId);
+  const cantidadFiltrosActivos = [filtroEspecialidad, filtroEstado, filtroLiceoId].filter(Boolean).length;
 
   function limpiarFiltros() {
-    setBusqueda(""); setFiltroEspecialidad(""); setFiltroEstado(""); setPagina(1);
+    setBusqueda(""); setFiltroEspecialidad(""); setFiltroEstado(""); setFiltroLiceoId(""); setPagina(1);
   }
 
   async function toggleActivo(p: Usuario) {
@@ -168,7 +175,11 @@ export default function ProfesoresPage() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <TituloPagina icon={<ClipboardList size={28} />}>Profesores Supervisores</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Gestiona y consulta los profesores supervisores registrados en SIGEDUAL.</p>
+          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+            {modoGlobal
+              ? "Profesores supervisores de todos los liceos. Usa el filtro \"Liceo\" para acotar a uno en particular."
+              : "Gestiona y consulta los profesores supervisores registrados en SIGEDUAL."}
+          </p>
         </div>
         {puedeGestionar && (
           <Link href="/dashboard/profesores/nuevo" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity text-center flex-shrink-0">
@@ -210,6 +221,13 @@ export default function ProfesoresPage() {
 
       {filtrosAbiertos && (
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {modoGlobal && (
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
+              <Select value={filtroLiceoId} onChange={(v) => { setFiltroLiceoId(v); setPagina(1); }} ariaLabel="Liceo"
+                opciones={[{ value: "", label: "Todos los liceos" }, ...liceos.map((l) => ({ value: l.id, label: l.nombre }))]} />
+            </div>
+          )}
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Especialidad</label>
             <Select value={filtroEspecialidad} onChange={(v) => { setFiltroEspecialidad(v); setPagina(1); }} ariaLabel="Especialidad"
@@ -288,6 +306,11 @@ export default function ProfesoresPage() {
               >
                 <Link href={`/dashboard/profesores/${p.uid}`} className="min-w-0">
                   <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{p.nombre}</p>
+                  {modoGlobal && (
+                    <p style={{ color: "var(--text-muted)" }} className="flex items-center gap-1 text-[11px] mt-0.5 truncate">
+                      <School size={11} /> {liceoNombrePorId[p.liceoId] || "—"}
+                    </p>
+                  )}
                 </Link>
                 <p style={{ color: "var(--text-secondary)" }} className="text-xs truncate">{p.run || "—"}</p>
                 <p style={{ color: "var(--text-secondary)" }} className="text-xs truncate">{p.especialidad || "—"}</p>
