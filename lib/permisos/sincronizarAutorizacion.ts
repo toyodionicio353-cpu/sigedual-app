@@ -9,6 +9,7 @@ interface DocAutorizacion {
   profesorUid: string;
   tipo: TipoAutorizacion;
   recursoId: string;
+  origen?: string;
 }
 
 /**
@@ -59,6 +60,10 @@ export async function sincronizarAutorizacionesDeProfesor(profesorUid: string): 
     }
   }
   for (const actual of actuales) {
+    // Los grants creados por el autorrellenado de una invitación no vienen
+    // de una Asignacion real — no le corresponde a esta reconciliación
+    // tocarlos (se revocan explícitamente, no por ausencia de Asignacion).
+    if (actual.origen === "invitacion") continue;
     const clave = `${actual.tipo}_${actual.recursoId}`;
     if (!clavesDeseadas.has(clave)) {
       batch.delete(doc(db, "autorizaciones", actual.id));
