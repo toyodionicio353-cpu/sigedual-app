@@ -8,21 +8,14 @@ import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAd
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { formatearFecha } from "@/lib/fecha";
+import {
+  estadoCanonico, estudianteIdsDe, fechaProgramadaDe, horaProgramadaDe,
+  ESTADO_VISITA_LABEL, ESTADO_VISITA_COLOR,
+} from "@/lib/visitas/normalizar";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
-import type { CentroDual, Estudiante, EstadoVisita, Visita } from "@/types";
+import type { CentroDual, Estudiante, Visita } from "@/types";
 import { AlertCircle, ChevronRight, MapPin, School, Search, SlidersHorizontal, X } from "lucide-react";
-
-const ESTADO_LABEL: Record<EstadoVisita, string> = {
-  programada: "Programada",
-  realizada: "Realizada",
-  cancelada: "Cancelada",
-};
-const ESTADO_COLOR: Record<EstadoVisita, string> = {
-  programada: "var(--accent-light)",
-  realizada: "var(--success)",
-  cancelada: "var(--danger)",
-};
 
 function normalizar(texto?: string): string {
   return (texto || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -54,15 +47,18 @@ export default function VisitasPage() {
     setError(false);
     try {
       if (usuario.rol === "profesor") {
-        const propias = await getDocs(query(collection(db, "visitas"), where("profesorId", "==", usuario.uid)));
         const idsEst = ambito.idsEstudiantes;
         const lotes: string[][] = [];
         for (let i = 0; i < idsEst.length; i += 30) lotes.push(idsEst.slice(i, i + 30));
-        const snapsDeEstudiantes = await Promise.all(
-          lotes.map((lote) => getDocs(query(collection(db, "visitas"), where("estudianteId", "in", lote))))
-        );
+        const [propias, supervisadas, ...snapsDeEstudiantes] = await Promise.all([
+          getDocs(query(collection(db, "visitas"), where("profesorId", "==", usuario.uid))),
+          getDocs(query(collection(db, "visitas"), where("profesorSupervisorId", "==", usuario.uid))),
+          ...lotes.map((lote) => getDocs(query(collection(db, "visitas"), where("estudianteId", "in", lote)))),
+          ...lotes.map((lote) => getDocs(query(collection(db, "visitas"), where("estudianteIds", "array-contains-any", lote)))),
+        ]);
         const porId = new Map<string, Visita>();
         propias.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita));
+        supervisadas.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita));
         snapsDeEstudiantes.forEach((snap) => snap.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita)));
         const [centrosData, estudiantesData] = await Promise.all([
           obtenerDocumentosPorId<CentroDual>("centros_duales", ambito.idsCentros),
@@ -99,25 +95,30 @@ export default function VisitasPage() {
   function centroNombre(id: string): string {
     return centros.find((c) => c.id === id)?.nombre || "Centro no encontrado";
   }
-  function estudianteNombre(id?: string): string {
-    if (!id) return "";
-    const e = estudiantes.find((e) => e.id === id);
-    return e ? `${e.nombres} ${e.apellidos}` : "";
+  function nombresEstudiantes(v: Visita): string {
+    return estudianteIdsDe(v)
+      .map((id) => estudiantes.find((e) => e.id === id))
+      .filter((e): e is Estudiante => Boolean(e))
+      .map((e) => `${e.nombres} ${e.apellidos}`)
+      .join(", ");
   }
 
   const filtradas = useMemo(() => {
     let base = visitas;
     if (filtroLiceoId) base = base.filter((v) => v.liceoId === filtroLiceoId);
-    if (filtroEstado) base = base.filter((v) => v.estado === filtroEstado);
+    if (filtroEstado) base = base.filter((v) => estadoCanonico(v.estado) === filtroEstado);
     if (busqueda.trim()) {
       const q = normalizar(busqueda);
       base = base.filter((v) =>
         normalizar(centroNombre(v.centroDualId)).includes(q) ||
-        normalizar(estudianteNombre(v.estudianteId)).includes(q) ||
-        normalizar(v.observaciones).includes(q)
+        normalizar(nombresEstudiantes(v)).includes(q) ||
+        normalizar(v.observacionesGenerales ?? v.observaciones).includes(q)
       );
     }
-    return [...base].sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0));
+    return [...base].sort((a, b) => {
+      const fa = fechaProgramadaDe(a); const fb = fechaProgramadaDe(b);
+      return fa < fb ? -1 : fa > fb ? 1 : 0;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visitas, filtroEstado, filtroLiceoId, busqueda, centros, estudiantes]);
 
@@ -190,9 +191,7 @@ export default function VisitasPage() {
             <Select value={filtroEstado} onChange={setFiltroEstado} ariaLabel="Estado"
               opciones={[
                 { value: "", label: "Todos" },
-                { value: "programada", label: "Programada" },
-                { value: "realizada", label: "Realizada" },
-                { value: "cancelada", label: "Cancelada" },
+                ...Object.entries(ESTADO_VISITA_LABEL).map(([value, label]) => ({ value, label })),
               ]} />
           </div>
         </div>
@@ -247,31 +246,42 @@ export default function VisitasPage() {
         <>
           <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">{filtradas.length} visita(s)</p>
           <div className="flex flex-col gap-3">
-            {filtradas.map((v) => (
-              <div key={v.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-4 flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{centroNombre(v.centroDualId)}</p>
-                    <span style={{ color: ESTADO_COLOR[v.estado], background: ESTADO_COLOR[v.estado] + "22" }} className="text-xs px-2 py-0.5 rounded-full flex-shrink-0">
-                      {ESTADO_LABEL[v.estado]}
-                    </span>
-                  </div>
-                  <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">
-                    {formatearFecha(v.fecha)}{v.hora ? ` · ${v.hora}` : ""}
-                    {estudianteNombre(v.estudianteId) && ` · ${estudianteNombre(v.estudianteId)}`}
-                  </p>
-                  {v.observaciones && (
-                    <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-1 truncate">{v.observaciones}</p>
-                  )}
-                  {modoGlobal && (
-                    <p style={{ color: "var(--text-muted)" }} className="flex items-center gap-1 text-[11px] mt-1">
-                      <School size={11} /> {liceoNombrePorId[v.liceoId] || "—"}
+            {filtradas.map((v) => {
+              const estado = estadoCanonico(v.estado);
+              const fecha = fechaProgramadaDe(v);
+              const hora = horaProgramadaDe(v);
+              const estudiantesTxt = nombresEstudiantes(v);
+              return (
+                <Link
+                  key={v.id}
+                  href={`/dashboard/visitas/${v.id}`}
+                  style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+                  className="rounded-2xl p-4 flex items-center gap-3 hover:[border-color:var(--accent)] transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{centroNombre(v.centroDualId)}</p>
+                      <span style={{ color: ESTADO_VISITA_COLOR[estado], background: ESTADO_VISITA_COLOR[estado] + "22" }} className="text-xs px-2 py-0.5 rounded-full flex-shrink-0">
+                        {ESTADO_VISITA_LABEL[estado]}
+                      </span>
+                    </div>
+                    <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">
+                      {formatearFecha(fecha)}{hora ? ` · ${hora}` : ""}
+                      {estudiantesTxt && ` · ${estudiantesTxt}`}
                     </p>
-                  )}
-                </div>
-                <ChevronRight size={16} style={{ color: "var(--text-muted)" }} className="flex-shrink-0" />
-              </div>
-            ))}
+                    {(v.observacionesGenerales || v.observaciones) && (
+                      <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-1 truncate">{v.observacionesGenerales || v.observaciones}</p>
+                    )}
+                    {modoGlobal && (
+                      <p style={{ color: "var(--text-muted)" }} className="flex items-center gap-1 text-[11px] mt-1">
+                        <School size={11} /> {liceoNombrePorId[v.liceoId] || "—"}
+                      </p>
+                    )}
+                  </div>
+                  <ChevronRight size={16} style={{ color: "var(--text-muted)" }} className="flex-shrink-0" />
+                </Link>
+              );
+            })}
           </div>
         </>
       )}

@@ -315,21 +315,88 @@ export interface DocumentoGenerado {
   actualizadoEn?: string;
 }
 
-export type EstadoVisita = "programada" | "realizada" | "cancelada";
+// "programada" y "realizada" son valores legado (visitas creadas antes de
+// esta ampliación) — se siguen leyendo/mostrando, pero nunca se escriben
+// en visitas nuevas. Ver lib/visitas/normalizar.ts para el mapeo a los
+// estados nuevos al mostrarlas.
+export type EstadoVisita =
+  | "agendada" | "en_proceso" | "pendiente_de_finalizar"
+  | "finalizada" | "cancelada" | "reprogramada"
+  | "programada" | "realizada";
+
+export type FuenteInformacionVisita = "maestro_guia" | "personal_oficina" | "encargado_empresa" | "otro";
+
+/** Respuesta a una pregunta base — el texto de la pregunta se copia
+ * (snapshot) al iniciar la visita, para que una visita ya iniciada nunca
+ * cambie de contenido aunque la plantilla de preguntas se edite después. */
+export interface RespuestaPreguntaVisita {
+  id: string;
+  categoria: string;
+  texto: string;
+  respuesta: string;
+  fuente?: FuenteInformacionVisita;
+  fuenteNombre?: string;
+  fuenteCargo?: string;
+}
+
+export type TipoElementoPersonalizado = "pregunta" | "observacion" | "acuerdo" | "situacion" | "otro";
+
+export interface ElementoPersonalizadoVisita {
+  id: string;
+  tipo: TipoElementoPersonalizado;
+  titulo?: string;
+  contenido: string;
+  fuente?: FuenteInformacionVisita;
+  fuenteNombre?: string;
+  fuenteCargo?: string;
+}
+
+export interface AcuerdoVisita {
+  id: string;
+  situacion: string;
+  accion: string;
+  responsable: string;
+  fechaComprometida?: string;
+  observaciones?: string;
+  /** Preparado para integrarse después con notificaciones/calendario. */
+  fechaSeguimiento?: string;
+}
 
 export interface Visita {
   id: string;
   liceoId: string;
   centroDualId: string;
-  estudianteId?: string;
-  profesorId?: string;
-  fecha: string;
-  hora?: string;
+  /** Uno o varios estudiantes correspondientes a esta visita. */
+  estudianteIds: string[];
+  maestroGuiaId?: string;
+  /** Responsable formal del registro — reemplaza a "profesorId". */
+  profesorSupervisorId: string;
+  direccion?: string;
+  motivo?: string;
+  observacionesPrevias?: string;
+  fechaProgramada: string;
+  horaProgramada?: string;
+  fechaReal?: string;
+  horaInicioReal?: string;
+  horaTerminoReal?: string;
   estado: EstadoVisita;
-  observaciones?: string;
+  preguntas: RespuestaPreguntaVisita[];
+  elementosPersonalizados: ElementoPersonalizadoVisita[];
+  observacionesGenerales?: string;
+  acuerdos: AcuerdoVisita[];
   creadoPor: string;
   creadoEn: string;
+  iniciadoPor?: string;
+  iniciadoEn?: string;
+  finalizadoPor?: string;
+  finalizadoEn?: string;
   actualizadoEn?: string;
+  // Campos legado — solo presentes en visitas creadas antes de esta ampliación.
+  estudianteId?: string;
+  profesorId?: string;
+  fecha?: string;
+  hora?: string;
+  observaciones?: string;
 }
 
 export type EstadoTicket =
