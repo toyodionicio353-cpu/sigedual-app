@@ -10,6 +10,37 @@ export interface Usuario {
   liceoId: string;
   activo: boolean;
   creadoEn: string;
+  // Datos personales de "Mi perfil" — el propio usuario los administra.
+  avatarUrl?: string;
+  fechaNacimiento?: string;
+  nacionalidad?: string;
+  direccion?: string;
+  numeroDireccion?: string;
+  depto?: string;
+  comuna?: string;
+  ciudad?: string;
+  region?: string;
+  telefono?: string;
+  telefonoSecundario?: string;
+  descripcion?: string;
+  actualizadoEn?: string;
+}
+
+export type TipoDatoSolicitud = "nombre" | "rut" | "correo" | "otro";
+
+/** Solicitud de un usuario para modificar un dato bloqueado de su propio
+ * perfil (ver Mi perfil). Queda pendiente de revisión administrativa —
+ * SIGEDUAL todavía no tiene una bandeja de Administración que las liste. */
+export interface SolicitudModificacion {
+  id: string;
+  uid: string;
+  liceoId: string;
+  tipoDato: TipoDatoSolicitud;
+  valorActual: string;
+  valorNuevo: string;
+  motivo: string;
+  estado: "pendiente" | "aprobada" | "rechazada";
+  creadoEn: string;
 }
 
 export interface Liceo {
