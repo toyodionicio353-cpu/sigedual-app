@@ -2,14 +2,16 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteField } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearFecha } from "@/lib/fecha";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
+import { especialidadCoincide } from "@/lib/profesores";
+import { sincronizarAutorizacionesDeProfesor } from "@/lib/permisos/sincronizarAutorizacion";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
-import type { Asignacion, CentroDual, EstadoAsignacion, Estudiante, MaestroGuia, Usuario } from "@/types";
+import type { Asignacion, CentroDual, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia, Usuario } from "@/types";
 import { ArrowLeft, CalendarCheck, ShieldAlert } from "lucide-react";
 
 const ESTADOS: EstadoAsignacion[] = ["pendiente", "en_proceso", "asignada", "activa", "finalizada", "cancelada"];
@@ -46,10 +48,13 @@ export default function FichaAsignacionPage() {
   const [centro, setCentro] = useState<CentroDual | null>(null);
   const [maestroGuia, setMaestroGuia] = useState<MaestroGuia | null>(null);
   const [responsable, setResponsable] = useState<Usuario | null>(null);
+  const [profesores, setProfesores] = useState<Usuario[]>([]);
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [noEncontrada, setNoEncontrada] = useState(false);
   const [denegada, setDenegada] = useState(false);
   const [actualizandoEstado, setActualizandoEstado] = useState(false);
+  const [cambiandoProfesor, setCambiandoProfesor] = useState(false);
 
   useEffect(() => {
     if (!usuario || !id) return;
@@ -75,16 +80,20 @@ export default function FichaAsignacionPage() {
         }
         setAsignacion(a);
 
-        const [snapEst, snapCentro, snapResp, snapMg] = await Promise.all([
+        const [snapEst, snapCentro, snapResp, snapMg, snapProfesores, snapEspecialidades] = await Promise.all([
           getDoc(doc(db, "estudiantes", a.estudianteId)),
           getDoc(doc(db, "centros_duales", a.centroDualId)),
           getDoc(doc(db, "usuarios", a.creadoPor)),
           a.maestroGuiaId ? getDoc(doc(db, "maestros_guia", a.maestroGuiaId)) : Promise.resolve(null),
+          getDocs(query(collection(db, "usuarios"), where("liceoId", "==", usuario!.liceoId), where("rol", "==", "profesor"))),
+          getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
         ]);
         if (snapEst.exists()) setEstudiante({ id: snapEst.id, ...snapEst.data() } as Estudiante);
         if (snapCentro.exists()) setCentro({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
         if (snapResp.exists()) setResponsable(snapResp.data() as Usuario);
         if (snapMg?.exists()) setMaestroGuia({ id: snapMg.id, ...snapMg.data() } as MaestroGuia);
+        setProfesores(snapProfesores.docs.map((d) => ({ ...d.data() } as Usuario)));
+        setEspecialidades(snapEspecialidades.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
       } catch {
         setDenegada(true);
       } finally {
@@ -98,6 +107,47 @@ export default function FichaAsignacionPage() {
     usuario.rol === "administrador" || usuario.rol === "coordinador" || usuario.rol === "director"
     || (usuario.rol === "profesor" && asignacion?.profesorSupervisorId === usuario.uid)
   ));
+
+  const profesorActual = profesores.find((p) => p.uid === asignacion?.profesorSupervisorId) ?? null;
+
+  function especialidadNombre(id?: string): string {
+    return especialidades.find((e) => e.id === id)?.nombre || "";
+  }
+
+  const profesoresFiltrados = (() => {
+    const nombre = especialidadNombre(estudiante?.especialidadId);
+    if (!nombre) return profesores;
+    const filtrados = profesores.filter((p) => especialidadCoincide(p.especialidad, nombre));
+    return filtrados.length > 0 ? filtrados : profesores;
+  })();
+
+  async function cambiarProfesor(nuevoProfesorId: string) {
+    if (!asignacion || cambiandoProfesor) return;
+    const anteriorId = asignacion.profesorSupervisorId;
+    if (nuevoProfesorId === (anteriorId || "")) return;
+    setCambiandoProfesor(true);
+    try {
+      await updateDoc(
+        doc(db, "asignaciones", asignacion.id),
+        nuevoProfesorId
+          ? { profesorSupervisorId: nuevoProfesorId, actualizadoEn: new Date().toISOString() }
+          : { profesorSupervisorId: deleteField(), actualizadoEn: new Date().toISOString() }
+      );
+      setAsignacion({ ...asignacion, profesorSupervisorId: nuevoProfesorId || undefined });
+      if (nuevoProfesorId) await sincronizarAutorizacionesDeProfesor(nuevoProfesorId);
+      if (anteriorId && anteriorId !== nuevoProfesorId) await sincronizarAutorizacionesDeProfesor(anteriorId);
+      if (usuario) {
+        registrarEvento({
+          uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+          accion: "cambiar_profesor_supervisor", recurso: "asignaciones", recursoId: asignacion.id,
+          resultado: "permitido",
+          detalle: `Profesor supervisor: ${profesorActual?.nombre || "sin asignar"} → ${profesores.find((p) => p.uid === nuevoProfesorId)?.nombre || "sin asignar"}`,
+        });
+      }
+    } finally {
+      setCambiandoProfesor(false);
+    }
+  }
 
   async function cambiarEstado(nuevoEstado: EstadoAsignacion) {
     if (!asignacion || actualizandoEstado) return;
@@ -214,6 +264,27 @@ export default function FichaAsignacionPage() {
           </div>
         ) : (
           <p style={{ color: "var(--text-muted)" }} className="text-sm">Centro dual no encontrado.</p>
+        )}
+      </div>
+
+      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6 mb-5">
+        <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold mb-4">Profesor supervisor</p>
+        {puedeEditar ? (
+          <div className="max-w-xs">
+            <Select
+              value={asignacion.profesorSupervisorId || ""}
+              onChange={cambiarProfesor}
+              disabled={cambiandoProfesor}
+              ariaLabel="Profesor supervisor"
+              placeholder={profesoresFiltrados.length === 0 ? "No hay profesores registrados" : "Selecciona un profesor"}
+              opciones={[{ value: "", label: "Sin profesor asignado" }, ...profesoresFiltrados.map((p) => ({ value: p.uid, label: p.nombre }))]}
+            />
+            {estudiante && especialidadNombre(estudiante.especialidadId) && profesoresFiltrados.length === profesores.length && profesores.length > 0 && (
+              <p style={{ color: "var(--text-muted)" }} className="text-xs mt-1">Ningún profesor tiene registrada la especialidad de este estudiante — puedes elegir manualmente.</p>
+            )}
+          </div>
+        ) : (
+          <p style={{ color: "var(--text-primary)" }} className="text-sm">{profesorActual?.nombre || "Sin profesor asignado"}</p>
         )}
       </div>
 

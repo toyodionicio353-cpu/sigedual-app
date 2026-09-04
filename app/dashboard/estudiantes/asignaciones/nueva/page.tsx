@@ -12,6 +12,7 @@ import Select from "@/components/ui/Select";
 import { useAdvertenciaLiceoGlobal } from "@/lib/liceos/useAdvertenciaLiceoGlobal";
 import ModalAdvertenciaLiceo from "@/components/liceos/ModalAdvertenciaLiceo";
 import { sincronizarAutorizacionesDeProfesor } from "@/lib/permisos/sincronizarAutorizacion";
+import { especialidadCoincide } from "@/lib/profesores";
 import type { Asignacion, CentroDual, Compatibilidad, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia, Usuario } from "@/types";
 import {
   ArrowLeft, ArrowRight, Search, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, User, Users, CalendarCheck,
@@ -204,6 +205,32 @@ export default function NuevaAsignacionPage() {
     () => estudiantes.filter((e) => seleccionGrupo.includes(e.id)),
     [estudiantes, seleccionGrupo]
   );
+
+  // Especialidad(es) contra las que filtrar el selector de profesor supervisor:
+  // en modo individual, la del estudiante elegido; en modo grupo, solo si todos
+  // los seleccionados comparten una única especialidad.
+  const especialidadIdParaFiltroProfesor = useMemo(() => {
+    if (modo === "individual") return estudianteSeleccionado?.especialidadId ?? null;
+    const ids = new Set(estudiantesSeleccionadosGrupo.map((e) => e.especialidadId));
+    return ids.size === 1 ? Array.from(ids)[0] : null;
+  }, [modo, estudianteSeleccionado, estudiantesSeleccionadosGrupo]);
+
+  const profesoresFiltrados = useMemo(() => {
+    if (!especialidadIdParaFiltroProfesor) return profesores;
+    const nombre = especialidadNombre(especialidadIdParaFiltroProfesor);
+    const filtrados = profesores.filter((p) => especialidadCoincide(p.especialidad, nombre));
+    return filtrados.length > 0 ? filtrados : profesores;
+  }, [profesores, especialidadIdParaFiltroProfesor, especialidades]);
+
+  const notaFiltroProfesor = useMemo(() => {
+    if (!especialidadIdParaFiltroProfesor) return "";
+    const nombre = especialidadNombre(especialidadIdParaFiltroProfesor);
+    const filtrados = profesores.filter((p) => especialidadCoincide(p.especialidad, nombre));
+    if (profesores.length > 0 && filtrados.length === 0) {
+      return "Ningún profesor tiene registrada la especialidad de este estudiante — puedes elegir manualmente.";
+    }
+    return "";
+  }, [profesores, especialidadIdParaFiltroProfesor, especialidades]);
 
   // Asignación golosa: a cada estudiante (ordenado por su mejor compatibilidad)
   // se le sugiere el centro mejor puntuado que aún tenga cupo, contabilizando
@@ -877,8 +904,11 @@ export default function NuevaAsignacionPage() {
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Profesor supervisor</label>
               <Select value={profesorSupervisorId} onChange={setProfesorSupervisorId}
                 ariaLabel="Profesor supervisor"
-                placeholder={profesores.length === 0 ? "No hay profesores registrados" : "Selecciona un profesor"}
-                opciones={profesores.map((p) => ({ value: p.uid, label: p.nombre }))} />
+                placeholder={profesoresFiltrados.length === 0 ? "No hay profesores registrados" : "Selecciona un profesor"}
+                opciones={profesoresFiltrados.map((p) => ({ value: p.uid, label: p.nombre }))} />
+              {notaFiltroProfesor && (
+                <p style={{ color: "var(--text-muted)" }} className="text-xs mt-1">{notaFiltroProfesor}</p>
+              )}
             </div>
             {modo === "individual" && (
               <div>
