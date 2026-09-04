@@ -8,8 +8,10 @@ import {
 } from "lucide-react";
 import { formatearRut, validarRut, validarEmail, validarTelefonoChileno } from "@/lib/rut";
 import { REGIONES } from "@/app/dashboard/liceos/_components/LiceoForm";
+import { TIPOS_CENTRO } from "@/app/dashboard/centros/_components/CentroDualForm";
+import { AMBIENTES_CENTRO, HABILIDADES, AREAS_DESEMPENO } from "@/lib/caracteristicas";
 import Select from "@/components/ui/Select";
-import type { NecesidadesEmpresa, RespuestaMaestroGuiaInvitacion } from "@/types";
+import type { NecesidadesEmpresa, RespuestaMaestroGuiaInvitacion, TipoCentroDual } from "@/types";
 
 const inputStyle = { background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" };
 const inputClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors disabled:opacity-50";
@@ -24,8 +26,8 @@ interface ContextoInvitacion {
 }
 
 interface EmpresaForm {
-  razonSocial: string; nombreFantasia: string; rut: string; giro: string;
-  direccion: string; comuna: string; region: string; telefono: string; email: string;
+  razonSocial: string; nombreFantasia: string; rut: string; tipo: TipoCentroDual; giro: string;
+  direccion: string; comuna: string; ciudad: string; region: string; telefono: string; email: string;
   sitioWeb: string; contactoNombre: string; contactoCargo: string;
   contactoEmail: string; contactoTelefono: string;
 }
@@ -44,8 +46,8 @@ interface CapacidadForm {
 type MaestroForm = Omit<RespuestaMaestroGuiaInvitacion, "id">;
 
 const EMPRESA_VACIA: EmpresaForm = {
-  razonSocial: "", nombreFantasia: "", rut: "", giro: "",
-  direccion: "", comuna: "", region: "", telefono: "", email: "",
+  razonSocial: "", nombreFantasia: "", rut: "", tipo: "empresa", giro: "",
+  direccion: "", comuna: "", ciudad: "", region: "", telefono: "", email: "",
   sitioWeb: "", contactoNombre: "", contactoCargo: "", contactoEmail: "", contactoTelefono: "",
 };
 
@@ -59,7 +61,8 @@ const CAPACIDAD_VACIA: CapacidadForm = {
 };
 
 const MAESTRO_VACIO: MaestroForm = {
-  nombreCompleto: "", run: "", cargo: "", area: "", email: "", telefono: "", experiencia: "", especialidad: "", disponibilidad: "", observaciones: "",
+  nombres: "", apellidoPaterno: "", apellidoMaterno: "", run: "", cargo: "", area: "",
+  email: "", telefono: "", aniosExperiencia: "", capacidad: "", especialidad: "", disponibilidad: "", observaciones: "",
 };
 
 const OPCIONES_NIVEL_ACTIVIDAD = [
@@ -117,6 +120,31 @@ function Campo({ label, error, children, span }: { label: string; error?: string
   );
 }
 
+function Pills({ opciones, seleccionadas, onToggle }: { opciones: string[]; seleccionadas: string[]; onToggle: (v: string) => void }) {
+  return (
+    <div className="sm:col-span-2 flex flex-wrap gap-2">
+      {opciones.map((o) => {
+        const activo = seleccionadas.includes(o);
+        return (
+          <button
+            key={o}
+            type="button"
+            onClick={() => onToggle(o)}
+            style={{
+              background: activo ? "var(--accent)" : "var(--bg-surface)",
+              border: `1px solid ${activo ? "var(--accent)" : "var(--border)"}`,
+              color: activo ? "var(--text-on-accent)" : "var(--text-secondary)",
+            }}
+            className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+          >
+            {o}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function FormularioInvitacionPage() {
   const { token } = useParams<{ token: string }>();
 
@@ -129,6 +157,9 @@ export default function FormularioInvitacionPage() {
   const [empresa, setEmpresa] = useState<EmpresaForm>(EMPRESA_VACIA);
   const [perfil, setPerfil] = useState<PerfilForm>(PERFIL_VACIO);
   const [necesidades, setNecesidades] = useState<NecesidadesEmpresa>({});
+  const [ambienteSel, setAmbienteSel] = useState<string[]>([]);
+  const [habilidadesSel, setHabilidadesSel] = useState<string[]>([]);
+  const [areasSel, setAreasSel] = useState<string[]>([]);
   const [capacidad, setCapacidad] = useState<CapacidadForm>(CAPACIDAD_VACIA);
   const [maestros, setMaestros] = useState<MaestroForm[]>([{ ...MAESTRO_VACIO }]);
   const [errores, setErrores] = useState<Record<string, string>>({});
@@ -175,6 +206,15 @@ export default function FormularioInvitacionPage() {
     setMaestros((lista) => lista.map((m, i) => (i === idx ? { ...m, [campo]: valor } : m)));
     setErrores((e) => ({ ...e, [`maestro.${idx}.${campo}`]: "" }));
   }
+  function toggleAmbiente(v: string) {
+    setAmbienteSel((sel) => (sel.includes(v) ? sel.filter((s) => s !== v) : [...sel, v]));
+  }
+  function toggleHabilidad(v: string) {
+    setHabilidadesSel((sel) => (sel.includes(v) ? sel.filter((s) => s !== v) : [...sel, v]));
+  }
+  function toggleArea(v: string) {
+    setAreasSel((sel) => (sel.includes(v) ? sel.filter((s) => s !== v) : [...sel, v]));
+  }
   function agregarMaestro() {
     setMaestros((lista) => [...lista, { ...MAESTRO_VACIO }]);
   }
@@ -194,7 +234,7 @@ export default function FormularioInvitacionPage() {
     }
     if (p === 4) {
       maestros.forEach((m, i) => {
-        if (!m.nombreCompleto.trim()) nuevos[`maestro.${i}.nombreCompleto`] = "Campo obligatorio.";
+        if (!m.nombres.trim()) nuevos[`maestro.${i}.nombres`] = "Campo obligatorio.";
         if (m.email?.trim() && !validarEmail(m.email)) nuevos[`maestro.${i}.email`] = "Correo inválido.";
       });
     }
@@ -221,6 +261,11 @@ export default function FormularioInvitacionPage() {
         empresa: { ...empresa, rut: empresa.rut.trim() ? empresa.rut : undefined },
         perfil,
         necesidades,
+        caracteristicas: {
+          ambiente: ambienteSel.length ? ambienteSel : undefined,
+          habilidadesValoradas: habilidadesSel.length ? habilidadesSel : undefined,
+          areasDesempeno: areasSel.length ? areasSel : undefined,
+        },
         capacidad: {
           cantidadEstudiantes: capacidad.cantidadEstudiantes.trim() ? Number(capacidad.cantidadEstudiantes) : undefined,
           especialidades: capacidad.especialidades.trim() ? capacidad.especialidades.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
@@ -230,7 +275,7 @@ export default function FormularioInvitacionPage() {
           horarios: capacidad.horarios || undefined,
           restricciones: capacidad.restricciones || undefined,
         },
-        maestrosGuia: maestros.filter((m) => m.nombreCompleto.trim()),
+        maestrosGuia: maestros.filter((m) => m.nombres.trim()),
       };
       const res = await fetch(`/api/invitaciones/${token}/enviar`, {
         method: "POST",
@@ -338,6 +383,9 @@ export default function FormularioInvitacionPage() {
                 <Campo label="RUT (opcional)" error={errores["empresa.rut"]}>
                   <input value={empresa.rut} onChange={(e) => setEmpresaCampo("rut", formatearRut(e.target.value))} placeholder="76.123.456-7" style={inputStyle} className={inputClass} />
                 </Campo>
+                <Campo label="Tipo de empresa">
+                  <Select value={empresa.tipo} onChange={(v) => setEmpresaCampo("tipo", v as TipoCentroDual)} ariaLabel="Tipo de empresa" opciones={TIPOS_CENTRO} />
+                </Campo>
                 <Campo label="Giro (opcional)" span>
                   <input value={empresa.giro} onChange={(e) => setEmpresaCampo("giro", e.target.value)} style={inputStyle} className={inputClass} />
                 </Campo>
@@ -346,6 +394,9 @@ export default function FormularioInvitacionPage() {
                 </Campo>
                 <Campo label="Comuna (opcional)">
                   <input value={empresa.comuna} onChange={(e) => setEmpresaCampo("comuna", e.target.value)} style={inputStyle} className={inputClass} />
+                </Campo>
+                <Campo label="Ciudad (opcional)">
+                  <input value={empresa.ciudad} onChange={(e) => setEmpresaCampo("ciudad", e.target.value)} style={inputStyle} className={inputClass} />
                 </Campo>
                 <Campo label="Región (opcional)">
                   <Select value={empresa.region} onChange={(v) => setEmpresaCampo("region", v)} ariaLabel="Región" placeholder="Selecciona una región" opciones={REGIONES.map((r) => ({ value: r, label: r }))} />
@@ -437,6 +488,23 @@ export default function FormularioInvitacionPage() {
                   <textarea value={necesidades.otras ?? ""} onChange={(e) => setNecesidades((n) => ({ ...n, otras: e.target.value }))} rows={2} style={inputStyle} className={inputClass} />
                 </Campo>
               </div>
+
+              <div className="mt-6">
+                <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium mb-1">Características del ambiente de trabajo (opcional)</p>
+                <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">Selecciona las que mejor describan el puesto que ofrece tu empresa.</p>
+                <Pills opciones={AMBIENTES_CENTRO} seleccionadas={ambienteSel} onToggle={toggleAmbiente} />
+              </div>
+
+              <div className="mt-6">
+                <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium mb-1">Habilidades valoradas (opcional)</p>
+                <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">Habilidades que consideras importantes en un estudiante en práctica.</p>
+                <Pills opciones={HABILIDADES} seleccionadas={habilidadesSel} onToggle={toggleHabilidad} />
+              </div>
+
+              <div className="mt-6">
+                <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium mb-1">Áreas donde podría desempeñarse un estudiante (opcional)</p>
+                <Pills opciones={AREAS_DESEMPENO} seleccionadas={areasSel} onToggle={toggleArea} />
+              </div>
             </div>
           )}
 
@@ -495,11 +563,17 @@ export default function FormularioInvitacionPage() {
                       )}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Campo label="Nombre completo *" error={errores[`maestro.${i}.nombreCompleto`]} span>
-                        <input value={m.nombreCompleto} onChange={(e) => setMaestroCampo(i, "nombreCompleto", e.target.value)} style={inputStyle} className={inputClass} />
+                      <Campo label="Nombres *" error={errores[`maestro.${i}.nombres`]}>
+                        <input value={m.nombres} onChange={(e) => setMaestroCampo(i, "nombres", e.target.value)} style={inputStyle} className={inputClass} />
                       </Campo>
                       <Campo label="RUN (opcional)">
                         <input value={m.run ?? ""} onChange={(e) => setMaestroCampo(i, "run", formatearRut(e.target.value))} style={inputStyle} className={inputClass} />
+                      </Campo>
+                      <Campo label="Apellido paterno (opcional)">
+                        <input value={m.apellidoPaterno ?? ""} onChange={(e) => setMaestroCampo(i, "apellidoPaterno", e.target.value)} style={inputStyle} className={inputClass} />
+                      </Campo>
+                      <Campo label="Apellido materno (opcional)">
+                        <input value={m.apellidoMaterno ?? ""} onChange={(e) => setMaestroCampo(i, "apellidoMaterno", e.target.value)} style={inputStyle} className={inputClass} />
                       </Campo>
                       <Campo label="Cargo (opcional)">
                         <input value={m.cargo ?? ""} onChange={(e) => setMaestroCampo(i, "cargo", e.target.value)} style={inputStyle} className={inputClass} />
@@ -516,8 +590,11 @@ export default function FormularioInvitacionPage() {
                       <Campo label="Teléfono (opcional)">
                         <input value={m.telefono ?? ""} onChange={(e) => setMaestroCampo(i, "telefono", e.target.value)} style={inputStyle} className={inputClass} />
                       </Campo>
-                      <Campo label="Experiencia (opcional)">
-                        <input value={m.experiencia ?? ""} onChange={(e) => setMaestroCampo(i, "experiencia", e.target.value)} style={inputStyle} className={inputClass} />
+                      <Campo label="Años de experiencia (opcional)">
+                        <input type="number" min={0} value={m.aniosExperiencia ?? ""} onChange={(e) => setMaestroCampo(i, "aniosExperiencia", e.target.value)} style={inputStyle} className={inputClass} />
+                      </Campo>
+                      <Campo label="Máximo de estudiantes que puede acompañar (opcional)">
+                        <input type="number" min={0} value={m.capacidad ?? ""} onChange={(e) => setMaestroCampo(i, "capacidad", e.target.value)} style={inputStyle} className={inputClass} />
                       </Campo>
                       <Campo label="Disponibilidad (opcional)">
                         <input value={m.disponibilidad ?? ""} onChange={(e) => setMaestroCampo(i, "disponibilidad", e.target.value)} style={inputStyle} className={inputClass} />
@@ -548,8 +625,10 @@ export default function FormularioInvitacionPage() {
                 </div>
                 <div style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)" }} className="rounded-xl p-3">
                   <p style={{ color: "var(--text-muted)" }} className="text-[11px] font-semibold uppercase mb-1">Maestros Guía</p>
-                  {maestros.filter((m) => m.nombreCompleto.trim()).map((m, i) => (
-                    <p key={i} style={{ color: "var(--text-primary)" }}>{m.nombreCompleto}{m.cargo ? ` · ${m.cargo}` : ""}</p>
+                  {maestros.filter((m) => m.nombres.trim()).map((m, i) => (
+                    <p key={i} style={{ color: "var(--text-primary)" }}>
+                      {[m.nombres, m.apellidoPaterno, m.apellidoMaterno].filter(Boolean).join(" ")}{m.cargo ? ` · ${m.cargo}` : ""}
+                    </p>
                   ))}
                 </div>
               </div>

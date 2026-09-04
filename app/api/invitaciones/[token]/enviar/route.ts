@@ -11,6 +11,7 @@ interface CuerpoEnvio {
   empresa: RespuestaInvitacion["empresa"];
   perfil: RespuestaInvitacion["perfil"];
   necesidades: RespuestaInvitacion["necesidades"];
+  caracteristicas: RespuestaInvitacion["caracteristicas"];
   capacidad: RespuestaInvitacion["capacidad"];
   maestrosGuia: Omit<RespuestaMaestroGuiaInvitacion, "id">[];
 }
@@ -48,7 +49,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
     if (!razonSocial) {
       return NextResponse.json({ error: "El nombre de la empresa es obligatorio." }, { status: 400 });
     }
-    const maestrosValidos = (body.maestrosGuia ?? []).filter((m) => m.nombreCompleto?.trim());
+    const maestrosValidos = (body.maestrosGuia ?? []).filter((m) => m.nombres?.trim());
     if (maestrosValidos.length === 0) {
       return NextResponse.json({ error: "Debes ingresar al menos un Maestro Guía." }, { status: 400 });
     }
@@ -60,6 +61,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
       empresa: body.empresa ?? {},
       perfil: body.perfil ?? {},
       necesidades: body.necesidades ?? {},
+      caracteristicas: body.caracteristicas ?? {},
       capacidad: body.capacidad ?? {},
       maestrosGuia: maestrosValidos.map((m) => ({ ...m, id: crypto.randomUUID() })),
       creadoEn: ahora,
