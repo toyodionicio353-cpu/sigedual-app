@@ -98,21 +98,13 @@ const MENUS: NavGroup[] = [
     ],
   },
   {
-    id: "visitas",
-    label: "Visitas",
-    icon: <MapPin size={20} strokeWidth={2.25} />,
-    color: "#f97316",
-    roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"],
-    href: "/dashboard/visitas",
-    sub: [],
-  },
-  {
     id: "documentos",
     label: "Documentos",
     icon: <FileText size={20} strokeWidth={2.25} />,
     color: "#f59e0b",
     roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"],
     sub: [
+      { href: "/dashboard/visitas", label: "Visitas", icon: <MapPin size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] },
       { href: "/dashboard/documentos/convenios", label: "Convenios", icon: <Handshake size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
       { href: "/dashboard/documentos/evaluaciones", label: "Evaluaciones", icon: <ClipboardCheck size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
       { href: "/dashboard/documentos/documentos", label: "Documentos", icon: <FolderOpen size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
