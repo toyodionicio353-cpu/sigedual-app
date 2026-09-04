@@ -292,7 +292,7 @@ export interface MaestroGuia {
   actualizadoEn?: string;
 }
 
-export type TipoModuloDocumento = "convenio" | "evaluacion" | "documento";
+export type TipoModuloDocumento = "convenio" | "documento";
 export type TipoSegmentoPlantilla = "protegido" | "editable" | "campo";
 
 export interface SegmentoDocumento {

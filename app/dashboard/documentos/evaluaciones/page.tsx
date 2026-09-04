@@ -1,108 +1,50 @@
 "use client";
-import { useState } from "react";
-import { useAuth } from "@/lib/auth-context";
-import BibliotecaDocumental, { type ItemBiblioteca } from "@/components/biblioteca/BibliotecaDocumental";
-import EditorDocumento from "@/components/biblioteca/EditorDocumento";
-import { plantillasParaModulo } from "@/lib/plantillas";
-import { useContextoDocumentos } from "@/lib/plantillas/useContextoDocumentos";
-import { useDocumentosCreados } from "@/lib/plantillas/useDocumentosCreados";
-import { eliminarDocumento } from "@/lib/documentos/guardarDocumento";
-import type { DocumentoGenerado } from "@/types";
-import type { PlantillaDocumento } from "@/types/plantillas";
-import { ClipboardCheck } from "lucide-react";
-
-const TIPO_MODULO = "evaluacion" as const;
-
-type Vista = { modo: "biblioteca" } | { modo: "editor"; plantilla?: PlantillaDocumento; existente?: DocumentoGenerado };
+import Link from "next/link";
+import { PLANTILLAS_EVALUACION } from "@/lib/evaluaciones";
+import TituloPagina from "@/components/TituloPagina";
+import { ClipboardCheck, Wand2 } from "lucide-react";
 
 export default function EvaluacionesPage() {
-  const { usuario } = useAuth();
-  const [aviso, setAviso] = useState("");
-  const [vista, setVista] = useState<Vista>({ modo: "biblioteca" });
-  const [tabBiblioteca, setTabBiblioteca] = useState<"plantillas" | "creados">("plantillas");
-
-  const plantillasDefinidas = plantillasParaModulo(TIPO_MODULO);
-  const { contexto, cargando: cargandoContexto } = useContextoDocumentos();
-  const { documentos, items: itemsCreados, cargando: cargandoCreados, recargar } = useDocumentosCreados(TIPO_MODULO);
-
-  const plantillas: ItemBiblioteca[] = plantillasDefinidas.map((p) => ({
-    id: p.id,
-    nombre: p.nombre,
-    subtitulo: p.descripcion,
-    previewLineas: p.previewLineas,
-  }));
-
-  function mostrarAviso(texto: string) {
-    setAviso(texto);
-    setTimeout(() => setAviso(""), 3000);
-  }
-
-  function usarPlantilla(item: ItemBiblioteca) {
-    const plantilla = plantillasDefinidas.find((p) => p.id === item.id);
-    if (!plantilla) return;
-    setVista({ modo: "editor", plantilla });
-  }
-
-  function abrirCreado(item: ItemBiblioteca) {
-    const doc = documentos.find((d) => d.id === item.id);
-    if (!doc) return;
-    setVista({ modo: "editor", existente: doc });
-  }
-
-  async function eliminarCreado(item: ItemBiblioteca) {
-    const doc = documentos.find((d) => d.id === item.id);
-    if (!doc || !usuario) return;
-    if (!confirm(`¿Eliminar "${doc.nombre}"? Esta acción no se puede deshacer.`)) return;
-    await eliminarDocumento({
-      documentoId: doc.id, liceoId: usuario.liceoId, tipoModulo: TIPO_MODULO, nombre: doc.nombre,
-    });
-    mostrarAviso("Evaluación eliminada.");
-    recargar();
-  }
-
-  if (vista.modo === "editor" && usuario) {
-    return (
-      <EditorDocumento
-        tipoModulo={TIPO_MODULO}
-        liceoId={usuario.liceoId}
-        usuarioUid={usuario.uid}
-        contexto={contexto}
-        plantilla={vista.plantilla}
-        documentoExistente={vista.existente}
-        onGuardado={() => { recargar(); setVista({ modo: "biblioteca" }); }}
-        onCancelar={() => setVista({ modo: "biblioteca" })}
-      />
-    );
-  }
-
   return (
-    <div>
-      {aviso && (
-        <div className="px-4 md:px-8 pt-4">
-          <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="rounded-xl px-4 py-2.5 text-xs" >
-            <span style={{ color: "var(--text-secondary)" }}>{aviso}</span>
-          </div>
+    <div className="p-4 md:p-8">
+      <div className="mb-6">
+        <TituloPagina icon={<ClipboardCheck size={28} />}>Evaluaciones</TituloPagina>
+        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+          Evalúa el desempeño de un estudiante en su Centro Dual.
+        </p>
+      </div>
+
+      {PLANTILLAS_EVALUACION.length === 0 ? (
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
+          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No hay evaluaciones disponibles</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {PLANTILLAS_EVALUACION.map((p) => (
+            <div key={p.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 flex flex-col gap-3">
+              <div>
+                <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">{p.nombre}</p>
+                <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{p.especialidad} · {p.nivel}</p>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <span style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="px-2.5 py-1 rounded-full text-[11px]">
+                  Evaluación Maestro Guía
+                </span>
+                <span style={{ background: "var(--success)22", color: "var(--success)" }} className="px-2.5 py-1 rounded-full text-[11px]">
+                  Activa
+                </span>
+              </div>
+              <Link
+                href={`/dashboard/documentos/evaluaciones/realizar/${p.id}`}
+                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+                className="mt-1 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"
+              >
+                <Wand2 size={15} /> Realizar evaluación
+              </Link>
+            </div>
+          ))}
         </div>
       )}
-      <BibliotecaDocumental
-        titulo="Evaluaciones"
-        icono={<ClipboardCheck size={28} />}
-        descripcion="Gestiona, consulta y utiliza las evaluaciones disponibles en SIGEDUAL."
-        placeholderBusqueda="Buscar evaluaciones..."
-        labelTabCreados="Evaluaciones creadas"
-        labelPlural="evaluaciones"
-        plantillas={plantillas}
-        creados={itemsCreados}
-        cargando={cargandoContexto || cargandoCreados}
-        onUsarPlantilla={usarPlantilla}
-        onAbrirCreado={abrirCreado}
-        tabInicial={tabBiblioteca}
-        onCambiarTab={setTabBiblioteca}
-        acciones={[
-          { label: "Editar", onClick: abrirCreado },
-          { label: "Eliminar", onClick: eliminarCreado },
-        ]}
-      />
     </div>
   );
 }
