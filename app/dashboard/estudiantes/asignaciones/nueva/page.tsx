@@ -7,9 +7,10 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { calcularCompatibilidad, disponibleParaRecomendar, estadoEfectivo, capacidadDe } from "@/lib/compatibilidad";
 import { formatearFecha } from "@/lib/fecha";
+import TituloPagina from "@/components/TituloPagina";
 import type { Asignacion, CentroDual, Compatibilidad, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia, Usuario } from "@/types";
 import {
-  ArrowLeft, ArrowRight, Search, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, User, Users,
+  ArrowLeft, ArrowRight, Search, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, User, Users, CalendarCheck,
 } from "lucide-react";
 
 const JORNADAS = ["Diurna", "Vespertina", "Jornada Completa", "Otro"];
@@ -373,7 +374,7 @@ export default function NuevaAsignacionPage() {
     <div className="p-4 md:p-8 max-w-4xl">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Nueva asignación</h1>
+          <TituloPagina icon={<CalendarCheck size={28} />}>Nueva asignación</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             {modo === "grupo" ? "Filtra un grupo de estudiantes y SIGEDUAL sugerirá un centro dual compatible para cada uno." : "Selecciona un estudiante y SIGEDUAL recomendará los centros duales más compatibles."}
           </p>

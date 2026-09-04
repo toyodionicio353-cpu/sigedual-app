@@ -7,7 +7,8 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearRut, validarRut } from "@/lib/rut";
 import type { Usuario } from "@/types";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 
 export default function EditarProfesorPage() {
   const { uid } = useParams<{ uid: string }>();
@@ -104,7 +105,7 @@ export default function EditarProfesorPage() {
     <div className="p-4 md:p-8 max-w-lg">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Editar profesor</h1>
+          <TituloPagina icon={<Pencil size={28} />}>Editar profesor</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{profesor.email}</p>
         </div>
         <Link

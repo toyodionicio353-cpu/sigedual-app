@@ -4,11 +4,12 @@ import Link from "next/link";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import TituloPagina from "@/components/TituloPagina";
 import type { Estudiante, Especialidad } from "@/types";
 import {
   Search, SlidersHorizontal, X, LayoutList, LayoutGrid,
   ChevronLeft, ChevronRight, Eye, UserPlus, Users2, BadgeCheck, Handshake,
-  AlertTriangle, GraduationCap,
+  AlertTriangle, GraduationCap, ClipboardList,
 } from "lucide-react";
 
 const NIVELES = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
@@ -247,7 +248,7 @@ export default function EstudiantesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Listado de estudiantes</h1>
+          <TituloPagina icon={<ClipboardList size={28} />}>Listado de estudiantes</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Consulta y revisa los estudiantes registrados en SIGEDUAL.</p>
         </div>
         {puedeAgregar && (

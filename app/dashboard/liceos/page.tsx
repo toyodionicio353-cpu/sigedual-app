@@ -4,10 +4,11 @@ import Link from "next/link";
 import { collection, getDocs, doc, updateDoc, deleteDoc, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import TituloPagina from "@/components/TituloPagina";
 import type { Liceo, Especialidad } from "@/types";
 import {
   Search, SlidersHorizontal, X, Plus, Eye, Pencil, Building2,
-  BadgeCheck, CircleSlash, CalendarClock, MapPin, GraduationCap, Power, Trash2,
+  BadgeCheck, CircleSlash, CalendarClock, MapPin, GraduationCap, Power, Trash2, School,
 } from "lucide-react";
 import { REGIONES } from "./_components/LiceoForm";
 
@@ -183,7 +184,7 @@ export default function LiceosPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Liceos</h1>
+          <TituloPagina icon={<School size={28} />}>Liceos</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Administra los establecimientos registrados en SIGEDUAL.</p>
         </div>
         <Link

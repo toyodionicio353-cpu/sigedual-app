@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
 import EstudianteForm, { ESTUDIANTE_FORM_VACIO, type EstudianteFormValues } from "../_components/EstudianteForm";
+import TituloPagina from "@/components/TituloPagina";
 import type { Estudiante, Especialidad } from "@/types";
 import { Users, ArrowLeft, UserPlus, CalendarClock, BadgeCheck, CheckCircle2, Eye } from "lucide-react";
 
@@ -109,7 +110,7 @@ export default function AgregarEstudiantePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Agregar estudiante</h1>
+          <TituloPagina icon={<UserPlus size={28} />}>Agregar estudiante</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             Registra un nuevo estudiante en SIGEDUAL y completa su información académica.
           </p>

@@ -6,7 +6,8 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { estadoEfectivo, disponibilidadDe, camposFaltantes } from "@/lib/compatibilidad";
 import type { Asignacion, CentroDual, EstadoCentroDual, Especialidad } from "@/types";
-import { Search, SlidersHorizontal, X, ChevronRight, ChevronLeft, AlertCircle } from "lucide-react";
+import { Search, SlidersHorizontal, X, ChevronRight, ChevronLeft, AlertCircle, Building } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 
 const PAGE_SIZE = 20;
 
@@ -137,7 +138,7 @@ export default function CentrosPage() {
     <div className="p-4 md:p-8">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Centros duales</h1>
+          <TituloPagina icon={<Building size={28} />}>Centros duales</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Administra los centros disponibles para la formación dual.</p>
         </div>
         {puedeGestionar && (

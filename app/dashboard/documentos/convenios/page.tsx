@@ -9,6 +9,7 @@ import { useDocumentosCreados } from "@/lib/plantillas/useDocumentosCreados";
 import { eliminarDocumento } from "@/lib/documentos/guardarDocumento";
 import type { DocumentoGenerado } from "@/types";
 import type { PlantillaDocumento } from "@/types/plantillas";
+import { Handshake } from "lucide-react";
 
 const TIPO_MODULO = "convenio" as const;
 
@@ -85,6 +86,7 @@ export default function ConveniosPage() {
       )}
       <BibliotecaDocumental
         titulo="Convenios"
+        icono={<Handshake size={28} />}
         descripcion="Gestiona, consulta y utiliza los convenios disponibles en SIGEDUAL."
         placeholderBusqueda="Buscar convenios..."
         labelTabCreados="Convenios creados"

@@ -9,6 +9,7 @@ import { useDocumentosCreados } from "@/lib/plantillas/useDocumentosCreados";
 import { eliminarDocumento } from "@/lib/documentos/guardarDocumento";
 import type { DocumentoGenerado } from "@/types";
 import type { PlantillaDocumento } from "@/types/plantillas";
+import { ClipboardCheck } from "lucide-react";
 
 const TIPO_MODULO = "evaluacion" as const;
 
@@ -85,6 +86,7 @@ export default function EvaluacionesPage() {
       )}
       <BibliotecaDocumental
         titulo="Evaluaciones"
+        icono={<ClipboardCheck size={28} />}
         descripcion="Gestiona, consulta y utiliza las evaluaciones disponibles en SIGEDUAL."
         placeholderBusqueda="Buscar evaluaciones..."
         labelTabCreados="Evaluaciones creadas"

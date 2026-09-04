@@ -4,7 +4,8 @@ import { collection, getDocs, doc, updateDoc, setDoc } from "firebase/firestore"
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import { RefreshCw, Trash2 } from "lucide-react";
+import { RefreshCw, Trash2, UserCog } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 import type { Usuario, Rol, Liceo } from "@/types";
 
 const ROLES: { value: Rol; label: string }[] = [
@@ -190,7 +191,7 @@ export default function UsuariosPage() {
     <div className="p-4 md:p-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Usuarios</h1>
+          <TituloPagina icon={<UserCog size={28} />}>Usuarios</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{usuarios.length} usuario(s) en el sistema</p>
         </div>
         <div className="flex gap-3">

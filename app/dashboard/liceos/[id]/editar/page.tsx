@@ -9,7 +9,8 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import LiceoForm, { type LiceoFormValues, type EspecialidadForm } from "../../_components/LiceoForm";
 import type { Liceo, Especialidad, CodigoAcceso } from "@/types";
-import { ArrowLeft, ShieldCheck, RefreshCw, Copy, Check } from "lucide-react";
+import { ArrowLeft, ShieldCheck, RefreshCw, Copy, Check, Pencil } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 
 const HORAS_VALIDEZ = 24;
 
@@ -218,7 +219,7 @@ export default function EditarLiceoPage() {
     <div className="p-4 md:p-8 max-w-4xl">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Editar liceo</h1>
+          <TituloPagina icon={<Pencil size={28} />}>Editar liceo</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Actualiza la información del establecimiento.</p>
         </div>
         <Link

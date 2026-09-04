@@ -7,7 +7,8 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import LiceoForm, { LICEO_FORM_VACIO, type LiceoFormValues, type EspecialidadForm } from "../_components/LiceoForm";
 import type { Liceo } from "@/types";
-import { ArrowLeft, CheckCircle2, Eye } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Eye, School } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 
 export default function AgregarLiceoPage() {
   const { usuario } = useAuth();
@@ -61,7 +62,7 @@ export default function AgregarLiceoPage() {
     <div className="p-4 md:p-8 max-w-4xl">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Agregar liceo</h1>
+          <TituloPagina icon={<School size={28} />}>Agregar liceo</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             Registra y configura un nuevo establecimiento en SIGEDUAL.
           </p>

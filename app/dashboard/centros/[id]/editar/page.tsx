@@ -8,7 +8,8 @@ import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
 import CentroDualForm, { type CentroDualFormValues } from "../../_components/CentroDualForm";
 import type { CentroDual, Especialidad } from "@/types";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 
 export default function EditarCentroDualPage() {
   const { id } = useParams<{ id: string }>();
@@ -156,7 +157,7 @@ export default function EditarCentroDualPage() {
     <div className="p-4 md:p-8 max-w-4xl">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Editar centro dual</h1>
+          <TituloPagina icon={<Pencil size={28} />}>Editar centro dual</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Actualiza los datos de {centroOriginal?.nombre}.</p>
         </div>
         <Link

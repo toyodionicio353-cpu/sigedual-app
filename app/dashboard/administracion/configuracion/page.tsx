@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import { Building2, Bell } from "lucide-react";
+import { Building2, Bell, SlidersHorizontal } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 import type { Liceo } from "@/types";
 
 const LICEO_VACIO: Omit<Liceo, "id" | "dominioCorreo"> = {
@@ -82,7 +83,7 @@ export default function ConfiguracionPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-2xl">
-      <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold mb-1">Configuración</h1>
+      <TituloPagina icon={<SlidersHorizontal size={28} />} className="mb-1">Configuración</TituloPagina>
       <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-8">
         Ajustes generales de la aplicación para tu institución.
       </p>

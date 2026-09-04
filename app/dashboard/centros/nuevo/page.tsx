@@ -8,7 +8,8 @@ import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
 import CentroDualForm, { CENTRO_FORM_VACIO, type CentroDualFormValues } from "../_components/CentroDualForm";
 import type { CentroDual, Especialidad } from "@/types";
-import { ArrowLeft, CheckCircle2, Eye } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Eye, Building2 } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 
 export default function AgregarCentroDualPage() {
   const { usuario } = useAuth();
@@ -93,7 +94,7 @@ export default function AgregarCentroDualPage() {
     <div className="p-4 md:p-8 max-w-4xl">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Agregar centro dual</h1>
+          <TituloPagina icon={<Building2 size={28} />}>Agregar centro dual</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             Registra la información necesaria para incorporar un nuevo centro al sistema.
           </p>

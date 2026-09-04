@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { Estudiante, Especialidad, HistorialCurso } from "@/types";
 import { ArrowLeft, GraduationCap, CheckCircle2, RotateCcw } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 
 const NIVELES = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
 const ANIO_ACTUAL = new Date().getFullYear();
@@ -133,7 +134,7 @@ export default function PromocionCursoPage() {
     <div className="p-4 md:p-8 max-w-4xl">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Promoción de curso</h1>
+          <TituloPagina icon={<GraduationCap size={28} />}>Promoción de curso</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             Confirma quiénes pasaron de nivel y quiénes repiten para el año académico {ANIO_ACTUAL}.
           </p>

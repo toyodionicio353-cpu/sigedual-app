@@ -6,8 +6,9 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearFecha } from "@/lib/fecha";
+import TituloPagina from "@/components/TituloPagina";
 import type { Asignacion, CentroDual, EstadoAsignacion, Estudiante, MaestroGuia, Usuario } from "@/types";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CalendarCheck } from "lucide-react";
 
 const ESTADOS: EstadoAsignacion[] = ["pendiente", "en_proceso", "asignada", "activa", "finalizada", "cancelada"];
 
@@ -121,7 +122,7 @@ export default function FichaAsignacionPage() {
     <div className="p-4 md:p-8 max-w-3xl">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Ficha de asignación</h1>
+          <TituloPagina icon={<CalendarCheck size={28} />}>Ficha de asignación</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             {estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : "Estudiante no encontrado"} — {centro?.nombre ?? "Centro no encontrado"}
           </p>

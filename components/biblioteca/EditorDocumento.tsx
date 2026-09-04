@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, Search } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Search, FileText } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 import type { DocumentoGenerado, Estudiante, SegmentoDocumento, TipoModuloDocumento } from "@/types";
 import type { ContextoResolucion, PlantillaDocumento } from "@/types/plantillas";
 import { resolverCamposEstudiante, resolverCamposDocumento, type ResultadoCampo } from "@/lib/plantillas/resolverCampos";
@@ -218,9 +219,9 @@ export default function EditorDocumento({
     <div className="p-4 md:p-8 max-w-3xl">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-2xl sm:text-3xl font-bold">
+          <TituloPagina icon={<FileText size={28} />}>
             {esEdicion ? "Editar documento" : "Nuevo documento"}
-          </h1>
+          </TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             {plantilla?.nombre ?? documentoExistente?.plantillaId}
           </p>
