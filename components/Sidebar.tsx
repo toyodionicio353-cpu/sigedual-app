@@ -80,7 +80,6 @@ const MENUS: NavGroup[] = [
     sub: [
       { href: "/dashboard/profesores", label: "Lista de profesores", icon: <ClipboardList size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director"] },
       { href: "/dashboard/profesores/nuevo", label: "Agregar profesor", icon: <UserPlus size={16} strokeWidth={2.25} />, roles: ["administrador"] },
-      { href: "/dashboard/profesores/asignaciones", label: "Listado de asignaciones", icon: <CalendarCheck size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director"] },
     ],
   },
   {
