@@ -8,6 +8,7 @@ import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAd
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { formatearFecha } from "@/lib/fecha";
+import { estadoCanonico, estudianteIdsDe, fechaProgramadaDe, horaProgramadaDe } from "@/lib/visitas/normalizar";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 import type { Asignacion, CentroDual, Estudiante, Visita } from "@/types";
@@ -48,14 +49,17 @@ export default function CalendarioPage() {
     async function cargar() {
       setLoading(true);
       if (usuario!.rol === "profesor") {
-        const propias = await getDocs(query(collection(db, "visitas"), where("profesorId", "==", usuario!.uid)));
         const lotes: string[][] = [];
         for (let i = 0; i < ambito.idsEstudiantes.length; i += 30) lotes.push(ambito.idsEstudiantes.slice(i, i + 30));
-        const snapsPorEstudiante = await Promise.all(
-          lotes.map((lote) => getDocs(query(collection(db, "visitas"), where("estudianteId", "in", lote))))
-        );
+        const [propias, supervisadas, ...snapsPorEstudiante] = await Promise.all([
+          getDocs(query(collection(db, "visitas"), where("profesorId", "==", usuario!.uid))),
+          getDocs(query(collection(db, "visitas"), where("profesorSupervisorId", "==", usuario!.uid))),
+          ...lotes.map((lote) => getDocs(query(collection(db, "visitas"), where("estudianteId", "in", lote)))),
+          ...lotes.map((lote) => getDocs(query(collection(db, "visitas"), where("estudianteIds", "array-contains-any", lote)))),
+        ]);
         const visitasPorId = new Map<string, Visita>();
         propias.docs.forEach((d) => visitasPorId.set(d.id, { id: d.id, ...d.data() } as Visita));
+        supervisadas.docs.forEach((d) => visitasPorId.set(d.id, { id: d.id, ...d.data() } as Visita));
         snapsPorEstudiante.forEach((snap) => snap.docs.forEach((d) => visitasPorId.set(d.id, { id: d.id, ...d.data() } as Visita)));
         const [centrosData, estudiantesData] = await Promise.all([
           obtenerDocumentosPorId<CentroDual>("centros_duales", ambito.idsCentros),
@@ -95,13 +99,18 @@ export default function CalendarioPage() {
     const hoy = hoyISO();
     const items: EventoCalendario[] = [];
     visitas
-      .filter((v) => v.estado === "programada" && v.fecha >= hoy)
-      .forEach((v) => items.push({
-        id: `visita-${v.id}`, tipo: "visita", fecha: v.fecha, liceoId: v.liceoId,
-        titulo: `Visita a ${centroNombre(v.centroDualId)}`,
-        subtitulo: v.hora ? `${v.hora} h${v.estudianteId ? ` · ${estudianteNombre(v.estudianteId)}` : ""}` : (v.estudianteId ? estudianteNombre(v.estudianteId) : ""),
-        href: "/dashboard/visitas",
-      }));
+      .filter((v) => estadoCanonico(v.estado) === "agendada" && fechaProgramadaDe(v) >= hoy)
+      .forEach((v) => {
+        const fecha = fechaProgramadaDe(v);
+        const hora = horaProgramadaDe(v);
+        const nombresEstudiantes = estudianteIdsDe(v).map(estudianteNombre).join(", ");
+        items.push({
+          id: `visita-${v.id}`, tipo: "visita", fecha, liceoId: v.liceoId,
+          titulo: `Visita a ${centroNombre(v.centroDualId)}`,
+          subtitulo: hora ? `${hora} h${nombresEstudiantes ? ` · ${nombresEstudiantes}` : ""}` : nombresEstudiantes,
+          href: `/dashboard/visitas/${v.id}`,
+        });
+      });
     asignaciones
       .filter((a) => a.fechaTermino && a.fechaTermino >= hoy && (a.estado === "asignada" || a.estado === "activa"))
       .forEach((a) => items.push({

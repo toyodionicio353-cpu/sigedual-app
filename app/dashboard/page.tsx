@@ -13,6 +13,7 @@ import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { estadoEfectivo, camposFaltantes } from "@/lib/compatibilidad";
 import { camposFaltantesMaestroGuia } from "@/lib/maestro-guia";
 import { formatearFecha } from "@/lib/fecha";
+import { estadoCanonico, fechaProgramadaDe, horaProgramadaDe } from "@/lib/visitas/normalizar";
 import { useNotificaciones } from "@/lib/notificaciones/useNotificaciones";
 import { ESTADOS_TICKET_ABIERTOS, ESTADO_TICKET_LABEL, ESTADO_TICKET_COLOR, PRIORIDAD_TICKET_COLOR, numeroTicket } from "@/lib/tickets/constantes";
 import ListaNotificaciones from "@/components/notificaciones/ListaNotificaciones";
@@ -73,14 +74,17 @@ export default function DashboardPage() {
           obtenerDocumentosPorId<CentroDual>("centros_duales", ambito.idsCentros),
           obtenerDocumentosPorId<MaestroGuia>("maestros_guia", ambito.idsMaestros),
         ]);
-        const propias = await getDocs(query(collection(db, "visitas"), where("profesorId", "==", usuario!.uid)));
         const lotesEst: string[][] = [];
         for (let i = 0; i < ambito.idsEstudiantes.length; i += 30) lotesEst.push(ambito.idsEstudiantes.slice(i, i + 30));
-        const snapsVisitasEst = await Promise.all(
-          lotesEst.map((lote) => getDocs(query(collection(db, "visitas"), where("estudianteId", "in", lote))))
-        );
+        const [propias, supervisadas, ...snapsVisitasEst] = await Promise.all([
+          getDocs(query(collection(db, "visitas"), where("profesorId", "==", usuario!.uid))),
+          getDocs(query(collection(db, "visitas"), where("profesorSupervisorId", "==", usuario!.uid))),
+          ...lotesEst.map((lote) => getDocs(query(collection(db, "visitas"), where("estudianteId", "in", lote)))),
+          ...lotesEst.map((lote) => getDocs(query(collection(db, "visitas"), where("estudianteIds", "array-contains-any", lote)))),
+        ]);
         const visitasPorId = new Map<string, Visita>();
         propias.docs.forEach((d) => visitasPorId.set(d.id, { id: d.id, ...d.data() } as Visita));
+        supervisadas.docs.forEach((d) => visitasPorId.set(d.id, { id: d.id, ...d.data() } as Visita));
         snapsVisitasEst.forEach((snap) => snap.docs.forEach((d) => visitasPorId.set(d.id, { id: d.id, ...d.data() } as Visita)));
 
         setEstudiantes(estudiantesData);
@@ -140,8 +144,8 @@ export default function DashboardPage() {
     () => estudiantesActivos.filter((e) => !idsConAsignacionActiva.has(e.id)),
     [estudiantesActivos, idsConAsignacionActiva]
   );
-  const visitasProximas = useMemo(() => visitas.filter((v) => v.estado === "programada" && v.fecha >= hoy), [visitas, hoy]);
-  const visitasAtrasadas = useMemo(() => visitas.filter((v) => v.estado === "programada" && v.fecha < hoy), [visitas, hoy]);
+  const visitasProximas = useMemo(() => visitas.filter((v) => estadoCanonico(v.estado) === "agendada" && fechaProgramadaDe(v) >= hoy), [visitas, hoy]);
+  const visitasAtrasadas = useMemo(() => visitas.filter((v) => estadoCanonico(v.estado) === "agendada" && fechaProgramadaDe(v) < hoy), [visitas, hoy]);
 
   const stats: Stat[] = [
     {
@@ -230,11 +234,15 @@ export default function DashboardPage() {
       return centros.find((c) => c.id === id)?.nombre || "Centro dual";
     }
     const items: { id: string; fecha: string; titulo: string; subtitulo: string; icon: React.ReactNode }[] = [];
-    visitasProximas.forEach((v) => items.push({
-      id: `visita-${v.id}`, fecha: v.fecha, titulo: `Visita a ${centroNombre(v.centroDualId)}`,
-      subtitulo: v.hora ? `${formatearFecha(v.fecha)} · ${v.hora} h` : formatearFecha(v.fecha),
-      icon: <MapPin size={14} style={{ color: "var(--accent-light)" }} />,
-    }));
+    visitasProximas.forEach((v) => {
+      const fecha = fechaProgramadaDe(v);
+      const hora = horaProgramadaDe(v);
+      items.push({
+        id: `visita-${v.id}`, fecha, titulo: `Visita a ${centroNombre(v.centroDualId)}`,
+        subtitulo: hora ? `${formatearFecha(fecha)} · ${hora} h` : formatearFecha(fecha),
+        icon: <MapPin size={14} style={{ color: "var(--accent-light)" }} />,
+      });
+    });
     asignaciones
       .filter((a) => (a.estado === "asignada" || a.estado === "activa") && a.fechaTermino && a.fechaTermino >= hoy)
       .forEach((a) => items.push({
