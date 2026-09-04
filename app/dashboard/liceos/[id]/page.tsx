@@ -23,11 +23,12 @@ function Seccion({ icon, titulo, children }: { icon: React.ReactNode; titulo: st
   );
 }
 
-function Dato({ label, valor, span }: { label: string; valor?: string | null; span?: boolean }) {
+function Dato({ label, valor, span }: { label: string; valor?: string | number | null; span?: boolean }) {
+  const texto = valor == null ? "" : String(valor).trim();
   return (
     <div className={span ? "sm:col-span-2" : ""}>
       <p style={{ color: "var(--text-muted)" }} className="text-xs mb-1">{label}</p>
-      <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium">{valor?.trim() ? valor : "—"}</p>
+      <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium">{texto || "—"}</p>
     </div>
   );
 }

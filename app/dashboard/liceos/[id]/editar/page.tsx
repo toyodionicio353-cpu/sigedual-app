@@ -67,16 +67,17 @@ export default function EditarLiceoPage() {
       return;
     }
     const l = snapLiceo.data() as Liceo;
+    const s = (v: unknown) => (v == null ? "" : String(v));
     setValores({
-      nombre: l.nombre ?? "", nombreCorto: l.nombreCorto ?? "", rut: l.rut ?? "",
-      tipoEstablecimiento: l.tipoEstablecimiento ?? "", dependencia: l.dependencia ?? "",
-      rbd: l.rbd ?? "", direccion: l.direccion ?? "", comuna: l.comuna ?? "",
-      ciudad: l.ciudad ?? "", region: l.region ?? "",
-      responsableNombre: l.responsableNombre ?? "", responsableCargo: l.responsableCargo ?? "",
-      responsableRun: l.responsableRun ?? "", responsableTelefono: l.responsableTelefono ?? "",
-      responsableEmail: l.responsableEmail ?? "",
-      telefono: l.telefono ?? "", email: l.email ?? "", sitioWeb: l.sitioWeb ?? "",
-      dominioCorreo: l.dominioCorreo ?? "",
+      nombre: s(l.nombre), nombreCorto: s(l.nombreCorto), rut: s(l.rut),
+      tipoEstablecimiento: s(l.tipoEstablecimiento), dependencia: s(l.dependencia),
+      rbd: s(l.rbd), direccion: s(l.direccion), comuna: s(l.comuna),
+      ciudad: s(l.ciudad), region: s(l.region),
+      responsableNombre: s(l.responsableNombre), responsableCargo: s(l.responsableCargo),
+      responsableRun: s(l.responsableRun), responsableTelefono: s(l.responsableTelefono),
+      responsableEmail: s(l.responsableEmail),
+      telefono: s(l.telefono), email: s(l.email), sitioWeb: s(l.sitioWeb),
+      dominioCorreo: s(l.dominioCorreo),
       estado: l.estado ?? "activo",
     });
     setEspecialidades(
