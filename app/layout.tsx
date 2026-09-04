@@ -57,7 +57,7 @@ export default function RootLayout({
               html.setAttribute("data-width", p.anchoContenido === "completo" ? "completo" : "fijo");
               var escalas = { pequeno: "87.5%", mediano: "100%", grande: "112.5%", "muy-grande": "125%" };
               html.style.fontSize = escalas[p.tamanoFuente] || "100%";
-              var acentos = { amarillo: ["#FFD100","#E6BC00"], ambar: ["#F5B800","#DBA400"], dorado: ["#E8C33D","#CFAC2E"], mostaza: ["#EAB308","#CA9A07"] };
+              var acentos = { amarillo: ["#FFD100","#E6BC00"], ambar: ["#F5B800","#DBA400"], dorado: ["#E8C33D","#CFAC2E"], mostaza: ["#EAB308","#CA9A07"], teal: ["#14B8A6","#12A292"], "amarillo-marca": ["#FFD54F","#E0BB46"], morado: ["#AB8ED6","#967DBC"], "rojo-coral": ["#E7786E","#CB6A61"], "azul-suave": ["#6CB2D6","#5F9DBC"] };
               var ac = acentos[p.colorAcento] || acentos.amarillo;
               html.style.setProperty("--accent", ac[0]);
               html.style.setProperty("--accent-light", ac[0]);
