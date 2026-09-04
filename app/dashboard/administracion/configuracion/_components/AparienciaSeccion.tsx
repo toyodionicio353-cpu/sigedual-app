@@ -60,7 +60,7 @@ export default function AparienciaSeccion() {
           })}
         </div>
         <p style={{ color: "var(--text-muted)" }} className="text-xs mt-2.5">
-          Solo se ofrecen variantes de la identidad amarilla/dorada de SIGEDUAL, para mantener el branding y la legibilidad.
+          Cada color fue verificado para mantener buena legibilidad del texto sobre los botones y elementos destacados.
         </p>
       </SettingRow>
 
