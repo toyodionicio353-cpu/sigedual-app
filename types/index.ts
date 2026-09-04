@@ -307,3 +307,106 @@ export interface DocumentoGenerado {
   creadoEn: string;
   actualizadoEn?: string;
 }
+
+export type EstadoVisita = "programada" | "realizada" | "cancelada";
+
+export interface Visita {
+  id: string;
+  liceoId: string;
+  centroDualId: string;
+  estudianteId?: string;
+  profesorId?: string;
+  fecha: string;
+  hora?: string;
+  estado: EstadoVisita;
+  observaciones?: string;
+  creadoPor: string;
+  creadoEn: string;
+  actualizadoEn?: string;
+}
+
+export type EstadoTicket =
+  | "nuevo"
+  | "abierto"
+  | "en_revision"
+  | "en_proceso"
+  | "esperando_respuesta"
+  | "resuelto"
+  | "cerrado";
+
+export type PrioridadTicket = "baja" | "media" | "alta" | "critica";
+
+export type TipoTicket =
+  | "problema"
+  | "error"
+  | "solicitud"
+  | "incidencia"
+  | "soporte_tecnico"
+  | "datos"
+  | "otro";
+
+export interface Ticket {
+  id: string;
+  numero: number;
+  asunto: string;
+  descripcion: string;
+  tipo: TipoTicket;
+  prioridad: PrioridadTicket;
+  estado: EstadoTicket;
+  creadoPor: string;
+  creadoPorNombre: string;
+  liceoId: string;
+  asignadoA?: string;
+  asignadoANombre?: string;
+  creadoEn: string;
+  actualizadoEn?: string;
+  resueltoEn?: string;
+  cerradoEn?: string;
+}
+
+export interface MensajeTicket {
+  id: string;
+  texto: string;
+  uid: string;
+  nombre: string;
+  creadoEn: string;
+}
+
+export interface NotaInternaTicket {
+  id: string;
+  texto: string;
+  uid: string;
+  nombre: string;
+  creadoEn: string;
+}
+
+export type TipoNotificacion =
+  | "alerta"
+  | "aviso"
+  | "mensaje"
+  | "solicitud"
+  | "cambio"
+  | "evaluacion_pendiente"
+  | "visita_proxima"
+  | "documento_pendiente"
+  | "firma_pendiente"
+  | "asignacion"
+  | "actualizacion_sistema"
+  | "incidencia"
+  | "recordatorio"
+  | "ticket";
+
+export interface Notificacion {
+  id: string;
+  destinatarioUid: string;
+  liceoId: string;
+  tipo: TipoNotificacion;
+  titulo: string;
+  descripcion: string;
+  prioridad?: "baja" | "media" | "alta";
+  leida: boolean;
+  accionHref?: string;
+  accionLabel?: string;
+  creadoEn: string;
+  leidaEn?: string;
+}

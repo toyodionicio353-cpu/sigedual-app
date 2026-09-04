@@ -81,6 +81,45 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador';
     }
 
+    match /contadores/{contadorId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /tickets/{ticketId} {
+      // Lectura: quien lo creó, o el administrador (nunca otros usuarios).
+      allow read: if request.auth != null && (
+        resource.data.creadoPor == request.auth.uid
+        || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador'
+      );
+      allow create: if request.auth != null && request.resource.data.creadoPor == request.auth.uid;
+      // Cambios de estado/prioridad/asignación: solo el administrador.
+      allow update, delete: if request.auth != null
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador';
+    }
+
+    // Hilo público del ticket: visible/editable por su creador o el administrador.
+    match /tickets/{ticketId}/mensajes/{msgId} {
+      allow read, create: if request.auth != null && (
+        get(/databases/$(database)/documents/tickets/$(ticketId)).data.creadoPor == request.auth.uid
+        || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador'
+      );
+      allow update, delete: if false;
+    }
+
+    // Notas internas: exclusivas del administrador, el creador del ticket nunca las ve.
+    match /tickets/{ticketId}/notasInternas/{notaId} {
+      allow read, write: if request.auth != null
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador';
+    }
+
+    match /notificaciones/{notifId} {
+      // Cada notificación es visible/editable solo por su destinatario
+      // (marcar como leída). Cualquier usuario autenticado puede crear una
+      // notificación dirigida a otro (ej: un ticket nuevo notifica al admin).
+      allow read, update, delete: if request.auth != null && resource.data.destinatarioUid == request.auth.uid;
+      allow create: if request.auth != null;
+    }
+
     // Colecciones de nivel raíz
     match /{collection}/{docId} {
       allow read, write: if request.auth != null;
