@@ -11,6 +11,7 @@ import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 import { useAdvertenciaLiceoGlobal } from "@/lib/liceos/useAdvertenciaLiceoGlobal";
 import ModalAdvertenciaLiceo from "@/components/liceos/ModalAdvertenciaLiceo";
+import { sincronizarAutorizacionesDeProfesor } from "@/lib/permisos/sincronizarAutorizacion";
 import type { Asignacion, CentroDual, Compatibilidad, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia, Usuario } from "@/types";
 import {
   ArrowLeft, ArrowRight, Search, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, User, Users, CalendarCheck,
@@ -312,6 +313,7 @@ export default function NuevaAsignacionPage() {
       if (estadoInicial === "asignada" || estadoInicial === "activa") {
         await updateDoc(doc(db, "estudiantes", estudianteSeleccionado.id), { centroDualId: centroSeleccionado.id });
       }
+      if (profesorSupervisorId) sincronizarAutorizacionesDeProfesor(profesorSupervisorId).catch(() => {});
       router.push(`/dashboard/estudiantes/asignaciones/${ref.id}`);
     } catch (err) {
       const detalle = err instanceof Error ? err.message : String(err);
@@ -354,6 +356,7 @@ export default function NuevaAsignacionPage() {
         }
       }
       await batch.commit();
+      if (profesorSupervisorId) sincronizarAutorizacionesDeProfesor(profesorSupervisorId).catch(() => {});
       router.push("/dashboard/estudiantes/asignaciones");
     } catch (err) {
       const detalle = err instanceof Error ? err.message : String(err);
