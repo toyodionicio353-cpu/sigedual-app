@@ -40,22 +40,30 @@ export default function FichaLiceoPage() {
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
+  const [errorCarga, setErrorCarga] = useState("");
 
   useEffect(() => {
     if (!usuario || !id) return;
     async function cargar() {
       setLoading(true);
-      const [snapLiceo, snapEsp] = await Promise.all([
-        getDoc(doc(db, "liceos", id)),
-        getDocs(query(collection(db, "especialidades"), where("liceoId", "==", id))),
-      ]);
-      if (snapLiceo.exists()) {
-        setLiceo({ id: snapLiceo.id, ...snapLiceo.data() } as Liceo);
-      } else {
-        setNoEncontrado(true);
+      setErrorCarga("");
+      try {
+        const [snapLiceo, snapEsp] = await Promise.all([
+          getDoc(doc(db, "liceos", id)),
+          getDocs(query(collection(db, "especialidades"), where("liceoId", "==", id))),
+        ]);
+        if (snapLiceo.exists()) {
+          setLiceo({ id: snapLiceo.id, ...snapLiceo.data() } as Liceo);
+        } else {
+          setNoEncontrado(true);
+        }
+        setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
+      } catch (err) {
+        const detalle = err instanceof Error ? err.message : String(err);
+        setErrorCarga(`No fue posible cargar el liceo. (${detalle})`);
+      } finally {
+        setLoading(false);
       }
-      setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
-      setLoading(false);
     }
     cargar();
   }, [usuario, id]);
@@ -74,6 +82,20 @@ export default function FichaLiceoPage() {
     return (
       <div className="p-4 md:p-8">
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
+      </div>
+    );
+  }
+
+  if (errorCarga) {
+    return (
+      <div className="p-4 md:p-8 max-w-3xl">
+        <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-2xl p-6">
+          <p style={{ color: "var(--danger)" }} className="text-sm font-medium mb-4">{errorCarga}</p>
+          <Link href="/dashboard/liceos" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+            <ArrowLeft size={16} />
+            Volver al listado
+          </Link>
+        </div>
       </div>
     );
   }
