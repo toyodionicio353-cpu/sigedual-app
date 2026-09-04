@@ -24,6 +24,15 @@ export interface Usuario {
   telefonoSecundario?: string;
   descripcion?: string;
   actualizadoEn?: string;
+  terminosAceptados?: AceptacionTerminos;
+}
+
+/** Registro de aceptación de los Términos, Condiciones y Política de
+ * Privacidad — no incluye una "versión" del documento porque el texto
+ * legal entregado todavía no declara una; no se inventa aquí. */
+export interface AceptacionTerminos {
+  aceptado: boolean;
+  fecha: string;
 }
 
 export type TipoDatoSolicitud = "nombre" | "rut" | "correo" | "otro";
