@@ -21,12 +21,15 @@ interface AuthContextType {
   liceoActivo: LiceoActivo | null;
   entrarALiceo: (liceo: LiceoActivo) => void;
   salirDelLiceo: () => void;
+  /** Vuelve a leer el documento de usuarios/{uid} — usarlo tras editar el propio perfil,
+   * para que el resto de la app (encabezado, sidebar, etc.) refleje los cambios sin recargar. */
+  refrescarUsuario: () => Promise<void>;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null, usuario: null, usuarioReal: null, liceoActivo: null,
-  entrarALiceo: () => {}, salirDelLiceo: () => {}, loading: true,
+  entrarALiceo: () => {}, salirDelLiceo: () => {}, refrescarUsuario: async () => {}, loading: true,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -75,13 +78,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sessionStorage.removeItem(CLAVE_LICEO_ACTIVO);
   }
 
+  async function refrescarUsuario() {
+    if (!user) return;
+    const snap = await getDoc(doc(db, "usuarios", user.uid));
+    if (snap.exists()) setUsuarioReal(snap.data() as Usuario);
+  }
+
   const usuario: Usuario | null =
     usuarioReal?.rol === "administrador" && liceoActivo
       ? { ...usuarioReal, liceoId: liceoActivo.id }
       : usuarioReal;
 
   return (
-    <AuthContext.Provider value={{ user, usuario, usuarioReal, liceoActivo, entrarALiceo, salirDelLiceo, loading }}>
+    <AuthContext.Provider value={{ user, usuario, usuarioReal, liceoActivo, entrarALiceo, salirDelLiceo, refrescarUsuario, loading }}>
       {children}
     </AuthContext.Provider>
   );

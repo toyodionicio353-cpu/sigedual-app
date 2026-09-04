@@ -8,15 +8,7 @@ import Link from "next/link";
 import type { Rol } from "@/types";
 import { usePreferencias } from "@/lib/preferencias/context";
 import { ordenarModulosDashboard } from "@/lib/preferencias/dashboardModulos";
-
-const ROL_LABEL: Record<Rol, string> = {
-  administrador: "Administrador",
-  coordinador: "Coordinador",
-  director: "Director",
-  profesor: "Profesor Supervisor",
-  centro_dual: "Centro Dual",
-  estudiante: "Estudiante",
-};
+import { ROL_LABEL } from "@/lib/roles";
 
 interface Stat {
   id: string;

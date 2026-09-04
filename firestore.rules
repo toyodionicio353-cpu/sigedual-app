@@ -4,7 +4,27 @@ service cloud.firestore {
 
     match /usuarios/{docId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      // Creación: el propio usuario (alta de cuenta, incluida la firma
+      // de Firebase Auth que queda momentáneamente autenticada como el
+      // nuevo usuario al crearlo) o un administrador completando una
+      // ficha. Sin restricción de campos: el documento no existe todavía.
+      allow create: if request.auth != null
+        && (request.auth.uid == docId
+            || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador');
+      // Edición: un administrador puede modificar cualquier cuenta (rol,
+      // estado, especialidad, etc. — eso es Administración). El propio
+      // usuario solo puede editar su perfil personal (Mi perfil) y NUNCA
+      // su rol, estado de cuenta, liceo, correo, nombre o especialidad —
+      // el frontend los bloquea, pero la regla es la que realmente protege.
+      allow update: if request.auth != null && (
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador'
+        || (request.auth.uid == docId
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                  .hasAny(['rol', 'activo', 'liceoId', 'email', 'nombre', 'especialidad', 'uid']))
+      );
+      // Eliminación: solo vía la API de administrador (firebase-admin, con su propia
+      // verificación de rol) — nunca directamente desde el cliente.
+      allow delete: if false;
     }
 
     match /sesiones/{sesionId} {
@@ -38,6 +58,19 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol in ['administrador', 'director']
         && (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador'
             || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.liceoId == liceoId);
+    }
+
+    match /solicitudesModificacion/{id} {
+      // Solicitudes de cambio de un dato bloqueado del propio perfil (Mi
+      // perfil > Solicitar modificación). Solo su autor o un administrador
+      // pueden leerlas; solo un administrador puede resolverlas (estado).
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow read: if request.auth != null && (
+        resource.data.uid == request.auth.uid
+        || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador'
+      );
+      allow update, delete: if request.auth != null
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador';
     }
 
     match /soporte/{liceoId} {
