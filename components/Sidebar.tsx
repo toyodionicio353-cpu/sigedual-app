@@ -124,7 +124,6 @@ const MENUS: NavGroup[] = [
     sub: [
       { href: "/dashboard/usuarios", label: "Usuarios", icon: <UserCog size={16} strokeWidth={2.25} />, roles: ["administrador"] },
       { href: "/dashboard/liceos", label: "Liceos", icon: <School size={16} strokeWidth={2.25} />, roles: ["administrador"] },
-      { href: "/dashboard/administracion/datos-liceo", label: "Datos del liceo", icon: <Building2 size={16} strokeWidth={2.25} />, roles: ["administrador", "director"] },
       { href: "/dashboard/administracion/seguridad", label: "Seguridad", icon: <ShieldCheck size={16} strokeWidth={2.25} />, roles: ["administrador", "director"] },
       { href: "/dashboard/administracion/usuario", label: "Usuario", icon: <User size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
       { href: "/dashboard/administracion/configuracion", label: "Configuración", icon: <SlidersHorizontal size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
