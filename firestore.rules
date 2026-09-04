@@ -41,7 +41,8 @@ service cloud.firestore {
         'solicitudesModificacion', 'soporte', 'contadores', 'tickets',
         'notificaciones', 'estudiantes', 'asignaciones', 'centros_duales',
         'maestros_guia', 'visitas', 'autorizaciones', 'conversaciones',
-        'invitaciones', 'respuestas_invitacion', 'centros_duales_por_rut'
+        'invitaciones', 'respuestas_invitacion', 'centros_duales_por_rut',
+        'evaluaciones'
       ];
     }
 
@@ -264,6 +265,23 @@ service cloud.firestore {
         esAccesoCompletoLiceo(resource.data.liceoId)
         || resource.data.profesorId == request.auth.uid
       );
+    }
+
+    // Evaluación de desempeño del estudiante en su Centro Dual. Cada
+    // documento es un registro completo e inmutable (sin borrador/guardado
+    // parcial): "update" deshabilitado a propósito — un error se corrige
+    // creando una evaluación nueva, nunca editando la anterior.
+    match /evaluaciones/{id} {
+      allow read: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || (datosUsuario().rol in ['profesor', 'centro_dual'] && tieneAutorizacion('estudiante', resource.data.estudianteId))
+      );
+      allow create: if request.auth != null && (
+        esAccesoCompletoLiceo(request.resource.data.liceoId)
+        || (datosUsuario().rol in ['profesor', 'centro_dual'] && tieneAutorizacion('estudiante', request.resource.data.estudianteId))
+      );
+      allow update: if false;
+      allow delete: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
     }
 
     // Índice de autorización: un documento por (profesor, tipo, recurso)

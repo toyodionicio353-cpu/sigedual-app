@@ -543,3 +543,55 @@ export interface IndiceCentroDualPorRut {
   centroDualId: string;
   liceoId: string;
 }
+
+// ── Evaluaciones (desempeño del estudiante en su Centro Dual) ──────────
+
+/** Escala de logro de la pauta: I (Insuficiente), R (Regular), B (Bueno),
+ * MB (Muy Bueno). Definida acá (no en lib/evaluaciones) porque types/
+ * nunca importa de lib/ — lib/evaluaciones/tipos.ts reexporta este tipo. */
+export type NivelLogro = "I" | "R" | "B" | "MB";
+
+// "autoevaluacion" y otros tipos futuros (sección 17 del pedido original)
+// se agregan acá cuando se implementen — el resto del modelo ya los admite.
+export type TipoEvaluador = "maestro_guia";
+
+export interface TareaAdicionalEvaluacion {
+  descripcion: string;
+  valor: NivelLogro;
+  observacion?: string;
+}
+
+/**
+ * Registro permanente de una evaluación ya completada — un documento por
+ * evaluación, nunca se sobrescribe (ver "estado": siempre "completada",
+ * no hay borrador/guardado parcial). Cada criterio se guarda
+ * individualmente (no solo el promedio) para habilitar reportes e
+ * historial más adelante.
+ */
+export interface Evaluacion {
+  id: string;
+  liceoId: string;
+  plantillaId: string;
+  estudianteId: string;
+  centroDualId: string;
+  maestroGuiaId: string;
+  asignacionId?: string;
+  tipoEvaluador: TipoEvaluador;
+  evaluadorUid: string;
+  evaluadorNombre: string;
+  evaluadorRol: Rol;
+  fecha: string;
+  respuestasLogros: Record<string, Record<string, NivelLogro>>;
+  tareasAdicionales: TareaAdicionalEvaluacion[];
+  respuestasDesarrolloPersonal: Record<string, NivelLogro>;
+  observaciones?: string;
+  resultados: {
+    logrosPorcentaje: number;
+    desarrolloPersonalPorcentaje: number;
+    promedioGeneral: number;
+  };
+  estado: "completada";
+  creadoPor: string;
+  creadoEn: string;
+  actualizadoEn?: string;
+}
