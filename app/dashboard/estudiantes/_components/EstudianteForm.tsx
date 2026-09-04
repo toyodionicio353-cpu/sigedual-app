@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Users, BadgeCheck, Phone, GraduationCap, HeartPulse, Sparkles, FileText, Plus, X,
 } from "lucide-react";
@@ -103,11 +103,12 @@ interface EstudianteFormProps {
   guardando: boolean;
   onCancelar: () => void;
   onGuardar: (valores: EstudianteFormValues, otrosMedicos: string[], rasgos: string[], habilidades: string[]) => void | Promise<void>;
+  onCambio?: (valores: EstudianteFormValues, otrosMedicos: string[], rasgos: string[], habilidades: string[]) => void;
 }
 
 export default function EstudianteForm({
   modo, valoresIniciales, otrosMedicosIniciales, rasgosIniciales, habilidadesIniciales, especialidades,
-  runsOcupados, guardando, onCancelar, onGuardar,
+  runsOcupados, guardando, onCancelar, onGuardar, onCambio,
 }: EstudianteFormProps) {
   const [form, setForm] = useState<EstudianteFormValues>(valoresIniciales);
   const [errores, setErrores] = useState<Partial<Record<keyof EstudianteFormValues, string>>>({});
@@ -116,6 +117,11 @@ export default function EstudianteForm({
   const [habilidades, setHabilidades] = useState<string[]>(habilidadesIniciales);
   const [formularioInvalido, setFormularioInvalido] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
+
+  useEffect(() => {
+    onCambio?.(form, otrosMedicos, rasgos, habilidades);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, otrosMedicos, rasgos, habilidades]);
 
   const cursosDisponibles = form.nivel ? LETRAS_CURSO.map((letra) => `${form.nivel} ${letra}`) : [];
 

@@ -8,6 +8,8 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Rol } from "@/types";
+import { usePreferencias } from "@/lib/preferencias/context";
+import type { ClaveTraduccion } from "@/lib/preferencias/i18n";
 import {
   LayoutDashboard, Users, Building2, GraduationCap,
   MessageSquare, Settings, LogOut, BookOpen,
@@ -122,6 +124,7 @@ const MENUS: NavGroup[] = [
     sub: [
       { href: "/dashboard/usuarios", label: "Usuarios", icon: <UserCog size={16} strokeWidth={2.25} />, roles: ["administrador"] },
       { href: "/dashboard/liceos", label: "Liceos", icon: <School size={16} strokeWidth={2.25} />, roles: ["administrador"] },
+      { href: "/dashboard/administracion/datos-liceo", label: "Datos del liceo", icon: <Building2 size={16} strokeWidth={2.25} />, roles: ["administrador", "director"] },
       { href: "/dashboard/administracion/seguridad", label: "Seguridad", icon: <ShieldCheck size={16} strokeWidth={2.25} />, roles: ["administrador", "director"] },
       { href: "/dashboard/administracion/usuario", label: "Usuario", icon: <User size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
       { href: "/dashboard/administracion/configuracion", label: "Configuración", icon: <SlidersHorizontal size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
@@ -139,6 +142,24 @@ const MENUS: NavGroup[] = [
   },
 ];
 
+// Traduce las etiquetas de navegación cuando el idioma es inglés — mapeadas
+// por id/href, no reemplazan la etiqueta original en español que se usa como
+// clave interna de MENUS. Ver lib/preferencias/i18n.ts.
+const CLAVE_GRUPO: Record<string, ClaveTraduccion> = {
+  inicio: "nav.inicio", estudiantes: "nav.estudiantes", centros: "nav.centros",
+  profesores: "nav.profesores", especialidades: "nav.especialidades", documentos: "nav.documentos",
+  mensajes: "nav.mensajes", administracion: "nav.administracion", soporte: "nav.soporte",
+};
+const CLAVE_SUB: Record<string, ClaveTraduccion> = {
+  "/dashboard/usuarios": "nav.usuarios",
+  "/dashboard/liceos": "nav.liceos",
+  "/dashboard/administracion/datos-liceo": "nav.datosLiceo",
+  "/dashboard/administracion/seguridad": "nav.seguridad",
+  "/dashboard/administracion/usuario": "nav.usuario",
+  "/dashboard/administracion/configuracion": "nav.configuracion",
+  "/dashboard/administracion/privacidad": "nav.privacidad",
+};
+
 interface SidebarProps {
   collapsed: boolean;
   setCollapsed: (v: boolean | ((prev: boolean) => boolean)) => void;
@@ -148,9 +169,19 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMobile }: SidebarProps) {
   const { usuario } = useAuth();
+  const { t } = usePreferencias();
   const pathname = usePathname();
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState<string | null>("inicio");
+
+  function etiquetaGrupo(menu: NavGroup): string {
+    const clave = CLAVE_GRUPO[menu.id];
+    return clave ? t(clave) : menu.label;
+  }
+  function etiquetaSub(sub: SubItem): string {
+    const clave = CLAVE_SUB[sub.href];
+    return clave ? t(clave) : sub.label;
+  }
 
   function toggleMenu(id: string) {
     setOpenMenu((prev) => (prev === id ? null : id));
@@ -249,7 +280,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 key={menu.id}
                 href={menu.href}
                 onClick={onCloseMobile}
-                title={collapsed ? menu.label : undefined}
+                title={collapsed ? etiquetaGrupo(menu) : undefined}
                 style={{
                   background: isActive ? "var(--accent)" : "transparent",
                   borderRadius: 9,
@@ -258,7 +289,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:[background:var(--hover-overlay)] transition-all"
               >
                 <span style={{ color: isActive ? "var(--text-on-accent)" : "var(--accent)", flexShrink: 0 }}>{menu.icon}</span>
-                {!collapsed && <span className="flex-1 whitespace-nowrap">{menu.label}</span>}
+                {!collapsed && <span className="flex-1 whitespace-nowrap">{etiquetaGrupo(menu)}</span>}
               </Link>
             );
           }
@@ -267,7 +298,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
             <div key={menu.id}>
               <button
                 onClick={() => !collapsed && toggleMenu(menu.id)}
-                title={collapsed ? menu.label : undefined}
+                title={collapsed ? etiquetaGrupo(menu) : undefined}
                 style={{
                   background: isActive ? "var(--accent)" : "transparent",
                   borderRadius: 9,
@@ -281,7 +312,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
 
                 {!collapsed && (
                   <>
-                    <span className="flex-1 whitespace-nowrap">{menu.label}</span>
+                    <span className="flex-1 whitespace-nowrap">{etiquetaGrupo(menu)}</span>
                     {/* Flecha */}
                     <span style={{
                       display: "inline-flex",
@@ -331,7 +362,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                           className="flex items-center gap-2 px-2.5 py-2 text-sm font-medium hover:[background:var(--hover-overlay)] transition-all"
                         >
                           <span style={{ color: subActive ? "var(--text-on-accent)" : "var(--accent)", opacity: subActive ? 1 : 0.85, flexShrink: 0 }}>{sub.icon}</span>
-                          <span className="truncate">{sub.label}</span>
+                          <span className="truncate">{etiquetaSub(sub)}</span>
                         </Link>
                       );
                     })}
@@ -347,12 +378,12 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
       <div className="px-2 pb-3 pt-2 flex-shrink-0" style={{ borderTop: "1px solid var(--border)" }}>
         <button
           onClick={handleLogout}
-          title="Cerrar sesión"
+          title={t("nav.cerrarSesion")}
           style={{ borderRadius: 9, color: "var(--text-muted)", width: "100%" }}
           className={`flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:bg-red-500/10 hover:text-red-400 transition-all ${collapsed ? "justify-center" : ""}`}
         >
           <LogOut size={20} strokeWidth={2.25} />
-          {!collapsed && <span className="whitespace-nowrap">Cerrar sesión</span>}
+          {!collapsed && <span className="whitespace-nowrap">{t("nav.cerrarSesion")}</span>}
         </button>
       </div>
       </aside>

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk, Oswald } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
+import { PreferenciasProvider } from "@/lib/preferencias/context";
+import { ToastProvider } from "@/lib/toast-context";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,15 +44,36 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `try {
-              var t = localStorage.getItem("sigedual-theme");
-              if (t === "light" || t === "dark") {
-                document.documentElement.setAttribute("data-theme", t);
-              }
+              var raw = localStorage.getItem("sigedual_preferences");
+              var p = raw ? JSON.parse(raw) : {};
+              var tema = p.tema || "sistema";
+              var oscuro = tema === "sistema"
+                ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)
+                : tema === "oscuro";
+              var html = document.documentElement;
+              html.setAttribute("data-theme", oscuro ? "dark" : "light");
+              html.setAttribute("data-density", p.densidad === "compacta" ? "compacta" : "comoda");
+              html.setAttribute("data-contrast", p.altoContraste ? "alto" : "normal");
+              html.setAttribute("data-width", p.anchoContenido === "completo" ? "completo" : "fijo");
+              var escalas = { pequeno: "87.5%", mediano: "100%", grande: "112.5%", "muy-grande": "125%" };
+              html.style.fontSize = escalas[p.tamanoFuente] || "100%";
+              var acentos = { amarillo: ["#FFD100","#E6BC00"], ambar: ["#F5B800","#DBA400"], dorado: ["#E8C33D","#CFAC2E"], mostaza: ["#EAB308","#CA9A07"] };
+              var ac = acentos[p.colorAcento] || acentos.amarillo;
+              html.style.setProperty("--accent", ac[0]);
+              html.style.setProperty("--accent-light", ac[0]);
+              html.style.setProperty("--accent-hover", ac[1]);
+              if (p.idioma === "en") html.setAttribute("lang", "en");
             } catch (e) {}`,
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col"><AuthProvider>{children}</AuthProvider></body>
+      <body className="min-h-full flex flex-col">
+        <AuthProvider>
+          <PreferenciasProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </PreferenciasProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }

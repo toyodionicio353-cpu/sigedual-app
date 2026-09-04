@@ -20,3 +20,11 @@ export function formatearFecha(iso?: string): string {
   if (Number.isNaN(fecha.getTime())) return iso;
   return fecha.toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" });
 }
+
+/** Formatea la hora de un ISO completo según la preferencia de formato
+ * (12 o 24 horas) elegida en Configuración > Idioma y regionalización. */
+export function formatearHora(iso: string, formato: "12" | "24" = "24"): string {
+  const fecha = new Date(iso);
+  if (Number.isNaN(fecha.getTime())) return "";
+  return fecha.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit", hour12: formato === "12" });
+}

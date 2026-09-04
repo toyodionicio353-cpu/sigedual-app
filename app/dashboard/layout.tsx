@@ -5,6 +5,10 @@ import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import Sidebar from "@/components/Sidebar";
 import ThemeToggle from "@/components/ThemeToggle";
+import CommandPalette from "@/components/CommandPalette";
+import ShortcutsProvider from "@/components/ShortcutsProvider";
+import { usePreferencias } from "@/lib/preferencias/context";
+import type { ClaveTraduccion } from "@/lib/preferencias/i18n";
 import { Bell, Building2, LogOut, ArrowLeft } from "lucide-react";
 
 const TITULOS: Record<string, string> = {
@@ -31,14 +35,37 @@ const TITULOS: Record<string, string> = {
   "/dashboard/mensajes/grupos": "Grupos",
   "/dashboard/usuarios": "Usuarios",
   "/dashboard/liceos": "Liceos",
+  "/dashboard/administracion/datos-liceo": "Datos del liceo",
   "/dashboard/administracion/seguridad": "Seguridad",
   "/dashboard/administracion/usuario": "Usuario",
   "/dashboard/administracion/configuracion": "Configuración",
   "/dashboard/administracion/privacidad": "Políticas de privacidad",
+  "/dashboard/administracion/terminos": "Términos y condiciones",
+  "/dashboard/administracion/aviso-legal": "Aviso legal",
+};
+
+// Solo se traduce el título del encabezado para las rutas que ya tienen una
+// clave en el diccionario de i18n (ver lib/preferencias/i18n.ts). El resto
+// de las páginas conserva su título en español hasta que se traduzcan.
+const TITULOS_CLAVE: Record<string, ClaveTraduccion> = {
+  "/dashboard": "nav.inicio",
+  "/dashboard/estudiantes": "nav.estudiantes",
+  "/dashboard/centros": "nav.centros",
+  "/dashboard/profesores": "nav.profesores",
+  "/dashboard/especialidades": "nav.especialidades",
+  "/dashboard/mensajes": "nav.mensajes",
+  "/dashboard/usuarios": "nav.usuarios",
+  "/dashboard/liceos": "nav.liceos",
+  "/dashboard/administracion/datos-liceo": "nav.datosLiceo",
+  "/dashboard/administracion/seguridad": "nav.seguridad",
+  "/dashboard/administracion/usuario": "nav.usuario",
+  "/dashboard/administracion/configuracion": "nav.configuracion",
+  "/dashboard/administracion/privacidad": "nav.privacidad",
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, liceoActivo, salirDelLiceo } = useAuth();
+  const { t } = usePreferencias();
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -69,7 +96,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  const titulo = TITULOS[pathname] ?? "Panel";
+  const claveTitulo = TITULOS_CLAVE[pathname];
+  const titulo = claveTitulo ? t(claveTitulo) : (TITULOS[pathname] ?? "Panel");
 
   function salir() {
     salirDelLiceo();
@@ -78,6 +106,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div style={{ background: "var(--bg-base)" }} className="flex h-screen overflow-hidden">
+      <CommandPalette />
+      <ShortcutsProvider />
       <Sidebar
         collapsed={collapsed}
         setCollapsed={setCollapsed}
