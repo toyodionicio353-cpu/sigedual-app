@@ -8,6 +8,8 @@ import { usePreferencias } from "@/lib/preferencias/context";
 import { ordenarModulosDashboard } from "@/lib/preferencias/dashboardModulos";
 import { ROL_LABEL } from "@/lib/roles";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
+import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { estadoEfectivo, camposFaltantes } from "@/lib/compatibilidad";
 import { camposFaltantesMaestroGuia } from "@/lib/maestro-guia";
 import { formatearFecha } from "@/lib/fecha";
@@ -44,6 +46,7 @@ export default function DashboardPage() {
   const { liceos } = useCatalogoLiceos(modoGlobal);
   const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
   const esAdmin = usuario?.rol === "administrador";
+  const ambito = useAmbitoProfesor();
 
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [centros, setCentros] = useState<CentroDual[]>([]);
@@ -58,8 +61,39 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!usuario) return;
+    if (usuario.rol === "profesor" && ambito.cargando) return;
     async function cargar() {
       const liceoId = usuario!.liceoId;
+
+      if (usuario!.rol === "profesor") {
+        // El Dashboard de un profesor no debe mostrar estadísticas
+        // globales del liceo — solo lo que está dentro de su ámbito.
+        const [estudiantesData, centrosData, maestrosData] = await Promise.all([
+          obtenerDocumentosPorId<Estudiante>("estudiantes", ambito.idsEstudiantes),
+          obtenerDocumentosPorId<CentroDual>("centros_duales", ambito.idsCentros),
+          obtenerDocumentosPorId<MaestroGuia>("maestros_guia", ambito.idsMaestros),
+        ]);
+        const propias = await getDocs(query(collection(db, "visitas"), where("profesorId", "==", usuario!.uid)));
+        const lotesEst: string[][] = [];
+        for (let i = 0; i < ambito.idsEstudiantes.length; i += 30) lotesEst.push(ambito.idsEstudiantes.slice(i, i + 30));
+        const snapsVisitasEst = await Promise.all(
+          lotesEst.map((lote) => getDocs(query(collection(db, "visitas"), where("estudianteId", "in", lote))))
+        );
+        const visitasPorId = new Map<string, Visita>();
+        propias.docs.forEach((d) => visitasPorId.set(d.id, { id: d.id, ...d.data() } as Visita));
+        snapsVisitasEst.forEach((snap) => snap.docs.forEach((d) => visitasPorId.set(d.id, { id: d.id, ...d.data() } as Visita)));
+
+        setEstudiantes(estudiantesData);
+        setCentros(centrosData);
+        setProfesores([]);
+        setMaestros(maestrosData);
+        setAsignaciones(ambito.asignaciones);
+        setVisitas(Array.from(visitasPorId.values()));
+        setTickets([]);
+        setCargando(false);
+        return;
+      }
+
       const alcance = <T,>(coleccion: string) =>
         modoGlobal ? collection(db, coleccion) : query(collection(db, coleccion), where("liceoId", "==", liceoId));
       const qProfesores = modoGlobal
@@ -90,7 +124,8 @@ export default function DashboardPage() {
       setCargando(false);
     }
     cargar();
-  }, [usuario, modoGlobal]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario, modoGlobal, ambito.cargando, ambito.idsEstudiantes, ambito.idsCentros, ambito.idsMaestros, ambito.asignaciones]);
 
   const hoy = hoyISO();
 
@@ -234,6 +269,7 @@ export default function DashboardPage() {
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1 capitalize">
           {ROL_LABEL[usuario.rol]} · {fechaHoy}
           {modoGlobal && " · Mostrando la información de todos los liceos"}
+          {usuario.rol === "profesor" && " · Mostrando solo tu ámbito asignado"}
         </p>
       </div>
 

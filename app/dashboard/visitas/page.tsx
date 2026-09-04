@@ -5,6 +5,8 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
+import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { formatearFecha } from "@/lib/fecha";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
@@ -31,6 +33,7 @@ export default function VisitasPage() {
   const modoGlobal = useModoGlobalAdmin();
   const { liceos } = useCatalogoLiceos(modoGlobal);
   const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
+  const ambito = useAmbitoProfesor();
 
   const [visitas, setVisitas] = useState<Visita[]>([]);
   const [centros, setCentros] = useState<CentroDual[]>([]);
@@ -50,6 +53,27 @@ export default function VisitasPage() {
     setLoading(true);
     setError(false);
     try {
+      if (usuario.rol === "profesor") {
+        const propias = await getDocs(query(collection(db, "visitas"), where("profesorId", "==", usuario.uid)));
+        const idsEst = ambito.idsEstudiantes;
+        const lotes: string[][] = [];
+        for (let i = 0; i < idsEst.length; i += 30) lotes.push(idsEst.slice(i, i + 30));
+        const snapsDeEstudiantes = await Promise.all(
+          lotes.map((lote) => getDocs(query(collection(db, "visitas"), where("estudianteId", "in", lote))))
+        );
+        const porId = new Map<string, Visita>();
+        propias.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita));
+        snapsDeEstudiantes.forEach((snap) => snap.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita)));
+        const [centrosData, estudiantesData] = await Promise.all([
+          obtenerDocumentosPorId<CentroDual>("centros_duales", ambito.idsCentros),
+          obtenerDocumentosPorId<Estudiante>("estudiantes", ambito.idsEstudiantes),
+        ]);
+        setVisitas(Array.from(porId.values()));
+        setCentros(centrosData);
+        setEstudiantes(estudiantesData);
+        setLoading(false);
+        return;
+      }
       const qVisitas = modoGlobal ? collection(db, "visitas") : query(collection(db, "visitas"), where("liceoId", "==", usuario.liceoId));
       const qCentros = modoGlobal ? collection(db, "centros_duales") : query(collection(db, "centros_duales"), where("liceoId", "==", usuario.liceoId));
       const qEstudiantes = modoGlobal ? collection(db, "estudiantes") : query(collection(db, "estudiantes"), where("liceoId", "==", usuario.liceoId));
@@ -65,7 +89,12 @@ export default function VisitasPage() {
     }
   }
 
-  useEffect(() => { if (usuario) cargar(); }, [usuario, modoGlobal]);
+  useEffect(() => {
+    if (!usuario) return;
+    if (usuario.rol === "profesor" && ambito.cargando) return;
+    cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario, modoGlobal, ambito.cargando, ambito.idsEstudiantes, ambito.idsCentros]);
 
   function centroNombre(id: string): string {
     return centros.find((c) => c.id === id)?.nombre || "Centro no encontrado";

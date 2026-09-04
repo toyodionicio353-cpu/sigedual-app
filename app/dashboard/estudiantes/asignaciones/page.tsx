@@ -5,6 +5,8 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
+import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import type { Asignacion, CentroDual, EstadoAsignacion, Estudiante } from "@/types";
 import { CalendarCheck, Search, Eye, Handshake, CheckCircle2, Clock, School } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
@@ -42,6 +44,7 @@ export default function AsignacionesPage() {
   const modoGlobal = useModoGlobalAdmin();
   const { liceos } = useCatalogoLiceos(modoGlobal);
   const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
+  const ambito = useAmbitoProfesor();
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [centros, setCentros] = useState<CentroDual[]>([]);
@@ -50,12 +53,24 @@ export default function AsignacionesPage() {
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroLiceoId, setFiltroLiceoId] = useState("");
 
-  const puedeAgregar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
+  const puedeAgregar = usuario?.rol === "administrador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
 
   useEffect(() => {
     if (!usuario) return;
+    if (usuario.rol === "profesor" && ambito.cargando) return;
     async function cargar() {
       setLoading(true);
+      if (usuario!.rol === "profesor") {
+        const [estudiantesData, centrosData] = await Promise.all([
+          obtenerDocumentosPorId<Estudiante>("estudiantes", ambito.idsEstudiantes),
+          obtenerDocumentosPorId<CentroDual>("centros_duales", ambito.idsCentros),
+        ]);
+        setAsignaciones(ambito.asignaciones);
+        setEstudiantes(estudiantesData);
+        setCentros(centrosData);
+        setLoading(false);
+        return;
+      }
       const qAsig = modoGlobal ? collection(db, "asignaciones") : query(collection(db, "asignaciones"), where("liceoId", "==", usuario!.liceoId));
       const qEst = modoGlobal ? collection(db, "estudiantes") : query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId));
       const qCentros = modoGlobal ? collection(db, "centros_duales") : query(collection(db, "centros_duales"), where("liceoId", "==", usuario!.liceoId));
@@ -66,7 +81,8 @@ export default function AsignacionesPage() {
       setLoading(false);
     }
     cargar();
-  }, [usuario, modoGlobal]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario, modoGlobal, ambito.cargando, ambito.asignaciones, ambito.idsEstudiantes, ambito.idsCentros]);
 
   const estudiantePor = useMemo(() => new Map(estudiantes.map((e) => [e.id, e])), [estudiantes]);
   const centroPor = useMemo(() => new Map(centros.map((c) => [c.id, c])), [centros]);

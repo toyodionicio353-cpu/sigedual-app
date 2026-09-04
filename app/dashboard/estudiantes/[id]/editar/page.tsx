@@ -6,10 +6,13 @@ import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "fireb
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
+import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
+import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import EstudianteForm, { type EstudianteFormValues } from "../../_components/EstudianteForm";
 import Select from "@/components/ui/Select";
 import type { Estudiante, Especialidad, Liceo } from "@/types";
-import { ArrowLeft, Pencil, School } from "lucide-react";
+import { ArrowLeft, Pencil, School, ShieldAlert } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 
 export default function EditarEstudiantePage() {
@@ -26,6 +29,7 @@ export default function EditarEstudiantePage() {
   const [runsOcupados, setRunsOcupados] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
+  const [denegado, setDenegado] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [errorSistema, setErrorSistema] = useState("");
   const [mensaje, setMensaje] = useState("");
@@ -36,15 +40,31 @@ export default function EditarEstudiantePage() {
 
   const puedeEditar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
   const esAdministrador = usuario?.rol === "administrador";
+  const ambito = useAmbitoProfesor();
 
   useEffect(() => {
     if (!usuario || !id || !puedeEditar) return;
+    if (usuario.rol === "profesor" && ambito.cargando) return;
+    if (usuario.rol === "profesor" && !ambito.idsEstudiantes.includes(id)) {
+      setDenegado(true);
+      setLoading(false);
+      registrarEvento({
+        uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+        accion: "editar_estudiante", recurso: "estudiantes", recursoId: id,
+        resultado: "denegado", detalle: "Estudiante fuera del ámbito autorizado del profesor.",
+      });
+      return;
+    }
     async function cargar() {
       setLoading(true);
-      const [snapEst, snapEsp, snapTodos] = await Promise.all([
+      const [snapEst, snapEsp, estudiantesParaRun] = await Promise.all([
         getDoc(doc(db, "estudiantes", id)),
         getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
-        getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
+        usuario!.rol === "profesor"
+          ? obtenerDocumentosPorId<Estudiante>("estudiantes", ambito.idsEstudiantes)
+          : getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))).then(
+              (snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante))
+            ),
       ]);
       if (!snapEst.exists()) {
         setNoEncontrado(true);
@@ -76,15 +96,15 @@ export default function EditarEstudiantePage() {
       setHabilidades(e.habilidades ?? []);
       setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
       setRunsOcupados(
-        snapTodos.docs
-          .filter((d) => d.id !== id)
-          .map((d) => (d.data() as Estudiante).run)
+        estudiantesParaRun
+          .filter((est) => est.id !== id)
+          .map((est) => est.run)
       );
       setLoading(false);
     }
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario, id, puedeEditar]);
+  }, [usuario, id, puedeEditar, ambito.cargando, ambito.idsEstudiantes]);
 
   useEffect(() => {
     if (!esAdministrador) return;
@@ -165,6 +185,22 @@ export default function EditarEstudiantePage() {
     return (
       <div className="p-4 md:p-8">
         <p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p>
+      </div>
+    );
+  }
+
+  if (denegado) {
+    return (
+      <div className="p-4 md:p-8 max-w-3xl">
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
+          <ShieldAlert size={22} style={{ color: "var(--text-muted)" }} className="mx-auto mb-3" />
+          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Acceso denegado</p>
+          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Este estudiante no está dentro de tu ámbito autorizado.</p>
+          <Link href="/dashboard/estudiantes" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+            <ArrowLeft size={16} />
+            Volver al listado
+          </Link>
+        </div>
       </div>
     );
   }

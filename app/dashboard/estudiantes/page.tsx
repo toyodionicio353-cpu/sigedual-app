@@ -5,6 +5,8 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
+import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 import type { Estudiante, Especialidad } from "@/types";
@@ -68,6 +70,7 @@ export default function EstudiantesPage() {
   const modoGlobal = useModoGlobalAdmin();
   const { liceos } = useCatalogoLiceos(modoGlobal);
   const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
+  const ambito = useAmbitoProfesor();
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,25 +86,28 @@ export default function EstudiantesPage() {
 
   useEffect(() => {
     if (!usuario) return;
+    if (usuario.rol === "profesor" && ambito.cargando) return;
     cargar();
-  }, [usuario, modoGlobal]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario, modoGlobal, ambito.cargando, ambito.idsEstudiantes]);
 
   async function cargar() {
     if (!usuario) return;
     setLoading(true);
-    let q;
-    if (modoGlobal) {
-      q = collection(db, "estudiantes");
-    } else if (usuario.rol === "administrador" || usuario.rol === "coordinador" || usuario.rol === "director") {
-      q = query(collection(db, "estudiantes"), where("liceoId", "==", usuario.liceoId));
-    } else if (usuario.rol === "profesor") {
-      q = query(collection(db, "estudiantes"), where("profesorId", "==", usuario.uid));
-    } else {
-      q = query(collection(db, "estudiantes"), where("liceoId", "==", usuario.liceoId));
-    }
     const qEsp = modoGlobal
       ? collection(db, "especialidades")
       : query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId));
+    if (usuario.rol === "profesor") {
+      const [estudiantesData, snapEsp] = await Promise.all([
+        obtenerDocumentosPorId<Estudiante>("estudiantes", ambito.idsEstudiantes),
+        getDocs(qEsp),
+      ]);
+      setEstudiantes(estudiantesData);
+      setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
+      setLoading(false);
+      return;
+    }
+    const q = modoGlobal ? collection(db, "estudiantes") : query(collection(db, "estudiantes"), where("liceoId", "==", usuario.liceoId));
     const [snapEst, snapEsp] = await Promise.all([getDocs(q), getDocs(qEsp)]);
     setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
     setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
@@ -259,7 +265,9 @@ export default function EstudiantesPage() {
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             {modoGlobal
               ? "Estudiantes de todos los liceos. Usa el filtro \"Liceo\" para acotar a uno en particular."
-              : "Consulta y revisa los estudiantes registrados en SIGEDUAL."}
+              : usuario?.rol === "profesor"
+                ? "Estudiantes que tienes asignados como profesor supervisor."
+                : "Consulta y revisa los estudiantes registrados en SIGEDUAL."}
           </p>
         </div>
         {puedeAgregar && (

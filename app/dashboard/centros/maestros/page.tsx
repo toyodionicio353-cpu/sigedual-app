@@ -5,6 +5,8 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
+import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { estadoDisponibilidadMaestroGuia, disponibilidadMaestroGuiaDe, camposFaltantesMaestroGuia } from "@/lib/maestro-guia";
 import type { Asignacion, CentroDual, Especialidad, MaestroGuia } from "@/types";
 import { AlertCircle, ChevronRight, Search, SlidersHorizontal, X, UsersRound, School } from "lucide-react";
@@ -47,6 +49,7 @@ export default function ListaMaestrosGuiaPage() {
   const modoGlobal = useModoGlobalAdmin();
   const { liceos } = useCatalogoLiceos(modoGlobal);
   const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
+  const ambito = useAmbitoProfesor();
   const [maestros, setMaestros] = useState<MaestroGuia[]>([]);
   const [centros, setCentros] = useState<CentroDual[]>([]);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
@@ -70,9 +73,22 @@ export default function ListaMaestrosGuiaPage() {
     setLoading(true);
     setError(false);
     try {
+      const qEsp = modoGlobal ? collection(db, "especialidades") : query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId));
+      if (usuario.rol === "profesor") {
+        const [maestrosData, centrosData, snapEsp] = await Promise.all([
+          obtenerDocumentosPorId<MaestroGuia>("maestros_guia", ambito.idsMaestros),
+          obtenerDocumentosPorId<CentroDual>("centros_duales", ambito.idsCentros),
+          getDocs(qEsp),
+        ]);
+        setMaestros(maestrosData);
+        setCentros(centrosData);
+        setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
+        setAsignaciones(ambito.asignaciones);
+        setLoading(false);
+        return;
+      }
       const qMg = modoGlobal ? collection(db, "maestros_guia") : query(collection(db, "maestros_guia"), where("liceoId", "==", usuario.liceoId));
       const qCentros = modoGlobal ? collection(db, "centros_duales") : query(collection(db, "centros_duales"), where("liceoId", "==", usuario.liceoId));
-      const qEsp = modoGlobal ? collection(db, "especialidades") : query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId));
       const qAsig = modoGlobal ? collection(db, "asignaciones") : query(collection(db, "asignaciones"), where("liceoId", "==", usuario.liceoId));
       const [snapMg, snapCentros, snapEsp, snapAsig] = await Promise.all([
         getDocs(qMg), getDocs(qCentros), getDocs(qEsp), getDocs(qAsig),
@@ -89,7 +105,12 @@ export default function ListaMaestrosGuiaPage() {
     }
   }
 
-  useEffect(() => { if (usuario) cargar(); }, [usuario, modoGlobal]);
+  useEffect(() => {
+    if (!usuario) return;
+    if (usuario.rol === "profesor" && ambito.cargando) return;
+    cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario, modoGlobal, ambito.cargando, ambito.idsMaestros, ambito.idsCentros, ambito.asignaciones]);
 
   function centroDe(id: string): CentroDual | undefined {
     return centros.find((c) => c.id === id);

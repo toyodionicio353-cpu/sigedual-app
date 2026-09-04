@@ -5,6 +5,8 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
+import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { estadoEfectivo, disponibilidadDe, camposFaltantes } from "@/lib/compatibilidad";
 import type { Asignacion, CentroDual, EstadoCentroDual, Especialidad } from "@/types";
 import { Search, SlidersHorizontal, X, ChevronRight, ChevronLeft, AlertCircle, Building, School } from "lucide-react";
@@ -38,6 +40,7 @@ export default function CentrosPage() {
   const modoGlobal = useModoGlobalAdmin();
   const { liceos } = useCatalogoLiceos(modoGlobal);
   const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
+  const ambito = useAmbitoProfesor();
   const [centros, setCentros] = useState<CentroDual[]>([]);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
@@ -57,8 +60,21 @@ export default function CentrosPage() {
   async function cargar() {
     if (!usuario) return;
     setLoading(true);
-    const qCentros = modoGlobal ? collection(db, "centros_duales") : query(collection(db, "centros_duales"), where("liceoId", "==", usuario.liceoId));
     const qEsp = modoGlobal ? collection(db, "especialidades") : query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId));
+    if (usuario.rol === "profesor") {
+      const [centrosData, snapEsp] = await Promise.all([
+        obtenerDocumentosPorId<CentroDual>("centros_duales", ambito.idsCentros),
+        getDocs(qEsp),
+      ]);
+      setCentros(centrosData);
+      setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
+      // Disponibilidad/ocupación se calcula solo con las asignaciones propias del
+      // profesor: las reglas de Firestore no le permiten leer las de sus colegas.
+      setAsignaciones(ambito.asignaciones);
+      setLoading(false);
+      return;
+    }
+    const qCentros = modoGlobal ? collection(db, "centros_duales") : query(collection(db, "centros_duales"), where("liceoId", "==", usuario.liceoId));
     const qAsig = modoGlobal ? collection(db, "asignaciones") : query(collection(db, "asignaciones"), where("liceoId", "==", usuario.liceoId));
     const [snapCentros, snapEsp, snapAsig] = await Promise.all([getDocs(qCentros), getDocs(qEsp), getDocs(qAsig)]);
     setCentros(snapCentros.docs.map((d) => ({ id: d.id, ...d.data() } as CentroDual)));
@@ -67,7 +83,12 @@ export default function CentrosPage() {
     setLoading(false);
   }
 
-  useEffect(() => { if (usuario) cargar(); }, [usuario, modoGlobal]);
+  useEffect(() => {
+    if (!usuario) return;
+    if (usuario.rol === "profesor" && ambito.cargando) return;
+    cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario, modoGlobal, ambito.cargando, ambito.idsCentros, ambito.asignaciones]);
 
   function especialidadNombre(id: string): string {
     return especialidades.find((e) => e.id === id)?.nombre || id;

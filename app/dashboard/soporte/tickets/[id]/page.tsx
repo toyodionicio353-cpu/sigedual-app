@@ -8,6 +8,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { crearNotificacion } from "@/lib/notificaciones/crearNotificacion";
+import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import {
   ESTADO_TICKET_LABEL, ESTADO_TICKET_COLOR, PRIORIDAD_TICKET_LABEL, PRIORIDAD_TICKET_COLOR,
   TIPO_TICKET_LABEL, numeroTicket,
@@ -114,6 +115,13 @@ export default function DetalleTicketPage() {
     if (nuevo === "cerrado") cambios.cerradoEn = new Date().toISOString();
     await updateDoc(doc(db, "tickets", ticket.id), cambios);
     setTicket((t) => (t ? { ...t, ...cambios } as Ticket : t));
+    if (usuario) {
+      registrarEvento({
+        uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+        accion: "cambiar_estado_ticket", recurso: "tickets", recursoId: ticket.id,
+        resultado: "permitido", detalle: `${numeroTicket(ticket.numero)} → ${nuevo}`,
+      });
+    }
     if (usuario && ticket.creadoPor !== usuario.uid && (nuevo === "resuelto" || nuevo === "cerrado")) {
       await crearNotificacion({
         destinatarioUid: ticket.creadoPor,
@@ -131,6 +139,13 @@ export default function DetalleTicketPage() {
     if (!ticket) return;
     await updateDoc(doc(db, "tickets", ticket.id), { prioridad: nueva, actualizadoEn: new Date().toISOString() });
     setTicket((t) => (t ? { ...t, prioridad: nueva } : t));
+    if (usuario) {
+      registrarEvento({
+        uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+        accion: "cambiar_prioridad_ticket", recurso: "tickets", recursoId: ticket.id,
+        resultado: "permitido", detalle: `${numeroTicket(ticket.numero)} → ${nueva}`,
+      });
+    }
   }
 
   async function asignar(uid: string) {
@@ -140,6 +155,13 @@ export default function DetalleTicketPage() {
     if (uid) { cambios.asignadoA = uid; cambios.asignadoANombre = admin?.nombre ?? ""; }
     await updateDoc(doc(db, "tickets", ticket.id), cambios);
     setTicket((t) => (t ? { ...t, asignadoA: uid || undefined, asignadoANombre: admin?.nombre } : t));
+    if (usuario) {
+      registrarEvento({
+        uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+        accion: "asignar_ticket", recurso: "tickets", recursoId: ticket.id,
+        resultado: "permitido", detalle: `${numeroTicket(ticket.numero)} → ${admin?.nombre ?? "sin asignar"}`,
+      });
+    }
   }
 
   if (cargando) {
