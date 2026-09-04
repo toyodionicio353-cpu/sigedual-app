@@ -32,6 +32,9 @@ const TITULOS: Record<string, string> = {
   "/dashboard/usuarios": "Usuarios",
   "/dashboard/liceos": "Liceos",
   "/dashboard/administracion/seguridad": "Seguridad",
+  "/dashboard/administracion/usuario": "Usuario",
+  "/dashboard/administracion/configuracion": "Configuración",
+  "/dashboard/administracion/privacidad": "Políticas de privacidad",
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
