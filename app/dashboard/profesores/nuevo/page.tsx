@@ -1,16 +1,18 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearRut, validarRut } from "@/lib/rut";
 import TituloPagina from "@/components/TituloPagina";
+import Select from "@/components/ui/Select";
 import { UserPlus } from "lucide-react";
 import { useAdvertenciaLiceoGlobal } from "@/lib/liceos/useAdvertenciaLiceoGlobal";
 import ModalAdvertenciaLiceo from "@/components/liceos/ModalAdvertenciaLiceo";
+import type { Especialidad } from "@/types";
 
 export default function AgregarProfesorPage() {
   const { usuario } = useAuth();
@@ -22,8 +24,24 @@ export default function AgregarProfesorPage() {
   const [password, setPassword] = useState("");
   const [run, setRun] = useState("");
   const [especialidad, setEspecialidad] = useState("");
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
+  const [cargandoEspecialidades, setCargandoEspecialidades] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!usuario) return;
+    setCargandoEspecialidades(true);
+    getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId))).then((snap) => {
+      setEspecialidades(
+        snap.docs
+          .map((d) => ({ id: d.id, ...d.data() } as Especialidad))
+          .filter((e) => e.estado !== "inactiva")
+          .sort((a, b) => a.nombre.localeCompare(b.nombre))
+      );
+      setCargandoEspecialidades(false);
+    });
+  }, [usuario]);
 
   if (usuario && usuario.rol !== "administrador") {
     return (
@@ -105,9 +123,19 @@ export default function AgregarProfesorPage() {
         </div>
         <div>
           <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Especialidad (opcional)</label>
-          <input value={especialidad} onChange={(e) => setEspecialidad(e.target.value)} placeholder="Contabilidad"
-            style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-            className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
+          {!cargandoEspecialidades && especialidades.length === 0 ? (
+            <p style={{ color: "var(--text-muted)" }} className="text-xs">
+              Este liceo todavía no tiene especialidades registradas. Agrégalas en "Especialidades" antes de asignar una.
+            </p>
+          ) : (
+            <Select
+              value={especialidad}
+              onChange={setEspecialidad}
+              ariaLabel="Especialidad"
+              disabled={cargandoEspecialidades}
+              opciones={[{ value: "", label: "Sin especialidad" }, ...especialidades.map((e) => ({ value: e.nombre, label: e.nombre }))]}
+            />
+          )}
         </div>
 
         <div className="flex justify-end mt-2">
