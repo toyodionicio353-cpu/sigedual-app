@@ -120,21 +120,11 @@ export default function FichaAsignacionPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-3xl">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-        <div>
-          <TituloPagina icon={<CalendarCheck size={28} />}>Ficha de asignación</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-            {estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : "Estudiante no encontrado"} — {centro?.nombre ?? "Centro no encontrado"}
-          </p>
-        </div>
-        <Link
-          href="/dashboard/estudiantes/asignaciones"
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
-        >
-          <ArrowLeft size={16} />
-          Volver al listado
-        </Link>
+      <div className="mb-6">
+        <TituloPagina icon={<CalendarCheck size={28} />}>Ficha de asignación</TituloPagina>
+        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+          {estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : "Estudiante no encontrado"} — {centro?.nombre ?? "Centro no encontrado"}
+        </p>
       </div>
 
       <div className="flex items-center gap-3 mb-6">

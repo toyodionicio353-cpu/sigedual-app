@@ -7,7 +7,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import LiceoForm, { LICEO_FORM_VACIO, type LiceoFormValues, type EspecialidadForm } from "../_components/LiceoForm";
 import type { Liceo } from "@/types";
-import { ArrowLeft, CheckCircle2, Eye, School } from "lucide-react";
+import { CheckCircle2, Eye, School } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 
 export default function AgregarLiceoPage() {
@@ -60,21 +60,11 @@ export default function AgregarLiceoPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-4xl">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-        <div>
-          <TituloPagina icon={<School size={28} />}>Agregar liceo</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-            Registra y configura un nuevo establecimiento en SIGEDUAL.
-          </p>
-        </div>
-        <Link
-          href="/dashboard/liceos"
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
-        >
-          <ArrowLeft size={16} />
-          Volver al listado
-        </Link>
+      <div className="mb-6">
+        <TituloPagina icon={<School size={28} />}>Agregar liceo</TituloPagina>
+        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+          Registra y configura un nuevo establecimiento en SIGEDUAL.
+        </p>
       </div>
 
       {errorSistema && (

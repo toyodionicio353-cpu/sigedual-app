@@ -372,21 +372,11 @@ export default function NuevaAsignacionPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-4xl">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-        <div>
-          <TituloPagina icon={<CalendarCheck size={28} />}>Nueva asignación</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-            {modo === "grupo" ? "Filtra un grupo de estudiantes y SIGEDUAL sugerirá un centro dual compatible para cada uno." : "Selecciona un estudiante y SIGEDUAL recomendará los centros duales más compatibles."}
-          </p>
-        </div>
-        <Link
-          href="/dashboard/estudiantes/asignaciones"
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
-        >
-          <ArrowLeft size={16} />
-          Volver al listado
-        </Link>
+      <div className="mb-6">
+        <TituloPagina icon={<CalendarCheck size={28} />}>Nueva asignación</TituloPagina>
+        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+          {modo === "grupo" ? "Filtra un grupo de estudiantes y SIGEDUAL sugerirá un centro dual compatible para cada uno." : "Selecciona un estudiante y SIGEDUAL recomendará los centros duales más compatibles."}
+        </p>
       </div>
 
       {/* Selector de modo */}

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import Sidebar from "@/components/Sidebar";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Bell, Building2, LogOut } from "lucide-react";
+import { Bell, Building2, LogOut, ArrowLeft } from "lucide-react";
 
 const TITULOS: Record<string, string> = {
   "/dashboard": "Inicio",
@@ -97,6 +97,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <Image src="/logo-icon.png" alt="Abrir menú" width={24} height={24} className="object-contain" />
             </button>
+
+            {/* Volver: navega a la página anterior. Se oculta en el inicio, que no tiene "atrás". */}
+            {pathname !== "/dashboard" && (
+              <button
+                onClick={() => router.back()}
+                style={{ color: "var(--accent)", borderRadius: 8 }}
+                className="p-1.5 hover:[background:var(--hover-overlay)] transition-colors flex-shrink-0"
+                title="Volver"
+              >
+                <ArrowLeft size={20} />
+              </button>
+            )}
 
             {/* Título */}
             <h2 style={{ color: "var(--text-primary)", fontFamily: "var(--font-display), sans-serif" }} className="text-xl font-bold tracking-tight truncate">{titulo}</h2>

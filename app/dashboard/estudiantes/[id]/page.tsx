@@ -120,15 +120,7 @@ export default function FichaEstudiantePage() {
 
   return (
     <div className="p-4 md:p-8 max-w-5xl">
-      <div className="flex items-center justify-between gap-3 mb-6">
-        <Link
-          href="/dashboard/estudiantes"
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"
-        >
-          <ArrowLeft size={16} />
-          Volver al listado
-        </Link>
+      <div className="flex items-center justify-end gap-3 mb-6">
         {(usuario?.rol === "administrador" || usuario?.rol === "profesor") && (
           <div className="flex gap-3">
             <button
