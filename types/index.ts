@@ -10,6 +10,13 @@ export interface Usuario {
   liceoId: string;
   activo: boolean;
   creadoEn: string;
+  // Solo poblados cuando rol === "centro_dual": vinculan esta cuenta de
+  // acceso al Maestro Guía/Centro Dual que representa (ver "Crear acceso"
+  // en la ficha de Maestro Guía). centroDualId se denormaliza desde
+  // MaestroGuia.centroDualId para que las reglas de Firestore no necesiten
+  // un get() adicional.
+  maestroGuiaId?: string;
+  centroDualId?: string;
   // Datos personales de "Mi perfil" — el propio usuario los administra.
   avatarUrl?: string;
   fechaNacimiento?: string;

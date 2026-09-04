@@ -178,7 +178,7 @@ service cloud.firestore {
     match /estudiantes/{id} {
       allow read: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
-        || (datosUsuario().rol == 'profesor' && tieneAutorizacion('estudiante', id))
+        || (datosUsuario().rol in ['profesor', 'centro_dual'] && tieneAutorizacion('estudiante', id))
       );
       allow create: if request.auth != null && (
         datosUsuario().rol == 'administrador'
@@ -186,7 +186,7 @@ service cloud.firestore {
       );
       allow update: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
-        || (datosUsuario().rol == 'profesor' && tieneAutorizacion('estudiante', id))
+        || (datosUsuario().rol in ['profesor', 'centro_dual'] && tieneAutorizacion('estudiante', id))
       );
       // Eliminar un estudiante es una acción administrativa, no de supervisión.
       allow delete: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
@@ -196,6 +196,7 @@ service cloud.firestore {
       allow read: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
         || resource.data.profesorSupervisorId == request.auth.uid
+        || (datosUsuario().rol == 'centro_dual' && resource.data.maestroGuiaId == datosUsuario().maestroGuiaId)
       );
       // Crear una asignación requiere ver y elegir entre TODOS los
       // estudiantes/centros del liceo todavía sin asignar — visión que un
@@ -217,6 +218,7 @@ service cloud.firestore {
       allow read: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
         || (datosUsuario().rol == 'profesor' && tieneAutorizacion('centro', id))
+        || (datosUsuario().rol == 'centro_dual' && datosUsuario().centroDualId == id)
       );
       allow create: if request.auth != null && (
         datosUsuario().rol == 'administrador'
@@ -233,6 +235,7 @@ service cloud.firestore {
       allow read: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
         || (datosUsuario().rol == 'profesor' && tieneAutorizacion('maestro', id))
+        || (datosUsuario().rol == 'centro_dual' && datosUsuario().maestroGuiaId == id)
       );
       allow create: if request.auth != null && (
         datosUsuario().rol == 'administrador'
@@ -276,7 +279,10 @@ service cloud.firestore {
       );
       allow create: if request.auth != null
         && (request.resource.data.profesorUid == request.auth.uid || esAccesoCompletoLiceo(request.resource.data.liceoId))
-        && get(/databases/$(database)/documents/asignaciones/$(request.resource.data.asignacionId)).data.profesorSupervisorId == request.resource.data.profesorUid;
+        && (
+          get(/databases/$(database)/documents/asignaciones/$(request.resource.data.asignacionId)).data.profesorSupervisorId == request.resource.data.profesorUid
+          || (datosUsuario().rol == 'centro_dual' && get(/databases/$(database)/documents/asignaciones/$(request.resource.data.asignacionId)).data.maestroGuiaId == datosUsuario().maestroGuiaId)
+        );
       allow update: if request.auth != null
         && (request.resource.data.profesorUid == request.auth.uid || esAccesoCompletoLiceo(request.resource.data.liceoId));
       allow delete: if request.auth != null
