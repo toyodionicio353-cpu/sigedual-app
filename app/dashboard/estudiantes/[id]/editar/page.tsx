@@ -7,8 +7,8 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
 import EstudianteForm, { type EstudianteFormValues } from "../../_components/EstudianteForm";
-import type { Estudiante, Especialidad } from "@/types";
-import { ArrowLeft, Pencil } from "lucide-react";
+import type { Estudiante, Especialidad, Liceo } from "@/types";
+import { ArrowLeft, Pencil, School } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 
 export default function EditarEstudiantePage() {
@@ -28,8 +28,13 @@ export default function EditarEstudiantePage() {
   const [guardando, setGuardando] = useState(false);
   const [errorSistema, setErrorSistema] = useState("");
   const [mensaje, setMensaje] = useState("");
+  const [liceos, setLiceos] = useState<Liceo[]>([]);
+  const [liceoSeleccionado, setLiceoSeleccionado] = useState("");
+  const [cambiandoLiceo, setCambiandoLiceo] = useState(false);
+  const [mensajeLiceo, setMensajeLiceo] = useState("");
 
   const puedeEditar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
+  const esAdministrador = usuario?.rol === "administrador";
 
   useEffect(() => {
     if (!usuario || !id || !puedeEditar) return;
@@ -47,6 +52,7 @@ export default function EditarEstudiantePage() {
       }
       const e = { id: snapEst.id, ...snapEst.data() } as Estudiante;
       setEstudianteOriginal(e);
+      setLiceoSeleccionado(e.liceoId);
       setValores({
         run: e.run ?? "", nombres: e.nombres ?? "",
         apellidoPaterno: e.apellidoPaterno ?? "", apellidoMaterno: e.apellidoMaterno ?? "",
@@ -77,6 +83,29 @@ export default function EditarEstudiantePage() {
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario, id, puedeEditar]);
+
+  useEffect(() => {
+    if (!esAdministrador) return;
+    getDocs(collection(db, "liceos")).then((snap) => {
+      setLiceos(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Liceo)));
+    });
+  }, [esAdministrador]);
+
+  async function cambiarLiceo() {
+    if (!liceoSeleccionado || !estudianteOriginal || cambiandoLiceo) return;
+    setCambiandoLiceo(true);
+    setMensajeLiceo("");
+    try {
+      await updateDoc(doc(db, "estudiantes", id), { liceoId: liceoSeleccionado, actualizadoEn: new Date().toISOString() });
+      setEstudianteOriginal({ ...estudianteOriginal, liceoId: liceoSeleccionado });
+      setMensajeLiceo("Liceo actualizado correctamente.");
+    } catch (err) {
+      const detalle = err instanceof Error ? err.message : String(err);
+      setMensajeLiceo(`No se pudo cambiar el liceo. (${detalle})`);
+    } finally {
+      setCambiandoLiceo(false);
+    }
+  }
 
   const runsOcupadosMemo = useMemo(() => runsOcupados, [runsOcupados]);
 
@@ -187,6 +216,39 @@ export default function EditarEstudiantePage() {
       {errorSistema && (
         <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-4 py-3 mb-6">
           <p style={{ color: "var(--danger)" }} className="text-sm font-medium">{errorSistema}</p>
+        </div>
+      )}
+
+      {esAdministrador && (
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6 mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <School size={16} style={{ color: "var(--accent-light)" }} />
+            <h3 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">Liceo asignado</h3>
+          </div>
+          <p style={{ color: "var(--text-muted)" }} className="text-xs mb-4">
+            Solo el administrador puede mover un estudiante a otro liceo (ej. si quedó asignado por error).
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <select
+              value={liceoSeleccionado}
+              onChange={(e) => setLiceoSeleccionado(e.target.value)}
+              style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+              className="flex-1 px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
+            >
+              {liceos.map((l) => <option key={l.id} value={l.id}>{l.nombre}</option>)}
+            </select>
+            <button
+              onClick={cambiarLiceo}
+              disabled={cambiandoLiceo || liceoSeleccionado === estudianteOriginal?.liceoId}
+              style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+              className="px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex-shrink-0"
+            >
+              {cambiandoLiceo ? "Guardando..." : "Guardar liceo"}
+            </button>
+          </div>
+          {mensajeLiceo && (
+            <p style={{ color: mensajeLiceo.startsWith("No se pudo") ? "var(--danger)" : "var(--success)" }} className="text-xs mt-2">{mensajeLiceo}</p>
+          )}
         </div>
       )}
 
