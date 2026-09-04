@@ -6,7 +6,8 @@ import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "fireb
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearFecha } from "@/lib/fecha";
-import type { Asignacion, EstadoAsignacion, Estudiante, Usuario } from "@/types";
+import { estadoCanonico, fechaProgramadaDe, ESTADO_VISITA_LABEL, ESTADO_VISITA_COLOR } from "@/lib/visitas/normalizar";
+import type { Asignacion, EstadoAsignacion, Estudiante, CentroDual, Visita, Usuario } from "@/types";
 import { ArrowLeft, Pencil, Power, MapPin, ClipboardCheck } from "lucide-react";
 
 const ESTADO_ASIGNACION_LABEL: Record<EstadoAsignacion, string> = {
@@ -39,6 +40,8 @@ export default function FichaProfesorPage() {
   const [profesor, setProfesor] = useState<Usuario | null>(null);
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [visitas, setVisitas] = useState<Visita[]>([]);
+  const [centros, setCentros] = useState<CentroDual[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [noEncontrado, setNoEncontrado] = useState(false);
@@ -67,6 +70,23 @@ export default function FichaProfesorPage() {
         ]);
         setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
         setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
+
+        const [snapVisitasNuevas, snapVisitasLegado] = await Promise.all([
+          getDocs(query(collection(db, "visitas"), where("profesorSupervisorId", "==", uid))),
+          getDocs(query(collection(db, "visitas"), where("profesorId", "==", uid))),
+        ]);
+        const visitasMap = new Map<string, Visita>();
+        for (const d of [...snapVisitasNuevas.docs, ...snapVisitasLegado.docs]) {
+          visitasMap.set(d.id, { id: d.id, ...d.data() } as Visita);
+        }
+        const listaVisitas = Array.from(visitasMap.values());
+        setVisitas(listaVisitas);
+
+        const centroIds = Array.from(new Set(listaVisitas.map((v) => v.centroDualId).filter(Boolean)));
+        if (centroIds.length > 0) {
+          const snapsCentros = await Promise.all(centroIds.map((cid) => getDoc(doc(db, "centros_duales", cid))));
+          setCentros(snapsCentros.filter((s) => s.exists()).map((s) => ({ id: s.id, ...s.data() } as CentroDual)));
+        }
       } catch (err) {
         console.error("Error al cargar ficha de profesor:", err);
         setError(true);
@@ -222,10 +242,37 @@ export default function FichaProfesorPage() {
       )}
 
       <Bloque titulo="Visitas" id="visitas">
-        <div className="flex items-start gap-2">
-          <MapPin size={15} style={{ color: "var(--text-muted)" }} className="flex-shrink-0 mt-0.5" />
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm">SIGEDUAL todavía no tiene un módulo de registro de visitas para profesores supervisores.</p>
-        </div>
+        {visitas.length === 0 ? (
+          <div className="flex items-start gap-2">
+            <MapPin size={15} style={{ color: "var(--text-muted)" }} className="flex-shrink-0 mt-0.5" />
+            <p style={{ color: "var(--text-secondary)" }} className="text-sm">Sin visitas registradas para este profesor supervisor.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {[...visitas]
+              .sort((a, b) => fechaProgramadaDe(b).localeCompare(fechaProgramadaDe(a)))
+              .map((v) => {
+                const centro = centros.find((c) => c.id === v.centroDualId);
+                const estado = estadoCanonico(v.estado);
+                return (
+                  <Link
+                    key={v.id}
+                    href={`/dashboard/visitas/${v.id}`}
+                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
+                    className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:[border-color:var(--accent)] transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium truncate">{centro?.nombre || "Centro dual no encontrado"}</p>
+                      <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{formatearFecha(fechaProgramadaDe(v))}</p>
+                    </div>
+                    <span style={{ color: ESTADO_VISITA_COLOR[estado], background: ESTADO_VISITA_COLOR[estado] + "22" }} className="px-2.5 py-1 rounded-full text-xs font-medium flex-shrink-0">
+                      {ESTADO_VISITA_LABEL[estado]}
+                    </span>
+                  </Link>
+                );
+              })}
+          </div>
+        )}
       </Bloque>
 
       <Bloque titulo="Evaluaciones" id="evaluaciones">
