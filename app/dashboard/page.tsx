@@ -10,8 +10,7 @@ import { ROL_LABEL } from "@/lib/roles";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
-import { estadoEfectivo, camposFaltantes } from "@/lib/compatibilidad";
-import { camposFaltantesMaestroGuia } from "@/lib/maestro-guia";
+import { estadoEfectivo } from "@/lib/compatibilidad";
 import { formatearFecha } from "@/lib/fecha";
 import { estadoCanonico, fechaProgramadaDe, horaProgramadaDe } from "@/lib/visitas/normalizar";
 import { useNotificaciones } from "@/lib/notificaciones/useNotificaciones";
@@ -21,8 +20,8 @@ import MapaDualCard from "./_inicio/MapaDualCard";
 import type { Asignacion, CentroDual, Estudiante, MaestroGuia, Rol, Ticket, Usuario, Visita } from "@/types";
 import {
   Users, Building2, BookOpen, UsersRound, CalendarCheck, MapPin, ArrowRight, Pin,
-  UserPlus, Building, FileText, LifeBuoy, AlertTriangle, Bell, CalendarDays,
-  ChevronRight, School, UserCheck,
+  UserPlus, Building, FileText, LifeBuoy, Bell, CalendarDays,
+  School, UserCheck,
 } from "lucide-react";
 
 interface Stat {
@@ -196,35 +195,6 @@ export default function DashboardPage() {
   ];
   const accionesVisibles = acciones.filter((a) => usuario && a.roles.includes(usuario.rol));
 
-  const requiereAtencion = useMemo(() => {
-    const items: { id: string; texto: string; href: string }[] = [];
-    if (estudiantesSinAsignacion.length > 0) {
-      items.push({ id: "sin-asignacion", texto: `${estudiantesSinAsignacion.length} estudiante(s) sin empresa asignada`, href: "/dashboard/estudiantes/asignaciones" });
-    }
-    const asignacionesVencidas = asignaciones.filter((a) => (a.estado === "asignada" || a.estado === "activa") && a.fechaTermino && a.fechaTermino < hoy);
-    if (asignacionesVencidas.length > 0) {
-      items.push({ id: "asig-vencidas", texto: `${asignacionesVencidas.length} asignación(es) con fecha de término vencida`, href: "/dashboard/estudiantes/asignaciones" });
-    }
-    if (visitasAtrasadas.length > 0) {
-      items.push({ id: "visitas-atrasadas", texto: `${visitasAtrasadas.length} visita(s) programada(s) atrasada(s)`, href: "/dashboard/visitas" });
-    }
-    const centrosIncompletos = centros.filter((c) => camposFaltantes(c).length > 0);
-    if (centrosIncompletos.length > 0) {
-      items.push({ id: "centros-incompletos", texto: `${centrosIncompletos.length} empresa(s) dual(es) con información incompleta`, href: "/dashboard/centros" });
-    }
-    const maestrosIncompletos = maestros.filter((m) => camposFaltantesMaestroGuia(m, centros.some((c) => c.id === m.centroDualId)).length > 0);
-    if (maestrosIncompletos.length > 0) {
-      items.push({ id: "maestros-incompletos", texto: `${maestrosIncompletos.length} maestro(s) guía con información incompleta`, href: "/dashboard/centros/maestros" });
-    }
-    if (esAdmin) {
-      const ticketsCriticos = tickets.filter((t) => t.prioridad === "critica" && ESTADOS_TICKET_ABIERTOS.includes(t.estado));
-      if (ticketsCriticos.length > 0) {
-        items.push({ id: "tickets-criticos", texto: `${ticketsCriticos.length} ticket(s) crítico(s) abierto(s)`, href: "/dashboard/administracion/tickets" });
-      }
-    }
-    return items;
-  }, [estudiantesSinAsignacion, asignaciones, visitasAtrasadas, centros, maestros, tickets, esAdmin, hoy]);
-
   const proximasActividades = useMemo(() => {
     function estudianteNombre(id: string) {
       const e = estudiantes.find((e) => e.id === id);
@@ -309,30 +279,6 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Columna principal */}
         <div className="lg:col-span-2 flex flex-col gap-5">
-          {/* Requiere atención */}
-          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle size={16} style={{ color: "var(--warning)" }} />
-              <h2 style={{ color: "var(--text-primary)" }} className="text-sm font-bold">Requiere atención</h2>
-            </div>
-            {requiereAtencion.length === 0 ? (
-              <p style={{ color: "var(--text-muted)" }} className="text-sm">Sin acciones pendientes.</p>
-            ) : (
-              <div className="flex flex-col">
-                {requiereAtencion.map((item, i) => (
-                  <Link key={item.id} href={item.href}
-                    style={{ borderTop: i > 0 ? "1px solid var(--border)" : "none" }}
-                    className="flex items-center justify-between gap-3 py-2.5 hover:[opacity:0.8] transition-opacity">
-                    <p style={{ color: "var(--text-primary)" }} className="text-sm">{item.texto}</p>
-                    <span style={{ color: "var(--accent-light)" }} className="text-xs font-semibold flex items-center gap-1 flex-shrink-0">
-                      Revisar <ChevronRight size={13} />
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Próximas actividades */}
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="p-5">
             <div className="flex items-center justify-between mb-3">
