@@ -2,12 +2,16 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import type { InvitacionEmpresa, RespuestaInvitacion, CentroDual, EstadoInvitacion } from "@/types";
-import { ArrowLeft, Building2, User2, Sparkles, ClipboardCheck, Users2, CheckCircle2, AlertTriangle } from "lucide-react";
+import type { InvitacionEmpresa, RespuestaInvitacion, CentroDual, EstadoInvitacion, Especialidad } from "@/types";
+import {
+  ArrowLeft, Building2, User2, Sparkles, ClipboardCheck, Users2, CheckCircle2, AlertTriangle, MoreVertical, Wand2,
+} from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import CentroDualForm, { CENTRO_FORM_VACIO, type CentroDualFormValues } from "../../_components/CentroDualForm";
+import MaestroGuiaForm, { MAESTRO_GUIA_FORM_VACIO, type MaestroGuiaFormValues } from "../../maestros/_components/MaestroGuiaForm";
 
 const ESTADO_LABEL: Record<EstadoInvitacion, string> = {
   generado: "Generado", abierto: "Abierto por la empresa", enviado: "Enviado por la empresa",
@@ -35,6 +39,46 @@ function Dato({ label, valor }: { label: string; valor?: string | number | null 
   );
 }
 
+function valoresCentroDesdeRespuesta(r: RespuestaInvitacion): CentroDualFormValues {
+  return {
+    ...CENTRO_FORM_VACIO,
+    nombre: r.empresa.razonSocial ?? "",
+    rut: r.empresa.rut ?? "",
+    razonSocial: r.empresa.razonSocial ?? "",
+    nombreComercial: r.empresa.nombreFantasia ?? "",
+    direccion: r.empresa.direccion ?? "",
+    comuna: r.empresa.comuna ?? "",
+    region: r.empresa.region ?? "",
+    telefono: r.empresa.telefono ?? "",
+    email: r.empresa.email ?? "",
+    sitioWeb: r.empresa.sitioWeb ?? "",
+    contactoNombre: r.empresa.contactoNombre ?? "",
+    contactoCargo: r.empresa.contactoCargo ?? "",
+    contactoTelefono: r.empresa.contactoTelefono ?? "",
+    contactoEmail: r.empresa.contactoEmail ?? "",
+    capacidad: r.capacidad.cantidadEstudiantes != null ? String(r.capacidad.cantidadEstudiantes) : "",
+  };
+}
+
+function valoresMaestroDesdeRespuesta(m: RespuestaInvitacion["maestrosGuia"][number]): MaestroGuiaFormValues {
+  const notasEmpresa = [
+    m.experiencia ? `Experiencia (según la empresa): ${m.experiencia}` : "",
+    m.especialidad ? `Especialidad indicada: ${m.especialidad}` : "",
+    m.disponibilidad ? `Disponibilidad: ${m.disponibilidad}` : "",
+    m.observaciones ?? "",
+  ].filter(Boolean).join("\n");
+  return {
+    ...MAESTRO_GUIA_FORM_VACIO,
+    nombres: m.nombreCompleto,
+    run: m.run ?? "",
+    email: m.email ?? "",
+    telefono: m.telefono ?? "",
+    cargo: m.cargo ?? "",
+    area: m.area ?? "",
+    observaciones: notasEmpresa,
+  };
+}
+
 export default function VistaPreviaInvitacionPage() {
   const { id } = useParams<{ id: string }>();
   const { usuario } = useAuth();
@@ -42,8 +86,20 @@ export default function VistaPreviaInvitacionPage() {
   const [invitacion, setInvitacion] = useState<InvitacionEmpresa | null>(null);
   const [respuesta, setRespuesta] = useState<RespuestaInvitacion | null>(null);
   const [centroExistente, setCentroExistente] = useState<CentroDual | null>(null);
+  const [centroResultado, setCentroResultado] = useState<CentroDual | null>(null);
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
+
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [mostrarFormCentro, setMostrarFormCentro] = useState(false);
+  const [guardandoCentro, setGuardandoCentro] = useState(false);
+  const [errorCentro, setErrorCentro] = useState("");
+
+  const [maestroActivoIdx, setMaestroActivoIdx] = useState<number | null>(null);
+  const [guardandoMaestro, setGuardandoMaestro] = useState(false);
+  const [errorMaestro, setErrorMaestro] = useState("");
+  const [maestrosProcesados, setMaestrosProcesados] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!usuario || !id) return;
@@ -55,12 +111,16 @@ export default function VistaPreviaInvitacionPage() {
         setLoading(false);
         return;
       }
-      setInvitacion({ id: snapInv.id, ...snapInv.data() } as InvitacionEmpresa);
+      const inv = { id: snapInv.id, ...snapInv.data() } as InvitacionEmpresa;
+      setInvitacion(inv);
 
       const snapResp = await getDoc(doc(db, "respuestas_invitacion", id));
       if (snapResp.exists()) {
         setRespuesta({ id: snapResp.id, ...snapResp.data() } as RespuestaInvitacion);
       }
+
+      const snapEsp = await getDocs(query(collection(db, "especialidades"), where("liceoId", "==", inv.liceoId)));
+      setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
 
       try {
         const token = await auth.currentUser?.getIdToken();
@@ -75,10 +135,77 @@ export default function VistaPreviaInvitacionPage() {
         // La comparación con SIGEDUAL es informativa — su falla no bloquea la revisión.
       }
 
+      if (inv.centroDualIdResultado) {
+        const snapCentro = await getDoc(doc(db, "centros_duales", inv.centroDualIdResultado));
+        if (snapCentro.exists()) setCentroResultado({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
+      }
+
       setLoading(false);
     }
     cargar();
   }, [usuario, id]);
+
+  async function guardarCentro(
+    valores: CentroDualFormValues,
+    especialidadesSel: string[],
+    areas: string[],
+    caracteristicas: string[],
+    habilidades: string[]
+  ) {
+    if (guardandoCentro) return;
+    setGuardandoCentro(true);
+    setErrorCentro("");
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch(`/api/invitaciones/${id}/autorellenar-centro`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          centroDualIdExistente: centroExistente?.id,
+          valores, especialidades: especialidadesSel, areas, caracteristicas, habilidades,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorCentro(data.error ?? "No fue posible guardar el centro dual.");
+        return;
+      }
+      const snapCentro = await getDoc(doc(db, "centros_duales", data.centroDualId));
+      if (snapCentro.exists()) setCentroResultado({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
+      setInvitacion((inv) => (inv ? { ...inv, estado: "procesado", centroDualIdResultado: data.centroDualId } : inv));
+      setMostrarFormCentro(false);
+    } catch (err) {
+      setErrorCentro(err instanceof Error ? err.message : "No fue posible conectar con el servidor.");
+    } finally {
+      setGuardandoCentro(false);
+    }
+  }
+
+  async function guardarMaestro(valores: MaestroGuiaFormValues, centroDualId: string, especialidadesSel: string[], areas: string[]) {
+    if (guardandoMaestro || maestroActivoIdx === null) return;
+    setGuardandoMaestro(true);
+    setErrorMaestro("");
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch(`/api/invitaciones/${id}/autorellenar-maestro`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ centroDualId, valores, especialidades: especialidadesSel, areas }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMaestro(data.error ?? "No fue posible guardar el maestro guía.");
+        return;
+      }
+      const maestroId = respuesta?.maestrosGuia[maestroActivoIdx]?.id;
+      if (maestroId) setMaestrosProcesados((set) => new Set(set).add(maestroId));
+      setMaestroActivoIdx(null);
+    } catch (err) {
+      setErrorMaestro(err instanceof Error ? err.message : "No fue posible conectar con el servidor.");
+    } finally {
+      setGuardandoMaestro(false);
+    }
+  }
 
   if (loading) {
     return <div className="p-4 md:p-8"><p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p></div>;
@@ -109,13 +236,41 @@ export default function VistaPreviaInvitacionPage() {
     );
   }
 
+  const centroParaMaestros = centroResultado ?? centroExistente;
+
   return (
     <div className="p-4 md:p-8 max-w-3xl">
-      <div className="mb-6">
-        <TituloPagina icon={<ClipboardCheck size={28} />}>{respuesta.empresa.razonSocial || invitacion.nombrePreliminar || "Formulario recibido"}</TituloPagina>
-        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-          Generada por {invitacion.profesorNombre} · Estado: {ESTADO_LABEL[invitacion.estado]}
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <TituloPagina icon={<ClipboardCheck size={28} />}>{respuesta.empresa.razonSocial || invitacion.nombrePreliminar || "Formulario recibido"}</TituloPagina>
+          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+            Generada por {invitacion.profesorNombre} · Estado: {ESTADO_LABEL[invitacion.estado]}
+          </p>
+        </div>
+        <div className="relative flex-shrink-0">
+          <button
+            onClick={() => setMenuAbierto((v) => !v)}
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-secondary)" }}
+            className="p-2 rounded-lg"
+            aria-label="Más acciones"
+          >
+            <MoreVertical size={16} />
+          </button>
+          {menuAbierto && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setMenuAbierto(false)} />
+              <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="absolute right-0 top-full mt-1 w-64 rounded-xl shadow-2xl overflow-hidden z-40 py-1">
+                <button
+                  onClick={() => { setMostrarFormCentro(true); setMenuAbierto(false); }}
+                  style={{ color: "var(--text-primary)" }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:[background:var(--hover-overlay)] transition-colors text-left"
+                >
+                  <Wand2 size={14} /> Autorrellenar Empresa Dual
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {centroExistente ? (
@@ -128,10 +283,19 @@ export default function VistaPreviaInvitacionPage() {
             </p>
           </div>
         </div>
-      ) : (
+      ) : !centroResultado ? (
         <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
           <CheckCircle2 size={16} style={{ color: "var(--success)" }} className="flex-shrink-0" />
           <p style={{ color: "var(--text-secondary)" }} className="text-xs">No se encontró ninguna empresa con este RUT registrada en SIGEDUAL — se creará un nuevo centro dual.</p>
+        </div>
+      ) : null}
+
+      {centroResultado && (
+        <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
+          <CheckCircle2 size={16} style={{ color: "var(--success)" }} className="flex-shrink-0" />
+          <p style={{ color: "var(--text-secondary)" }} className="text-xs">
+            Centro dual autorrellenado: <strong style={{ color: "var(--text-primary)" }}>{centroResultado.nombre}</strong>. Ya puedes autorrellenar los Maestros Guía.
+          </p>
         </div>
       )}
 
@@ -189,25 +353,105 @@ export default function VistaPreviaInvitacionPage() {
           <Users2 size={16} style={{ color: "var(--accent-light)" }} />
           <h2 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">Maestros Guía ({respuesta.maestrosGuia.length})</h2>
         </div>
+        {!centroParaMaestros && (
+          <p style={{ color: "var(--text-muted)" }} className="text-xs mb-4">Primero autorrellena la Empresa Dual para poder autorrellenar sus Maestros Guía.</p>
+        )}
         <div className="flex flex-col gap-4">
-          {respuesta.maestrosGuia.map((m) => (
-            <div key={m.id} style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)" }} className="rounded-xl p-4">
-              <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold mb-2">{m.nombreCompleto}</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Dato label="RUN" valor={m.run} />
-                <Dato label="Cargo" valor={m.cargo} />
-                <Dato label="Área" valor={m.area} />
-                <Dato label="Especialidad" valor={m.especialidad} />
-                <Dato label="Correo" valor={m.email} />
-                <Dato label="Teléfono" valor={m.telefono} />
-                <Dato label="Experiencia" valor={m.experiencia} />
-                <Dato label="Disponibilidad" valor={m.disponibilidad} />
-                <Dato label="Observaciones" valor={m.observaciones} />
+          {respuesta.maestrosGuia.map((m, i) => {
+            const procesado = maestrosProcesados.has(m.id);
+            return (
+              <div key={m.id} style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)" }} className="rounded-xl p-4">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">{m.nombreCompleto}</p>
+                  {procesado ? (
+                    <span style={{ color: "var(--success)" }} className="text-xs flex items-center gap-1 flex-shrink-0"><CheckCircle2 size={13} /> Autorrellenado</span>
+                  ) : (
+                    <button
+                      onClick={() => setMaestroActivoIdx(i)}
+                      disabled={!centroParaMaestros}
+                      style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 disabled:opacity-40"
+                    >
+                      <Wand2 size={13} /> Autorrellenar Maestro Guía
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Dato label="RUN" valor={m.run} />
+                  <Dato label="Cargo" valor={m.cargo} />
+                  <Dato label="Área" valor={m.area} />
+                  <Dato label="Especialidad" valor={m.especialidad} />
+                  <Dato label="Correo" valor={m.email} />
+                  <Dato label="Teléfono" valor={m.telefono} />
+                  <Dato label="Experiencia" valor={m.experiencia} />
+                  <Dato label="Disponibilidad" valor={m.disponibilidad} />
+                  <Dato label="Observaciones" valor={m.observaciones} />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
+
+      {mostrarFormCentro && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)" }} className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 style={{ color: "var(--text-primary)" }} className="text-base font-bold">
+                {centroExistente ? "Actualizar centro dual existente" : "Autorrellenar Empresa Dual"}
+              </h2>
+              <button onClick={() => setMostrarFormCentro(false)} style={{ color: "var(--text-muted)" }} className="text-xs">Cerrar</button>
+            </div>
+            {errorCentro && (
+              <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-4 py-3 mb-4">
+                <p style={{ color: "var(--danger)" }} className="text-sm font-medium">{errorCentro}</p>
+              </div>
+            )}
+            <CentroDualForm
+              modo={centroExistente ? "editar" : "crear"}
+              valoresIniciales={valoresCentroDesdeRespuesta(respuesta)}
+              especialidadesIniciales={[]}
+              areasIniciales={[]}
+              caracteristicasIniciales={[]}
+              habilidadesIniciales={[]}
+              especialidadesDisponibles={especialidades}
+              rutsOcupados={[]}
+              guardando={guardandoCentro}
+              onCancelar={() => setMostrarFormCentro(false)}
+              onGuardar={guardarCentro}
+            />
+          </div>
+        </div>
+      )}
+
+      {maestroActivoIdx !== null && centroParaMaestros && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)" }} className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 style={{ color: "var(--text-primary)" }} className="text-base font-bold">Autorrellenar Maestro Guía</h2>
+              <button onClick={() => setMaestroActivoIdx(null)} style={{ color: "var(--text-muted)" }} className="text-xs">Cerrar</button>
+            </div>
+            {errorMaestro && (
+              <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-4 py-3 mb-4">
+                <p style={{ color: "var(--danger)" }} className="text-sm font-medium">{errorMaestro}</p>
+              </div>
+            )}
+            <MaestroGuiaForm
+              modo="crear"
+              valoresIniciales={valoresMaestroDesdeRespuesta(respuesta.maestrosGuia[maestroActivoIdx])}
+              centrosDisponibles={[centroParaMaestros]}
+              centroFijo={centroParaMaestros}
+              especialidadesIniciales={[]}
+              areasIniciales={[]}
+              especialidadesDisponibles={especialidades}
+              rutsOcupadosPorCentro={[]}
+              guardando={guardandoMaestro}
+              onCancelar={() => setMaestroActivoIdx(null)}
+              onGuardar={guardarMaestro}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
