@@ -6,11 +6,14 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { usePreferencias } from "@/lib/preferencias/context";
+import { formatearHora } from "@/lib/fecha";
 import { Search, Plus, ArrowLeft, Send, Users, X, Check } from "lucide-react";
 import type { Usuario, Conversacion, MensajeConversacion } from "@/types";
 
 export default function MensajesPage() {
   const { usuario } = useAuth();
+  const { preferencias } = usePreferencias();
   const [conversaciones, setConversaciones] = useState<Conversacion[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [activaId, setActivaId] = useState<string | null>(null);
@@ -131,7 +134,7 @@ export default function MensajesPage() {
   }
 
   function formatHora(iso: string) {
-    return new Date(iso).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+    return formatearHora(iso, preferencias.formatoHora);
   }
 
   const conversacionesFiltradas = conversaciones.filter((c) =>

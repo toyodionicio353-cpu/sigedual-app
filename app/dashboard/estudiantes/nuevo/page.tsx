@@ -9,13 +9,28 @@ import { normalizarRut } from "@/lib/rut";
 import EstudianteForm, { ESTUDIANTE_FORM_VACIO, type EstudianteFormValues } from "../_components/EstudianteForm";
 import TituloPagina from "@/components/TituloPagina";
 import type { Estudiante, Especialidad } from "@/types";
-import { Users, UserPlus, CalendarClock, BadgeCheck, CheckCircle2, Eye } from "lucide-react";
+import { usePreferencias } from "@/lib/preferencias/context";
+import { useBorradorAutomatico } from "@/lib/borradores/useBorradorAutomatico";
+import { Users, UserPlus, CalendarClock, BadgeCheck, CheckCircle2, Eye, FileClock } from "lucide-react";
+
+interface BorradorEstudiante {
+  form: EstudianteFormValues;
+  otrosMedicos: string[];
+  rasgos: string[];
+  habilidades: string[];
+}
 
 const ANIO_ACTUAL = new Date().getFullYear();
 
 export default function AgregarEstudiantePage() {
   const { usuario } = useAuth();
+  const { preferencias } = usePreferencias();
   const router = useRouter();
+  const { guardar: guardarBorrador, restaurar: restaurarBorrador, limpiar: limpiarBorrador, borradorDisponible } =
+    useBorradorAutomatico<BorradorEstudiante>("estudiantes-nuevo", preferencias.borradoresAutomaticos);
+  const [valoresFormulario, setValoresFormulario] = useState<EstudianteFormValues>(ESTUDIANTE_FORM_VACIO);
+  const [formularioKey, setFormularioKey] = useState(0);
+  const [avisoBorrador, setAvisoBorrador] = useState(true);
 
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
@@ -97,6 +112,7 @@ export default function AgregarEstudiantePage() {
       };
       const ref = await addDoc(collection(db, "estudiantes"), nuevo);
       setRegistrado({ id: ref.id, ...nuevo } as Estudiante);
+      limpiarBorrador();
     } catch (err) {
       const detalle = err instanceof Error ? err.message : String(err);
       setErrorSistema(`No fue posible registrar al estudiante. Intenta nuevamente. (${detalle})`);
@@ -158,10 +174,43 @@ export default function AgregarEstudiantePage() {
         </div>
       )}
 
+      {avisoBorrador && borradorDisponible && (
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-xl px-4 py-3 mb-6 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <span className="flex items-center gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+            <FileClock size={16} style={{ color: "var(--accent-light)" }} />
+            Tienes un borrador guardado automáticamente de un registro sin terminar.
+          </span>
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              onClick={() => {
+                const borrador = restaurarBorrador();
+                if (borrador) {
+                  setValoresFormulario(borrador.form);
+                  setFormularioKey((k) => k + 1);
+                }
+                setAvisoBorrador(false);
+              }}
+              style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold"
+            >
+              Restaurar borrador
+            </button>
+            <button
+              onClick={() => { limpiarBorrador(); setAvisoBorrador(false); }}
+              style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium"
+            >
+              Descartar
+            </button>
+          </div>
+        </div>
+      )}
+
       {!cargandoDatos && (
         <EstudianteForm
+          key={formularioKey}
           modo="crear"
-          valoresIniciales={ESTUDIANTE_FORM_VACIO}
+          valoresIniciales={valoresFormulario}
           otrosMedicosIniciales={[]}
           rasgosIniciales={[]}
           habilidadesIniciales={[]}
@@ -170,6 +219,7 @@ export default function AgregarEstudiantePage() {
           guardando={guardando}
           onCancelar={() => router.push("/dashboard/estudiantes")}
           onGuardar={guardar}
+          onCambio={(form, otrosMedicos, rasgos, habilidades) => guardarBorrador({ form, otrosMedicos, rasgos, habilidades })}
         />
       )}
 

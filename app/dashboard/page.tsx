@@ -3,9 +3,11 @@ import { useAuth } from "@/lib/auth-context";
 import { useEffect, useState } from "react";
 import { collection, query, where, getCountFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Users, Building2, MessageSquare, BookOpen, GraduationCap, Settings, ArrowRight } from "lucide-react";
+import { Users, Building2, MessageSquare, BookOpen, GraduationCap, Settings, ArrowRight, Pin } from "lucide-react";
 import Link from "next/link";
 import type { Rol } from "@/types";
+import { usePreferencias } from "@/lib/preferencias/context";
+import { ordenarModulosDashboard } from "@/lib/preferencias/dashboardModulos";
 
 const ROL_LABEL: Record<Rol, string> = {
   administrador: "Administrador",
@@ -17,6 +19,7 @@ const ROL_LABEL: Record<Rol, string> = {
 };
 
 interface Stat {
+  id: string;
   label: string;
   value: number;
   icon: React.ReactNode;
@@ -27,6 +30,7 @@ interface Stat {
 
 export default function DashboardPage() {
   const { usuario } = useAuth();
+  const { preferencias } = usePreferencias();
   const [counts, setCounts] = useState({ estudiantes: 0, centros: 0, mensajes: 0, profesores: 0, especialidades: 0 });
 
   useEffect(() => {
@@ -51,11 +55,11 @@ export default function DashboardPage() {
   }, [usuario]);
 
   const stats: Stat[] = [
-    { label: "Estudiantes", value: counts.estudiantes, icon: <Users size={22} />, color: "#2563eb", href: "/dashboard/estudiantes", roles: ["administrador", "coordinador", "director", "profesor"] },
-    { label: "Centros Duales", value: counts.centros, icon: <Building2 size={22} />, color: "#22c55e", href: "/dashboard/centros", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] },
-    { label: "Profesores", value: counts.profesores, icon: <BookOpen size={22} />, color: "#8b5cf6", href: "/dashboard/profesores", roles: ["administrador", "coordinador", "director"] },
-    { label: "Especialidades", value: counts.especialidades, icon: <GraduationCap size={22} />, color: "#06b6d4", href: "/dashboard/especialidades", roles: ["administrador", "coordinador", "director"] },
-    { label: "Mensajes", value: 0, icon: <MessageSquare size={22} />, color: "#ec4899", href: "/dashboard/mensajes", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+    { id: "estudiantes", label: "Estudiantes", value: counts.estudiantes, icon: <Users size={22} />, color: "#2563eb", href: "/dashboard/estudiantes", roles: ["administrador", "coordinador", "director", "profesor"] },
+    { id: "centros", label: "Centros Duales", value: counts.centros, icon: <Building2 size={22} />, color: "#22c55e", href: "/dashboard/centros", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] },
+    { id: "profesores", label: "Profesores", value: counts.profesores, icon: <BookOpen size={22} />, color: "#8b5cf6", href: "/dashboard/profesores", roles: ["administrador", "coordinador", "director"] },
+    { id: "especialidades", label: "Especialidades", value: counts.especialidades, icon: <GraduationCap size={22} />, color: "#06b6d4", href: "/dashboard/especialidades", roles: ["administrador", "coordinador", "director"] },
+    { id: "mensajes", label: "Mensajes", value: 0, icon: <MessageSquare size={22} />, color: "#ec4899", href: "/dashboard/mensajes", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
   ];
 
   const accesos = [
@@ -64,7 +68,10 @@ export default function DashboardPage() {
     { label: "Ver Centros", icon: <Building2 size={16} />, href: "/dashboard/centros", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] as Rol[] },
   ];
 
-  const visibleStats = stats.filter((s) => usuario && s.roles.includes(usuario.rol));
+  const visibleStats = ordenarModulosDashboard(
+    stats.filter((s) => usuario && s.roles.includes(usuario.rol)),
+    preferencias.dashboardModulos
+  );
   const visibleAccesos = accesos.filter((a) => usuario && a.roles.includes(usuario.rol));
 
   const hora = new Date().getHours();
@@ -87,14 +94,18 @@ export default function DashboardPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
         {visibleStats.map((s) => (
-          <Link key={s.href} href={s.href}
+          <Link key={s.id} href={s.href}
             style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }}
             className="p-5 flex flex-col gap-4 transition-all group hover:[border-color:var(--accent)]">
             <div className="flex items-center justify-between">
               <div style={{ background: "var(--accent)", borderRadius: 999 }} className="w-11 h-11 flex items-center justify-center">
                 <span style={{ color: "var(--text-on-accent)" }}>{s.icon}</span>
               </div>
-              <ArrowRight size={16} style={{ color: "var(--text-muted)" }} className="transition-colors hover:[color:var(--text-primary)]" />
+              {preferencias.dashboardModulos.find((m) => m.id === s.id)?.fijado ? (
+                <Pin size={14} style={{ color: "var(--accent-light)" }} fill="var(--accent-light)" />
+              ) : (
+                <ArrowRight size={16} style={{ color: "var(--text-muted)" }} className="transition-colors hover:[color:var(--text-primary)]" />
+              )}
             </div>
             <div>
               <p style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">{s.value}</p>

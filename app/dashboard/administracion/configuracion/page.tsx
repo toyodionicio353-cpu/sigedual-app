@@ -1,173 +1,186 @@
 "use client";
-import { useEffect, useState } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth-context";
-import { Building2, Bell, SlidersHorizontal } from "lucide-react";
+import { useMemo, useState } from "react";
+import { usePreferencias } from "@/lib/preferencias/context";
+import { useFeedback } from "@/lib/preferencias/useFeedback";
 import TituloPagina from "@/components/TituloPagina";
-import PaginaVacia from "@/components/PaginaVacia";
-import type { Liceo } from "@/types";
+import { INDICE_BUSQUEDA, type CategoriaConfig } from "./_data/indiceBusqueda";
+import AparienciaSeccion from "./_components/AparienciaSeccion";
+import InteraccionSeccion from "./_components/InteraccionSeccion";
+import IdiomaSeccion from "./_components/IdiomaSeccion";
+import NotificacionesSeccion from "./_components/NotificacionesSeccion";
+import PrivacidadSeccion from "./_components/PrivacidadSeccion";
+import { Search, SlidersHorizontal, Palette, MousePointerClick, Globe, Bell, ShieldCheck, RotateCcw } from "lucide-react";
 
-const LICEO_VACIO: Omit<Liceo, "id" | "dominioCorreo"> = {
-  nombre: "", rbd: "", direccion: "", comuna: "", region: "", telefono: "", email: "",
-};
-
-interface Notificaciones {
-  mensajesNuevos: boolean;
-  documentosNuevos: boolean;
-}
-
-const NOTIFICACIONES_DEFAULT: Notificaciones = { mensajesNuevos: true, documentosNuevos: true };
+const CATEGORIAS: { id: CategoriaConfig; label: string; icon: React.ReactNode; Componente: React.ComponentType }[] = [
+  { id: "apariencia", label: "Apariencia", icon: <Palette size={17} />, Componente: AparienciaSeccion },
+  { id: "interaccion", label: "Interacción", icon: <MousePointerClick size={17} />, Componente: InteraccionSeccion },
+  { id: "idioma", label: "Idioma y región", icon: <Globe size={17} />, Componente: IdiomaSeccion },
+  { id: "notificaciones", label: "Notificaciones", icon: <Bell size={17} />, Componente: NotificacionesSeccion },
+  { id: "privacidad", label: "Privacidad y datos", icon: <ShieldCheck size={17} />, Componente: PrivacidadSeccion },
+];
 
 export default function ConfiguracionPage() {
-  const { usuario } = useAuth();
-  const [liceo, setLiceo] = useState(LICEO_VACIO);
-  const [notificaciones, setNotificaciones] = useState<Notificaciones>(NOTIFICACIONES_DEFAULT);
-  const [loading, setLoading] = useState(true);
-  const [guardandoLiceo, setGuardandoLiceo] = useState(false);
-  const [mensajeLiceo, setMensajeLiceo] = useState("");
-
-  const puedeAcceder = usuario?.rol === "administrador" || usuario?.rol === "director";
-
-  async function cargar() {
-    if (!usuario) return;
-    setLoading(true);
-    const liceoSnap = await getDoc(doc(db, "liceos", usuario.liceoId));
-    if (liceoSnap.exists()) {
-      const d = liceoSnap.data() as Liceo;
-      setLiceo({
-        nombre: d.nombre ?? "", rbd: d.rbd ?? "", direccion: d.direccion ?? "",
-        comuna: d.comuna ?? "", region: d.region ?? "", telefono: d.telefono ?? "", email: d.email ?? "",
-      });
-    }
-    const prefSnap = await getDoc(doc(db, "usuarios", usuario.uid));
-    const prefs = prefSnap.exists() ? prefSnap.data().notificaciones : null;
-    if (prefs) setNotificaciones({ ...NOTIFICACIONES_DEFAULT, ...prefs });
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    if (usuario && puedeAcceder) cargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario]);
-
-  async function guardarLiceo() {
-    if (!usuario) return;
-    setGuardandoLiceo(true);
-    setMensajeLiceo("");
-    try {
-      await setDoc(doc(db, "liceos", usuario.liceoId), { id: usuario.liceoId, ...liceo }, { merge: true });
-      setMensajeLiceo("Datos del liceo actualizados.");
-    } catch {
-      setMensajeLiceo("No se pudieron guardar los datos.");
-    } finally {
-      setGuardandoLiceo(false);
-    }
-  }
-
-  async function cambiarNotificacion(clave: keyof Notificaciones) {
-    if (!usuario) return;
-    const nuevas = { ...notificaciones, [clave]: !notificaciones[clave] };
-    setNotificaciones(nuevas);
-    await setDoc(doc(db, "usuarios", usuario.uid), { notificaciones: nuevas }, { merge: true });
-  }
-
-  if (!usuario) return null;
-
-  if (!puedeAcceder) {
-    return (
-      <PaginaVacia
-        icon={<SlidersHorizontal size={28} />}
-        titulo="Configuración"
-        descripcion="Ajustes generales de la aplicación para tu institución."
-      />
+  const { restablecer } = usePreferencias();
+  const avisar = useFeedback();
+  const [categoriaActiva, setCategoriaActiva] = useState<CategoriaConfig>("apariencia");
+  const [busqueda, setBusqueda] = useState("");
+  const [modalRestablecer, setModalRestablecer] = useState(false);
+  const resultados = useMemo(() => {
+    const q = busqueda.trim().toLowerCase();
+    if (!q) return [];
+    return INDICE_BUSQUEDA.filter(
+      (e) => e.titulo.toLowerCase().includes(q) || e.descripcion.toLowerCase().includes(q) || e.keywords.some((k) => k.includes(q))
     );
+  }, [busqueda]);
+
+  function irAResultado(id: string, categoria: CategoriaConfig) {
+    setBusqueda("");
+    setCategoriaActiva(categoria);
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.style.outline = "2px solid var(--accent)";
+      el.style.outlineOffset = "4px";
+      el.style.borderRadius = "10px";
+      setTimeout(() => { el.style.outline = ""; el.style.outlineOffset = ""; }, 1600);
+    }, 60);
   }
+
+  function confirmarRestablecer() {
+    restablecer();
+    setModalRestablecer(false);
+    avisar("Preferencias restauradas.");
+  }
+
+  const CategoriaActivaInfo = CATEGORIAS.find((c) => c.id === categoriaActiva)!;
+  const ContenidoActivo = CategoriaActivaInfo.Componente;
 
   return (
-    <div className="p-4 md:p-8 max-w-2xl">
-      <TituloPagina icon={<SlidersHorizontal size={28} />} className="mb-1">Configuración</TituloPagina>
-      <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-8">
-        Ajustes generales de la aplicación para tu institución.
-      </p>
+    <div className="p-4 md:p-8 max-w-5xl">
+      <div className="mb-6">
+        <TituloPagina icon={<SlidersHorizontal size={28} />} className="mb-1">Configuración</TituloPagina>
+        <p style={{ color: "var(--text-secondary)" }} className="text-sm">
+          Centro de preferencias del sistema. Personaliza tu experiencia en SIGEDUAL sin afectar los datos académicos ni la configuración de otros usuarios.
+        </p>
+      </div>
 
-      {loading ? (
-        <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
-      ) : (
-        <div className="flex flex-col gap-6">
-          {/* Datos del liceo */}
-          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6">
-            <div className="flex items-center gap-2 mb-1">
-              <Building2 size={18} style={{ color: "var(--accent-light)" }} />
-              <h2 style={{ color: "var(--text-primary)" }} className="text-base font-semibold">Datos del liceo</h2>
-            </div>
-            <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-4">
-              Esta información aparecerá en documentos y comunicaciones generadas por el sistema.
-            </p>
-
-            <div className="grid sm:grid-cols-2 gap-4">
-              {[
-                { key: "nombre", label: "Nombre del liceo", span: true },
-                { key: "rbd", label: "RBD" },
-                { key: "telefono", label: "Teléfono" },
-                { key: "direccion", label: "Dirección", span: true },
-                { key: "comuna", label: "Comuna" },
-                { key: "region", label: "Región" },
-                { key: "email", label: "Correo de contacto", span: true },
-              ].map(({ key, label, span }) => (
-                <div key={key} className={span ? "sm:col-span-2" : ""}>
-                  <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">{label}</label>
-                  <input
-                    type="text"
-                    value={(liceo as Record<string, string>)[key]}
-                    onChange={(e) => setLiceo((l) => ({ ...l, [key]: e.target.value }))}
-                    style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                    className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
-                  />
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={guardarLiceo}
-              disabled={guardandoLiceo}
-              style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
-              className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition-opacity mt-4"
-            >
-              {guardandoLiceo ? "Guardando..." : "Guardar cambios"}
-            </button>
-            {mensajeLiceo && <p style={{ color: "var(--text-muted)" }} className="text-xs mt-3">{mensajeLiceo}</p>}
+      {/* Buscador */}
+      <div className="relative mb-6">
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl">
+          <Search size={16} style={{ color: "var(--text-muted)" }} />
+          <input
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar configuración..."
+            aria-label="Buscar configuración"
+            style={{ color: "var(--text-primary)" }}
+            className="flex-1 bg-transparent outline-none text-sm"
+          />
+        </div>
+        {busqueda.trim() && (
+          <div
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", borderRadius: 14 }}
+            className="absolute left-0 right-0 mt-1.5 z-20 shadow-2xl max-h-72 overflow-y-auto"
+          >
+            {resultados.length === 0 ? (
+              <p style={{ color: "var(--text-muted)" }} className="text-sm text-center py-5">No se encontraron configuraciones para tu búsqueda.</p>
+            ) : (
+              resultados.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => irAResultado(r.id, r.categoria)}
+                  className="w-full text-left px-4 py-2.5 hover:[background:var(--hover-overlay)] transition-colors flex items-center justify-between gap-3"
+                >
+                  <span>
+                    <span style={{ color: "var(--text-primary)" }} className="text-sm font-medium block">{r.titulo}</span>
+                    <span style={{ color: "var(--text-muted)" }} className="text-xs">{r.descripcion}</span>
+                  </span>
+                  <span style={{ color: "var(--text-muted)" }} className="text-xs flex-shrink-0">
+                    {CATEGORIAS.find((c) => c.id === r.categoria)?.label}
+                  </span>
+                </button>
+              ))
+            )}
           </div>
+        )}
+      </div>
 
-          {/* Notificaciones */}
-          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6">
-            <div className="flex items-center gap-2 mb-1">
-              <Bell size={18} style={{ color: "var(--accent-light)" }} />
-              <h2 style={{ color: "var(--text-primary)" }} className="text-base font-semibold">Notificaciones</h2>
-            </div>
-            <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-4">
-              Elige qué avisos quieres recibir dentro de SIGEDUAL.
+      {/* Selector de categoría en móvil/tablet */}
+      <div className="lg:hidden mb-5">
+        <select
+          value={categoriaActiva}
+          onChange={(e) => setCategoriaActiva(e.target.value as CategoriaConfig)}
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+          className="w-full px-4 py-3 rounded-xl text-sm font-medium outline-none focus:[border-color:var(--accent)] transition-colors"
+        >
+          {CATEGORIAS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+        </select>
+      </div>
+
+      <div className="flex gap-6 items-start">
+        {/* Sidebar de categorías en escritorio */}
+        <nav className="hidden lg:flex flex-col gap-1 w-56 flex-shrink-0 sticky top-4">
+          {CATEGORIAS.map((c) => {
+            const activo = c.id === categoriaActiva;
+            return (
+              <button
+                key={c.id}
+                onClick={() => setCategoriaActiva(c.id)}
+                style={{
+                  background: activo ? "var(--accent)" : "transparent",
+                  color: activo ? "var(--text-on-accent)" : "var(--text-secondary)",
+                  borderRadius: 10,
+                }}
+                className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-left hover:[background:var(--hover-overlay)] transition-colors"
+              >
+                <span style={{ color: activo ? "var(--text-on-accent)" : "var(--accent-light)" }}>{c.icon}</span>
+                {c.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Contenido */}
+        <div
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }}
+          className="flex-1 min-w-0 p-5 sm:p-6"
+        >
+          <ContenidoActivo />
+        </div>
+      </div>
+
+      {/* Restablecer configuración */}
+      <div className="flex justify-end mt-8">
+        <button
+          onClick={() => setModalRestablecer(true)}
+          style={{ color: "var(--text-muted)" }}
+          className="inline-flex items-center gap-2 text-xs font-medium hover:[color:var(--danger)] transition-colors"
+        >
+          <RotateCcw size={13} />
+          Restablecer configuración
+        </button>
+      </div>
+
+      {modalRestablecer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }} onClick={() => setModalRestablecer(false)}>
+          <div
+            role="dialog" aria-modal="true" aria-label="Restablecer configuración"
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }}
+            className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
+          >
+            <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-2">¿Restablecer configuración?</h2>
+            <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-6">
+              Se restauran únicamente tus preferencias personales de interfaz (tema, densidad, notificaciones, etc.). No se eliminan estudiantes, empresas, profesores, evaluaciones, documentos ni ningún otro dato académico o de usuarios.
             </p>
-
-            <div className="flex flex-col gap-3">
-              {[
-                { key: "mensajesNuevos" as const, label: "Mensajes nuevos" },
-                { key: "documentosNuevos" as const, label: "Documentos nuevos" },
-              ].map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between">
-                  <span style={{ color: "var(--text-primary)" }} className="text-sm">{label}</span>
-                  <button
-                    onClick={() => cambiarNotificacion(key)}
-                    style={{ background: notificaciones[key] ? "var(--accent)" : "var(--bg-surface)", border: "1px solid var(--border-light)" }}
-                    className="w-11 h-6 rounded-full relative transition-colors"
-                  >
-                    <span
-                      style={{ background: "#fff", left: notificaciones[key] ? 22 : 3, top: 2 }}
-                      className="absolute w-4 h-4 rounded-full transition-all"
-                    />
-                  </button>
-                </div>
-              ))}
+            <div className="flex gap-3">
+              <button onClick={() => setModalRestablecer(false)} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex-1 py-2.5 rounded-xl text-sm font-medium">
+                Cancelar
+              </button>
+              <button onClick={confirmarRestablecer} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="flex-1 py-2.5 rounded-xl text-sm font-semibold">
+                Restablecer
+              </button>
             </div>
           </div>
         </div>
