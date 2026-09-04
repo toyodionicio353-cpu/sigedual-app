@@ -10,6 +10,7 @@ import CentroDualForm, { type CentroDualFormValues } from "../../_components/Cen
 import type { CentroDual, Especialidad } from "@/types";
 import { ArrowLeft, Pencil } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import { sincronizarIndiceRutCentro } from "@/lib/invitaciones/indiceRut";
 
 export default function EditarCentroDualPage() {
   const { id } = useParams<{ id: string }>();
@@ -88,9 +89,10 @@ export default function EditarCentroDualPage() {
     setErrorSistema("");
     setMensaje("");
     try {
+      const rutNuevo = form.rut.trim() ? normalizarRut(form.rut) : "";
       await updateDoc(doc(db, "centros_duales", id), {
         nombre: form.nombre.trim(),
-        rut: form.rut.trim() ? normalizarRut(form.rut) : "",
+        rut: rutNuevo,
         tipo: form.tipo,
         razonSocial: form.razonSocial.trim(),
         nombreComercial: form.nombreComercial.trim(),
@@ -114,6 +116,9 @@ export default function EditarCentroDualPage() {
         activo: form.estado === "activo",
         actualizadoEn: new Date().toISOString(),
       });
+      if (rutNuevo !== (centroOriginal.rut ? normalizarRut(centroOriginal.rut) : "")) {
+        await sincronizarIndiceRutCentro(id, usuario.liceoId, rutNuevo, centroOriginal.rut);
+      }
       setMensaje("Cambios guardados correctamente.");
     } catch (err) {
       const detalle = err instanceof Error ? err.message : String(err);

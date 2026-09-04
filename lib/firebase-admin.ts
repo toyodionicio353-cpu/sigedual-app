@@ -105,6 +105,28 @@ export async function requireAdmin(request: Request): Promise<string> {
   return uid;
 }
 
+/**
+ * Verifica que la petición traiga un token de Firebase válido, sin exigir
+ * ningún rol — cada ruta decide qué autorización adicional necesita.
+ * Devuelve el uid del solicitante.
+ */
+export async function requireCallerUid(request: Request): Promise<string> {
+  const header = request.headers.get("authorization") ?? "";
+  const idToken = header.startsWith("Bearer ") ? header.slice(7) : null;
+  if (!idToken) throw new Error("No autorizado: falta el token de sesión.");
+
+  const lookupRes = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken }),
+  });
+  if (!lookupRes.ok) throw new Error("No autorizado: token inválido o vencido.");
+  const lookupData = (await lookupRes.json()) as { users?: { localId: string }[] };
+  const uid = lookupData.users?.[0]?.localId;
+  if (!uid) throw new Error("No autorizado: token inválido.");
+  return uid;
+}
+
 /** Todas las cuentas (uid + correo) que existen actualmente en Firebase Authentication. */
 export async function listAuthAccounts(): Promise<{ uid: string; email: string }[]> {
   const sa = getServiceAccount();
@@ -224,6 +246,36 @@ export async function listCollectionDocs(collectionPath: string): Promise<{ id: 
     pageToken = data.nextPageToken;
   } while (pageToken);
   return out;
+}
+
+/** Lee un único documento por ruta (ej: "invitaciones/abc123"). Devuelve `null` si no existe. */
+export async function getDocument(path: string): Promise<{ id: string; data: Record<string, unknown> } | null> {
+  const sa = getServiceAccount();
+  const token = await getAccessToken();
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${sa.project_id}/databases/(default)/documents/${path}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`No se pudo leer ${path}: ${await res.text()}`);
+  const doc = (await res.json()) as { name: string; fields?: Record<string, FirestoreValue> };
+  const id = doc.name.split("/").pop() as string;
+  const fields = doc.fields ?? {};
+  const data = Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, firestoreValueToJs(v)]));
+  return { id, data };
+}
+
+/** Actualiza solo los campos indicados de un documento existente (Firestore REST `updateMask`). */
+export async function updateDocumentFields(path: string, data: Record<string, unknown>): Promise<void> {
+  const sa = getServiceAccount();
+  const token = await getAccessToken();
+  const fields = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, jsToFirestoreValue(v)]));
+  const mask = Object.keys(data).map((k) => `updateMask.fieldPaths=${encodeURIComponent(k)}`).join("&");
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${sa.project_id}/databases/(default)/documents/${path}?${mask}`,
+    { method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ fields }) }
+  );
+  if (!res.ok) throw new Error(`No se pudo actualizar ${path}: ${await res.text()}`);
 }
 
 /** Crea o reemplaza por completo un documento en la ruta indicada (ej: "estudiantes_archivados/abc123"). */

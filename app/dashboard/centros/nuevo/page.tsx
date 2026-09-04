@@ -12,6 +12,7 @@ import { CheckCircle2, Eye, Building2 } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import { useAdvertenciaLiceoGlobal } from "@/lib/liceos/useAdvertenciaLiceoGlobal";
 import ModalAdvertenciaLiceo from "@/components/liceos/ModalAdvertenciaLiceo";
+import { sincronizarIndiceRutCentro } from "@/lib/invitaciones/indiceRut";
 
 export default function AgregarCentroDualPage() {
   const { usuario } = useAuth();
@@ -84,6 +85,9 @@ export default function AgregarCentroDualPage() {
         creadoEn: new Date().toISOString(),
       };
       const ref = await addDoc(collection(db, "centros_duales"), nuevo);
+      if (nuevo.rut) {
+        await sincronizarIndiceRutCentro(ref.id, usuario.liceoId, nuevo.rut);
+      }
       setCreado({ id: ref.id, ...nuevo } as CentroDual);
     } catch (err) {
       const detalle = err instanceof Error ? err.message : String(err);

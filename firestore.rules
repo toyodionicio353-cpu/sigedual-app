@@ -40,7 +40,8 @@ service cloud.firestore {
         'usuarios', 'sesiones', 'auditoria', 'liceos', 'codigosAcceso',
         'solicitudesModificacion', 'soporte', 'contadores', 'tickets',
         'notificaciones', 'estudiantes', 'asignaciones', 'centros_duales',
-        'maestros_guia', 'visitas', 'autorizaciones', 'conversaciones'
+        'maestros_guia', 'visitas', 'autorizaciones', 'conversaciones',
+        'invitaciones', 'respuestas_invitacion', 'centros_duales_por_rut'
       ];
     }
 
@@ -280,6 +281,52 @@ service cloud.firestore {
         && (request.resource.data.profesorUid == request.auth.uid || esAccesoCompletoLiceo(request.resource.data.liceoId));
       allow delete: if request.auth != null
         && (resource.data.profesorUid == request.auth.uid || esAccesoCompletoLiceo(resource.data.liceoId));
+    }
+
+    // Invitación a Empresa Dual: el profesor que la genera (o
+    // administrador/coordinador/director de su liceo) puede crearla,
+    // leerla y actualizarla (revocar). La empresa invitada NUNCA tiene
+    // sesión de Firebase Auth — su acceso pasa exclusivamente por las
+    // rutas de API en app/api/invitaciones/ (privilegio de servidor),
+    // nunca por estas reglas de cliente.
+    match /invitaciones/{id} {
+      allow read, update: if request.auth != null && (
+        resource.data.profesorUid == request.auth.uid
+        || esAccesoCompletoLiceo(resource.data.liceoId)
+      );
+      allow create: if request.auth != null && (
+        request.resource.data.profesorUid == request.auth.uid
+        || esAccesoCompletoLiceo(request.resource.data.liceoId)
+      );
+      allow delete: if false;
+    }
+
+    // Respuesta que la empresa envió: la escribe únicamente la ruta de API
+    // (la empresa no tiene sesión). El profesor dueño de la invitación (o
+    // acceso completo de liceo) puede leerla para revisar el formulario,
+    // pero no puede editar la respuesta cruda de la empresa desde el
+    // cliente — solo lo que resulte del autorrellenado, que también pasa
+    // por la ruta de API.
+    match /respuestas_invitacion/{id} {
+      allow read: if request.auth != null && (
+        get(/databases/$(database)/documents/invitaciones/$(id)).data.profesorUid == request.auth.uid
+        || esAccesoCompletoLiceo(resource.data.liceoId)
+      );
+      allow write: if false;
+    }
+
+    // Índice inverso RUT → CentroDual (los documentos de centros_duales
+    // usan ID autogenerado). Igual patrón que `autorizaciones`: solo
+    // lectura por quien tiene acceso completo al liceo dueño; la
+    // escritura la hace el mismo código que crea/edita el centro.
+    match /centros_duales_por_rut/{rutNormalizado} {
+      allow read: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
+      // Mismo criterio que la creación/edición de un centro dual: quien
+      // puede escribir el centro puede mantener su entrada en el índice.
+      allow write: if request.auth != null && (
+        datosUsuario().rol == 'administrador'
+        || (datosUsuario().liceoId == request.resource.data.liceoId && datosUsuario().rol in ['director', 'coordinador', 'profesor'])
+      );
     }
 
     // Conversaciones: visibles y editables únicamente por sus participantes

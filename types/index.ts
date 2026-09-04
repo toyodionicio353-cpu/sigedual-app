@@ -394,7 +394,8 @@ export type TipoNotificacion =
   | "actualizacion_sistema"
   | "incidencia"
   | "recordatorio"
-  | "ticket";
+  | "ticket"
+  | "formulario_recibido";
 
 export interface Notificacion {
   id: string;
@@ -409,4 +410,116 @@ export interface Notificacion {
   accionLabel?: string;
   creadoEn: string;
   leidaEn?: string;
+}
+
+// ── Invitación a Empresa Dual (levantamiento de datos externo) ────────────
+
+export type EstadoInvitacion =
+  | "generado"
+  | "abierto"
+  | "enviado"
+  | "en_revision"
+  | "procesado"
+  | "expirado"
+  | "revocado";
+
+export interface InvitacionEmpresa {
+  id: string;
+  liceoId: string;
+  profesorUid: string;
+  profesorNombre: string;
+  especialidadId?: string;
+  cursos?: string[];
+  nombrePreliminar?: string;
+  contactoNombre?: string;
+  contactoEmail?: string;
+  contactoTelefono?: string;
+  observaciones?: string;
+  estado: EstadoInvitacion;
+  creadoEn: string;
+  expiraEn?: string;
+  ultimoAccesoEn?: string;
+  enviadoEn?: string;
+  procesadoEn?: string;
+  centroDualIdResultado?: string;
+}
+
+/** Nivel de detalle estructurado de las "necesidades" que la empresa
+ * declara sobre los estudiantes que puede recibir — se guarda tal cual la
+ * entrega la empresa, todavía no se usa en lib/compatibilidad.ts. */
+export interface NecesidadesEmpresa {
+  nivelActividad?: "muy_activo" | "moderado" | "tranquilo" | "no_determinante";
+  ritmoAprendizaje?: "rapido" | "moderado" | "acompanado";
+  autonomia?: "alta" | "media" | "supervision_constante";
+  adaptacion?: "alta" | "media" | "baja";
+  comunicacion?: "alta_clientes" | "moderada" | "interna";
+  trabajoEquipo?: "alto" | "medio" | "bajo";
+  otras?: string;
+}
+
+export interface RespuestaMaestroGuiaInvitacion {
+  id: string;
+  nombreCompleto: string;
+  run?: string;
+  cargo?: string;
+  area?: string;
+  email?: string;
+  telefono?: string;
+  experiencia?: string;
+  especialidad?: string;
+  disponibilidad?: string;
+  observaciones?: string;
+}
+
+export interface RespuestaInvitacion {
+  id: string;
+  invitacionId: string;
+  liceoId: string;
+  empresa: {
+    razonSocial?: string;
+    nombreFantasia?: string;
+    rut?: string;
+    giro?: string;
+    direccion?: string;
+    comuna?: string;
+    region?: string;
+    telefono?: string;
+    email?: string;
+    sitioWeb?: string;
+    contactoNombre?: string;
+    contactoCargo?: string;
+    contactoEmail?: string;
+    contactoTelefono?: string;
+  };
+  perfil: {
+    actividadPrincipal?: string;
+    areaTrabajo?: string;
+    tipoTareas?: string;
+    tecnologias?: string;
+    herramientas?: string;
+    ambienteLaboral?: string;
+    caracteristicasImportantes?: string;
+  };
+  necesidades: NecesidadesEmpresa;
+  capacidad: {
+    cantidadEstudiantes?: number;
+    especialidades?: string[];
+    cursos?: string[];
+    periodo?: string;
+    jornada?: string;
+    horarios?: string;
+    restricciones?: string;
+  };
+  maestrosGuia: RespuestaMaestroGuiaInvitacion[];
+  creadoEn: string;
+  enviadoEn: string;
+}
+
+/** Índice inverso RUT → CentroDual (documentos de centros_duales usan ID
+ * autogenerado, no el RUT) — permite detectar duplicados sin necesitar una
+ * consulta amplia que las reglas de Firestore no permitirían a un profesor
+ * fuera de su ámbito. Mismo patrón que `autorizaciones`. */
+export interface IndiceCentroDualPorRut {
+  centroDualId: string;
+  liceoId: string;
 }
