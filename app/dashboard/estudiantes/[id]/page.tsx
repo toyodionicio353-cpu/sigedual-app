@@ -1,15 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearFecha } from "@/lib/fecha";
 import type { Estudiante, Especialidad } from "@/types";
 import {
   ArrowLeft, BadgeCheck, Phone, GraduationCap, HeartPulse,
-  Sparkles, FileText, Users, Pencil, History,
+  Sparkles, FileText, Users, Pencil, History, Trash2,
 } from "lucide-react";
 
 const ESTADO_COLOR: Record<string, string> = {
@@ -46,11 +46,13 @@ function Dato({ label, valor, span, color }: { label: string; valor?: string | n
 
 export default function FichaEstudiantePage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const { usuario } = useAuth();
   const [estudiante, setEstudiante] = useState<Estudiante | null>(null);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
 
   useEffect(() => {
     if (!usuario || !id) return;
@@ -94,6 +96,23 @@ export default function FichaEstudiantePage() {
     );
   }
 
+  async function eliminar() {
+    if (!estudiante || eliminando) return;
+    setEliminando(true);
+    try {
+      const snapAsig = await getDocs(query(collection(db, "asignaciones"), where("estudianteId", "==", estudiante.id)));
+      if (snapAsig.size > 0) {
+        alert("Este estudiante tiene asignaciones asociadas y no se puede eliminar, para proteger la trazabilidad histórica. Si ya no debe aparecer activo, cámbialo a estado \"Retirado\" desde Editar.");
+        return;
+      }
+      if (!confirm(`¿Eliminar a ${estudiante.nombres} ${estudiante.apellidos}? Esta acción no se puede deshacer.`)) return;
+      await deleteDoc(doc(db, "estudiantes", estudiante.id));
+      router.push("/dashboard/estudiantes");
+    } finally {
+      setEliminando(false);
+    }
+  }
+
   const especialidadNombre = especialidades.find((e) => e.id === estudiante.especialidadId)?.nombre;
   const anio = estudiante.anioAcademico || String(new Date(estudiante.creadoEn).getFullYear());
   const repitiendoNivelActual = (estudiante.historialCursos ?? []).some((h) => h.nivel === estudiante.nivel);
@@ -110,14 +129,25 @@ export default function FichaEstudiantePage() {
           Volver al listado
         </Link>
         {(usuario?.rol === "administrador" || usuario?.rol === "profesor") && (
-          <Link
-            href={`/dashboard/estudiantes/${estudiante.id}/editar`}
-            style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity"
-          >
-            <Pencil size={15} />
-            Editar estudiante
-          </Link>
+          <div className="flex gap-3">
+            <button
+              onClick={eliminar}
+              disabled={eliminando}
+              style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--danger)" }}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--danger)] transition-colors disabled:opacity-50"
+            >
+              <Trash2 size={15} />
+              Eliminar
+            </button>
+            <Link
+              href={`/dashboard/estudiantes/${estudiante.id}/editar`}
+              style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+            >
+              <Pencil size={15} />
+              Editar estudiante
+            </Link>
+          </div>
         )}
       </div>
 
