@@ -16,7 +16,7 @@ import {
   ChevronDown, UserPlus, ClipboardList,
   UsersRound, Building, ShieldCheck,
   CalendarCheck, FileText, Handshake, ClipboardCheck, FolderOpen,
-  UserCog, School, SlidersHorizontal, LifeBuoy, User, ScrollText,
+  UserCog, School, SlidersHorizontal, LifeBuoy, User, ScrollText, Clock,
 } from "lucide-react";
 
 interface SubItem {
@@ -272,6 +272,29 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
           const isActive = menu.href
             ? pathname === menu.href
             : visibleSub.some((s) => s.href === pathname || (s.href !== "/dashboard" && pathname.startsWith(s.href)));
+
+          if (menu.id === "mensajes" && usuario?.rol !== "administrador") {
+            return (
+              <button
+                key={menu.id}
+                type="button"
+                disabled
+                title={collapsed ? `${etiquetaGrupo(menu)} — Próximamente` : undefined}
+                style={{ borderRadius: 9, color: "var(--text-muted)", width: "100%", opacity: 0.55, cursor: "not-allowed" }}
+                className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium text-left"
+              >
+                <span style={{ color: "var(--text-muted)", flexShrink: 0 }}>{menu.icon}</span>
+                {!collapsed && (
+                  <>
+                    <span className="flex-1 whitespace-nowrap">{etiquetaGrupo(menu)}</span>
+                    <span style={{ background: "var(--hover-overlay)", color: "var(--text-muted)" }} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap">
+                      <Clock size={10} /> Próximamente
+                    </span>
+                  </>
+                )}
+              </button>
+            );
+          }
 
           if (menu.href) {
             return (

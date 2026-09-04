@@ -8,11 +8,12 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { usePreferencias } from "@/lib/preferencias/context";
 import { formatearHora } from "@/lib/fecha";
-import { Search, Plus, ArrowLeft, Send, Users, X, Check } from "lucide-react";
+import { Search, Plus, ArrowLeft, Send, Users, X, Check, MessageSquare, Clock } from "lucide-react";
 import type { Usuario, Conversacion, MensajeConversacion } from "@/types";
 
 export default function MensajesPage() {
   const { usuario } = useAuth();
+  const puedeUsar = usuario?.rol === "administrador";
   const { preferencias } = usePreferencias();
   const [conversaciones, setConversaciones] = useState<Conversacion[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -33,7 +34,7 @@ export default function MensajesPage() {
 
   // Conversaciones del usuario
   useEffect(() => {
-    if (!usuario) return;
+    if (!usuario || !puedeUsar) return;
     const q = query(
       collection(db, "conversaciones"),
       where("participantes", "array-contains", usuario.uid),
@@ -47,7 +48,7 @@ export default function MensajesPage() {
 
   // Usuarios del liceo (para nombres y nueva conversación)
   useEffect(() => {
-    if (!usuario) return;
+    if (!usuario || !puedeUsar) return;
     getDocs(query(collection(db, "usuarios"), where("liceoId", "==", usuario.liceoId))).then((snap) => {
       setUsuarios(snap.docs.map((d) => d.data() as Usuario).filter((u) => u.uid !== usuario.uid));
     });
@@ -141,6 +142,25 @@ export default function MensajesPage() {
     nombreConversacion(c).toLowerCase().includes(busqueda.toLowerCase())
   );
   const activa = conversaciones.find((c) => c.id === activaId) ?? null;
+
+  if (usuario && !puedeUsar) {
+    return (
+      <div className="p-4 md:p-8 flex items-center justify-center h-[calc(100dvh-56px)]">
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-10 text-center max-w-sm">
+          <div style={{ background: "var(--accent)22" }} className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MessageSquare size={26} style={{ color: "var(--accent-light)" }} />
+          </div>
+          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Mensajes</p>
+          <span style={{ background: "var(--accent)22", color: "var(--accent-light)" }} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold mb-3">
+            <Clock size={11} /> Próximamente
+          </span>
+          <p style={{ color: "var(--text-muted)" }} className="text-sm">
+            Esta función todavía está en desarrollo. Muy pronto vas a poder comunicarte con otros usuarios desde aquí.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[calc(100dvh-56px)]">

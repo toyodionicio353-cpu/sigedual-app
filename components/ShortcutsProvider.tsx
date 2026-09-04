@@ -65,7 +65,9 @@ export default function ShortcutsProvider() {
         g: "/dashboard", e: "/dashboard/estudiantes", c: "/dashboard/centros",
         m: "/dashboard/mensajes", s: "/dashboard/soporte",
       };
-      const destino = destinos[e.key.toLowerCase()];
+      const tecla = e.key.toLowerCase();
+      if (tecla === "m" && usuario?.rol !== "administrador") return;
+      const destino = destinos[tecla];
       if (destino) router.push(destino);
     }
     window.addEventListener("keydown", alPresionar);

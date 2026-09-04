@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useEffect, useState } from "react";
 import { collection, query, where, getCountFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Users, Building2, MessageSquare, BookOpen, GraduationCap, Settings, ArrowRight, Pin } from "lucide-react";
+import { Users, Building2, MessageSquare, BookOpen, GraduationCap, Settings, ArrowRight, Pin, Clock } from "lucide-react";
 import Link from "next/link";
 import type { Rol } from "@/types";
 import { usePreferencias } from "@/lib/preferencias/context";
@@ -90,26 +90,47 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-        {visibleStats.map((s) => (
-          <Link key={s.id} href={s.href}
-            style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }}
-            className="p-5 flex flex-col gap-4 transition-all group hover:[border-color:var(--accent)]">
-            <div className="flex items-center justify-between">
-              <div style={{ background: "var(--accent)", borderRadius: 999 }} className="w-11 h-11 flex items-center justify-center">
-                <span style={{ color: "var(--text-on-accent)" }}>{s.icon}</span>
+        {visibleStats.map((s) => {
+          if (s.id === "mensajes" && usuario?.rol !== "administrador") {
+            return (
+              <div key={s.id}
+                style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, opacity: 0.6 }}
+                className="p-5 flex flex-col gap-4 cursor-not-allowed">
+                <div className="flex items-center justify-between">
+                  <div style={{ background: "var(--text-muted)", borderRadius: 999 }} className="w-11 h-11 flex items-center justify-center">
+                    <span style={{ color: "var(--bg-card)" }}>{s.icon}</span>
+                  </div>
+                  <span style={{ background: "var(--hover-overlay)", color: "var(--text-muted)" }} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap">
+                    <Clock size={10} /> Próximamente
+                  </span>
+                </div>
+                <div>
+                  <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{s.label}</p>
+                </div>
               </div>
-              {preferencias.dashboardModulos.find((m) => m.id === s.id)?.fijado ? (
-                <Pin size={14} style={{ color: "var(--accent-light)" }} fill="var(--accent-light)" />
-              ) : (
-                <ArrowRight size={16} style={{ color: "var(--text-muted)" }} className="transition-colors hover:[color:var(--text-primary)]" />
-              )}
-            </div>
-            <div>
-              <p style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">{s.value}</p>
-              <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-0.5">{s.label}</p>
-            </div>
-          </Link>
-        ))}
+            );
+          }
+          return (
+            <Link key={s.id} href={s.href}
+              style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }}
+              className="p-5 flex flex-col gap-4 transition-all group hover:[border-color:var(--accent)]">
+              <div className="flex items-center justify-between">
+                <div style={{ background: "var(--accent)", borderRadius: 999 }} className="w-11 h-11 flex items-center justify-center">
+                  <span style={{ color: "var(--text-on-accent)" }}>{s.icon}</span>
+                </div>
+                {preferencias.dashboardModulos.find((m) => m.id === s.id)?.fijado ? (
+                  <Pin size={14} style={{ color: "var(--accent-light)" }} fill="var(--accent-light)" />
+                ) : (
+                  <ArrowRight size={16} style={{ color: "var(--text-muted)" }} className="transition-colors hover:[color:var(--text-primary)]" />
+                )}
+              </div>
+              <div>
+                <p style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">{s.value}</p>
+                <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-0.5">{s.label}</p>
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Accesos rápidos */}
