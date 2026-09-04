@@ -99,6 +99,7 @@ export interface Especialidad {
   nombre: string;
   liceoId: string;
   estado?: "activa" | "inactiva";
+  creadoEn?: string;
 }
 
 export interface Estudiante {
