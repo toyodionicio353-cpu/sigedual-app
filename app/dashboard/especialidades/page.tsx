@@ -1,31 +1,44 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { collection, query, where, getDocs, addDoc, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
 import TituloPagina from "@/components/TituloPagina";
-import { GraduationCap } from "lucide-react";
+import Select from "@/components/ui/Select";
+import { GraduationCap, School } from "lucide-react";
 import type { Especialidad } from "@/types";
 
 export default function EspecialidadesPage() {
   const { usuario } = useAuth();
+  const modoGlobal = useModoGlobalAdmin();
+  const { liceos } = useCatalogoLiceos(modoGlobal);
+  const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [nombre, setNombre] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [filtroLiceoId, setFiltroLiceoId] = useState("");
 
-  const puedeEditar = usuario?.rol === "administrador";
+  const puedeEditar = usuario?.rol === "administrador" && !modoGlobal;
 
-  useEffect(() => { if (usuario) cargar(); }, [usuario]);
+  useEffect(() => { if (usuario) cargar(); }, [usuario, modoGlobal]);
 
   async function cargar() {
     if (!usuario) return;
     setLoading(true);
-    const q = query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId));
+    const q = modoGlobal
+      ? collection(db, "especialidades")
+      : query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId));
     const snap = await getDocs(q);
     setEspecialidades(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
     setLoading(false);
   }
+
+  const especialidadesFiltradas = useMemo(
+    () => (filtroLiceoId ? especialidades.filter((e) => e.liceoId === filtroLiceoId) : especialidades),
+    [especialidades, filtroLiceoId]
+  );
 
   async function agregar(e: React.FormEvent) {
     e.preventDefault();
@@ -50,10 +63,26 @@ export default function EspecialidadesPage() {
     <div className="p-4 md:p-8">
       <div className="mb-6">
         <TituloPagina icon={<GraduationCap size={28} />}>Especialidades</TituloPagina>
-        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Carreras técnico-profesionales del establecimiento</p>
+        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+          {modoGlobal
+            ? "Especialidades de todos los liceos. Usa el filtro \"Liceo\" para acotar a uno en particular."
+            : "Carreras técnico-profesionales del establecimiento"}
+        </p>
       </div>
 
-      {puedeEditar && (
+      {modoGlobal && (
+        <div className="mb-4 max-w-xs">
+          <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
+          <Select value={filtroLiceoId} onChange={setFiltroLiceoId} ariaLabel="Liceo"
+            opciones={[{ value: "", label: "Todos los liceos" }, ...liceos.map((l) => ({ value: l.id, label: l.nombre }))]} />
+        </div>
+      )}
+
+      {modoGlobal ? (
+        <p style={{ color: "var(--text-muted)" }} className="text-xs mb-6">
+          Para agregar o eliminar especialidades, entra al liceo correspondiente desde "Liceos".
+        </p>
+      ) : puedeEditar && (
         <form onSubmit={agregar} className="flex flex-col sm:flex-row gap-3 mb-6">
           <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre de la especialidad (ej: Contabilidad)"
             style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
@@ -67,17 +96,24 @@ export default function EspecialidadesPage() {
 
       {loading ? (
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
-      ) : especialidades.length === 0 ? (
+      ) : especialidadesFiltradas.length === 0 ? (
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
           <p style={{ color: "var(--text-muted)" }} className="text-sm">No hay especialidades registradas aún.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {especialidades.map((esp) => (
+          {especialidadesFiltradas.map((esp) => (
             <div key={esp.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-xl px-5 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-xl">🎓</span>
-                <p style={{ color: "var(--text-primary)" }} className="font-medium text-sm">{esp.nombre}</p>
+                <div>
+                  <p style={{ color: "var(--text-primary)" }} className="font-medium text-sm">{esp.nombre}</p>
+                  {modoGlobal && (
+                    <p style={{ color: "var(--text-muted)" }} className="flex items-center gap-1 text-[11px] mt-0.5">
+                      <School size={11} /> {liceoNombrePorId[esp.liceoId] || "—"}
+                    </p>
+                  )}
+                </div>
               </div>
               {puedeEditar && (
                 <button onClick={() => eliminar(esp.id)} style={{ color: "var(--danger)" }} className="text-xs hover:underline">Eliminar</button>

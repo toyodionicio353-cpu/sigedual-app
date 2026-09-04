@@ -4,9 +4,10 @@ import Link from "next/link";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
 import { estadoDisponibilidadMaestroGuia, disponibilidadMaestroGuiaDe, camposFaltantesMaestroGuia } from "@/lib/maestro-guia";
 import type { Asignacion, CentroDual, Especialidad, MaestroGuia } from "@/types";
-import { AlertCircle, ChevronRight, Search, SlidersHorizontal, X, UsersRound } from "lucide-react";
+import { AlertCircle, ChevronRight, Search, SlidersHorizontal, X, UsersRound, School } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 
@@ -43,6 +44,9 @@ function soloAlfanumerico(texto?: string): string {
 
 export default function ListaMaestrosGuiaPage() {
   const { usuario } = useAuth();
+  const modoGlobal = useModoGlobalAdmin();
+  const { liceos } = useCatalogoLiceos(modoGlobal);
+  const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
   const [maestros, setMaestros] = useState<MaestroGuia[]>([]);
   const [centros, setCentros] = useState<CentroDual[]>([]);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
@@ -55,6 +59,7 @@ export default function ListaMaestrosGuiaPage() {
   const [filtroCentroId, setFiltroCentroId] = useState("");
   const [filtroEspecialidadId, setFiltroEspecialidadId] = useState("");
   const [filtroDisponibilidad, setFiltroDisponibilidad] = useState("");
+  const [filtroLiceoId, setFiltroLiceoId] = useState("");
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   const [orden, setOrden] = useState("recomendado");
 
@@ -65,11 +70,12 @@ export default function ListaMaestrosGuiaPage() {
     setLoading(true);
     setError(false);
     try {
+      const qMg = modoGlobal ? collection(db, "maestros_guia") : query(collection(db, "maestros_guia"), where("liceoId", "==", usuario.liceoId));
+      const qCentros = modoGlobal ? collection(db, "centros_duales") : query(collection(db, "centros_duales"), where("liceoId", "==", usuario.liceoId));
+      const qEsp = modoGlobal ? collection(db, "especialidades") : query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId));
+      const qAsig = modoGlobal ? collection(db, "asignaciones") : query(collection(db, "asignaciones"), where("liceoId", "==", usuario.liceoId));
       const [snapMg, snapCentros, snapEsp, snapAsig] = await Promise.all([
-        getDocs(query(collection(db, "maestros_guia"), where("liceoId", "==", usuario.liceoId))),
-        getDocs(query(collection(db, "centros_duales"), where("liceoId", "==", usuario.liceoId))),
-        getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId))),
-        getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario.liceoId))),
+        getDocs(qMg), getDocs(qCentros), getDocs(qEsp), getDocs(qAsig),
       ]);
       setMaestros(snapMg.docs.map((d) => ({ id: d.id, ...d.data() } as MaestroGuia)));
       setCentros(snapCentros.docs.map((d) => ({ id: d.id, ...d.data() } as CentroDual)));
@@ -83,7 +89,7 @@ export default function ListaMaestrosGuiaPage() {
     }
   }
 
-  useEffect(() => { if (usuario) cargar(); }, [usuario]);
+  useEffect(() => { if (usuario) cargar(); }, [usuario, modoGlobal]);
 
   function centroDe(id: string): CentroDual | undefined {
     return centros.find((c) => c.id === id);
@@ -97,6 +103,7 @@ export default function ListaMaestrosGuiaPage() {
 
   const filtrados = useMemo(() => {
     let base = maestros;
+    if (filtroLiceoId) base = base.filter((m) => m.liceoId === filtroLiceoId);
     if (filtroEstado) base = base.filter((m) => m.estado === filtroEstado);
     if (filtroCentroId) base = base.filter((m) => m.centroDualId === filtroCentroId);
     if (filtroEspecialidadId) base = base.filter((m) => (m.especialidades ?? []).includes(filtroEspecialidadId));
@@ -120,7 +127,7 @@ export default function ListaMaestrosGuiaPage() {
     }
     return base;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [maestros, filtroEstado, filtroCentroId, filtroEspecialidadId, filtroDisponibilidad, busqueda, centros, asignaciones]);
+  }, [maestros, filtroEstado, filtroCentroId, filtroEspecialidadId, filtroDisponibilidad, filtroLiceoId, busqueda, centros, asignaciones]);
 
   const ordenados = useMemo(() => {
     const arr = [...filtrados];
@@ -152,11 +159,11 @@ export default function ListaMaestrosGuiaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtrados, orden, asignaciones, centros]);
 
-  const hayFiltrosActivos = Boolean(busqueda.trim() || filtroEstado || filtroCentroId || filtroEspecialidadId || filtroDisponibilidad);
-  const cantidadFiltrosActivos = [filtroEstado, filtroCentroId, filtroEspecialidadId, filtroDisponibilidad].filter(Boolean).length;
+  const hayFiltrosActivos = Boolean(busqueda.trim() || filtroEstado || filtroCentroId || filtroEspecialidadId || filtroDisponibilidad || filtroLiceoId);
+  const cantidadFiltrosActivos = [filtroEstado, filtroCentroId, filtroEspecialidadId, filtroDisponibilidad, filtroLiceoId].filter(Boolean).length;
 
   function limpiarFiltros() {
-    setBusqueda(""); setFiltroEstado(""); setFiltroCentroId(""); setFiltroEspecialidadId(""); setFiltroDisponibilidad("");
+    setBusqueda(""); setFiltroEstado(""); setFiltroCentroId(""); setFiltroEspecialidadId(""); setFiltroDisponibilidad(""); setFiltroLiceoId("");
   }
 
   return (
@@ -164,7 +171,11 @@ export default function ListaMaestrosGuiaPage() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <TituloPagina icon={<UsersRound size={28} />}>Maestros guía</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Administra las personas responsables de acompañar a los estudiantes en los centros duales.</p>
+          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+            {modoGlobal
+              ? "Maestros guía de todos los liceos. Usa el filtro \"Liceo\" para acotar a uno en particular."
+              : "Administra las personas responsables de acompañar a los estudiantes en los centros duales."}
+          </p>
         </div>
         {puedeAgregar && (
           <Link href="/dashboard/centros/maestros/nuevo" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity text-center flex-shrink-0">
@@ -213,6 +224,13 @@ export default function ListaMaestrosGuiaPage() {
 
       {filtrosAbiertos && (
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-4 gap-3">
+          {modoGlobal && (
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
+              <Select value={filtroLiceoId} onChange={setFiltroLiceoId} ariaLabel="Liceo"
+                opciones={[{ value: "", label: "Todos los liceos" }, ...liceos.map((l) => ({ value: l.id, label: l.nombre }))]} />
+            </div>
+          )}
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Estado</label>
             <Select value={filtroEstado} onChange={setFiltroEstado} ariaLabel="Estado"
@@ -313,6 +331,11 @@ export default function ListaMaestrosGuiaPage() {
                 >
                   <div className="min-w-0">
                     <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{m.nombres} {m.apellidoPaterno} {m.apellidoMaterno}</p>
+                    {modoGlobal && (
+                      <p style={{ color: "var(--text-muted)" }} className="flex items-center gap-1 text-[11px] mt-0.5 truncate">
+                        <School size={11} /> {liceoNombrePorId[m.liceoId] || "—"}
+                      </p>
+                    )}
                     {incompleto && (
                       <p style={{ color: "var(--text-muted)" }} className="flex items-center gap-1 text-[11px] mt-0.5">
                         <AlertCircle size={11} />

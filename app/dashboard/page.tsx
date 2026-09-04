@@ -9,6 +9,7 @@ import type { Rol } from "@/types";
 import { usePreferencias } from "@/lib/preferencias/context";
 import { ordenarModulosDashboard } from "@/lib/preferencias/dashboardModulos";
 import { ROL_LABEL } from "@/lib/roles";
+import { useModoGlobalAdmin } from "@/lib/liceos/modoGlobalAdmin";
 
 interface Stat {
   id: string;
@@ -23,6 +24,7 @@ interface Stat {
 export default function DashboardPage() {
   const { usuario } = useAuth();
   const { preferencias } = usePreferencias();
+  const modoGlobal = useModoGlobalAdmin();
   const [counts, setCounts] = useState({ estudiantes: 0, centros: 0, mensajes: 0, profesores: 0, especialidades: 0 });
 
   useEffect(() => {
@@ -30,10 +32,12 @@ export default function DashboardPage() {
     async function cargar() {
       const liceoId = usuario!.liceoId;
       const [e, c, p, esp] = await Promise.all([
-        getCountFromServer(query(collection(db, "estudiantes"), where("liceoId", "==", liceoId))),
-        getCountFromServer(query(collection(db, "centros_duales"), where("liceoId", "==", liceoId))),
-        getCountFromServer(query(collection(db, "usuarios"), where("liceoId", "==", liceoId), where("rol", "==", "profesor"))),
-        getCountFromServer(query(collection(db, "especialidades"), where("liceoId", "==", liceoId))),
+        getCountFromServer(modoGlobal ? collection(db, "estudiantes") : query(collection(db, "estudiantes"), where("liceoId", "==", liceoId))),
+        getCountFromServer(modoGlobal ? collection(db, "centros_duales") : query(collection(db, "centros_duales"), where("liceoId", "==", liceoId))),
+        getCountFromServer(modoGlobal
+          ? query(collection(db, "usuarios"), where("rol", "==", "profesor"))
+          : query(collection(db, "usuarios"), where("liceoId", "==", liceoId), where("rol", "==", "profesor"))),
+        getCountFromServer(modoGlobal ? collection(db, "especialidades") : query(collection(db, "especialidades"), where("liceoId", "==", liceoId))),
       ]);
       setCounts({
         estudiantes: e.data().count,
@@ -44,7 +48,7 @@ export default function DashboardPage() {
       });
     }
     cargar();
-  }, [usuario]);
+  }, [usuario, modoGlobal]);
 
   const stats: Stat[] = [
     { id: "estudiantes", label: "Estudiantes", value: counts.estudiantes, icon: <Users size={22} />, color: "#2563eb", href: "/dashboard/estudiantes", roles: ["administrador", "coordinador", "director", "profesor"] },
@@ -80,6 +84,7 @@ export default function DashboardPage() {
         </h1>
         <p style={{ color: "var(--text-secondary)" }} className="mt-1.5 text-sm">
           {usuario ? ROL_LABEL[usuario.rol] : ""} — Panel principal de SIGEDUAL
+          {modoGlobal && " · Mostrando la información de todos los liceos"}
         </p>
       </div>
 
