@@ -8,10 +8,11 @@ import { useAuth } from "@/lib/auth-context";
 import { formatearFecha } from "@/lib/fecha";
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
-import type { Estudiante, Especialidad } from "@/types";
+import { estadoCanonico, fechaProgramadaDe, profesorSupervisorIdDe, ESTADO_VISITA_LABEL, ESTADO_VISITA_COLOR } from "@/lib/visitas/normalizar";
+import type { Estudiante, Especialidad, Visita, CentroDual, Usuario } from "@/types";
 import {
   ArrowLeft, BadgeCheck, Phone, GraduationCap, HeartPulse,
-  Sparkles, FileText, Users, Pencil, History, Trash2, ShieldAlert,
+  Sparkles, FileText, Users, Pencil, History, Trash2, ShieldAlert, MapPin,
 } from "lucide-react";
 
 const ESTADO_COLOR: Record<string, string> = {
@@ -53,6 +54,9 @@ export default function FichaEstudiantePage() {
   const { usuario } = useAuth();
   const [estudiante, setEstudiante] = useState<Estudiante | null>(null);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
+  const [visitas, setVisitas] = useState<Visita[]>([]);
+  const [centros, setCentros] = useState<CentroDual[]>([]);
+  const [profesores, setProfesores] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [denegado, setDenegado] = useState(false);
@@ -85,6 +89,26 @@ export default function FichaEstudiantePage() {
           setNoEncontrado(true);
         }
         setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
+
+        if (snapEst.exists()) {
+          const [snapLegado, snapNuevas] = await Promise.all([
+            getDocs(query(collection(db, "visitas"), where("estudianteId", "==", id))),
+            getDocs(query(collection(db, "visitas"), where("estudianteIds", "array-contains", id))),
+          ]);
+          const porId = new Map<string, Visita>();
+          snapLegado.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita));
+          snapNuevas.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita));
+          const visitasData = Array.from(porId.values());
+          setVisitas(visitasData);
+          const idsCentro = Array.from(new Set(visitasData.map((v) => v.centroDualId)));
+          const idsProfesor = Array.from(new Set(visitasData.map(profesorSupervisorIdDe).filter(Boolean)));
+          const [snapsCentro, snapsProfesor] = await Promise.all([
+            Promise.all(idsCentro.map((cid) => getDoc(doc(db, "centros_duales", cid)))),
+            Promise.all(idsProfesor.map((pid) => getDoc(doc(db, "usuarios", pid)))),
+          ]);
+          setCentros(snapsCentro.filter((s) => s.exists()).map((s) => ({ id: s!.id, ...s!.data() } as CentroDual)));
+          setProfesores(snapsProfesor.filter((s) => s.exists()).map((s) => s!.data() as Usuario));
+        }
       } catch {
         // Las reglas de Firestore denegaron la lectura (fuera de ámbito/liceo).
         setDenegado(true);
@@ -231,6 +255,34 @@ export default function FichaEstudiantePage() {
           <Dato label="Jornada" valor={estudiante.jornada} />
           <Dato label="Centro dual asignado" valor={estudiante.centroDualId ? "Asignado" : "Sin empresa asignada"} />
         </Seccion>
+
+        {visitas.length > 0 && (
+          <Seccion icon={<MapPin size={16} />} titulo="Visitas">
+            <div className="sm:col-span-2 flex flex-col gap-2">
+              {[...visitas].sort((a, b) => fechaProgramadaDe(b).localeCompare(fechaProgramadaDe(a))).map((v) => {
+                const estado = estadoCanonico(v.estado);
+                const centroNombre = centros.find((c) => c.id === v.centroDualId)?.nombre || "Centro dual";
+                const profNombre = profesores.find((p) => p.uid === profesorSupervisorIdDe(v))?.nombre || "—";
+                return (
+                  <Link
+                    key={v.id}
+                    href={`/dashboard/visitas/${v.id}`}
+                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
+                    className="rounded-lg px-4 py-3 flex items-center justify-between gap-3 hover:[border-color:var(--accent)] transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium truncate">{formatearFecha(fechaProgramadaDe(v))} · {centroNombre}</p>
+                      <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">Profesor Supervisor: {profNombre}</p>
+                    </div>
+                    <span style={{ color: ESTADO_VISITA_COLOR[estado], background: `${ESTADO_VISITA_COLOR[estado]}22` }} className="px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0">
+                      {ESTADO_VISITA_LABEL[estado]}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </Seccion>
+        )}
 
         {(estudiante.historialCursos?.length ?? 0) > 0 && (
           <Seccion icon={<History size={16} />} titulo="Cursos pasados">

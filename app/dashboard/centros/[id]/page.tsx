@@ -9,7 +9,9 @@ import { estadoEfectivo, disponibilidadDe, camposFaltantes } from "@/lib/compati
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
-import type { Asignacion, CentroDual, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia } from "@/types";
+import { estadoCanonico, fechaProgramadaDe, profesorSupervisorIdDe, ESTADO_VISITA_LABEL, ESTADO_VISITA_COLOR } from "@/lib/visitas/normalizar";
+import { formatearFecha } from "@/lib/fecha";
+import type { Asignacion, CentroDual, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia, Visita, Usuario } from "@/types";
 import { AlertCircle, ArrowLeft, Pencil, Trash2, ShieldAlert } from "lucide-react";
 
 const ESTADO_CENTRO_LABEL: Record<string, string> = {
@@ -54,6 +56,8 @@ export default function FichaCentroDualPage() {
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [maestrosGuia, setMaestrosGuia] = useState<MaestroGuia[]>([]);
+  const [visitas, setVisitas] = useState<Visita[]>([]);
+  const [profesores, setProfesores] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [denegado, setDenegado] = useState(false);
@@ -97,15 +101,32 @@ export default function FichaCentroDualPage() {
           setAsignaciones(asigDeEsteCentro);
           setEstudiantes(await obtenerDocumentosPorId<Estudiante>("estudiantes", asigDeEsteCentro.map((a) => a.estudianteId)));
           setMaestrosGuia(await obtenerDocumentosPorId<MaestroGuia>("maestros_guia", ambito.idsMaestros));
+          // Igual que arriba: no se puede consultar visitas por centroDualId
+          // directo (traería visitas de colegas fuera de su ámbito, que las
+          // reglas rechazarían) — se filtran las propias del profesor.
+          const propiasSnap = await getDocs(query(collection(db, "visitas"), where("profesorSupervisorId", "==", usuario!.uid)));
+          const legadoSnap = await getDocs(query(collection(db, "visitas"), where("profesorId", "==", usuario!.uid)));
+          const porId = new Map<string, Visita>();
+          propiasSnap.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita));
+          legadoSnap.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita));
+          const visitasDeCentro = Array.from(porId.values()).filter((v) => v.centroDualId === id);
+          setVisitas(visitasDeCentro);
+          setProfesores(usuario ? [usuario] : []);
         } else {
-          const [snapAsig, snapEst, snapMg] = await Promise.all([
+          const [snapAsig, snapEst, snapMg, snapVisitas] = await Promise.all([
             getDocs(query(collection(db, "asignaciones"), where("centroDualId", "==", id))),
             getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
             getDocs(query(collection(db, "maestros_guia"), where("centroDualId", "==", id))),
+            getDocs(query(collection(db, "visitas"), where("centroDualId", "==", id))),
           ]);
           setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
           setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
           setMaestrosGuia(snapMg.docs.map((d) => ({ id: d.id, ...d.data() } as MaestroGuia)));
+          const visitasData = snapVisitas.docs.map((d) => ({ id: d.id, ...d.data() } as Visita));
+          setVisitas(visitasData);
+          const idsProfesor = Array.from(new Set(visitasData.map(profesorSupervisorIdDe).filter(Boolean)));
+          const snapsProfesor = await Promise.all(idsProfesor.map((pid) => getDoc(doc(db, "usuarios", pid))));
+          setProfesores(snapsProfesor.filter((s) => s.exists()).map((s) => s.data() as Usuario));
         }
       } catch {
         setDenegado(true);
@@ -369,6 +390,35 @@ export default function FichaCentroDualPage() {
                 <span style={{ color: "var(--text-secondary)" }} className="text-xs flex-shrink-0">{ESTADO_ASIGNACION_LABEL[a.estado]}</span>
               </Link>
             ))}
+          </div>
+        )}
+      </Bloque>
+
+      <Bloque titulo="Visitas">
+        {visitas.length === 0 ? (
+          <p style={{ color: "var(--text-secondary)" }} className="text-sm">Todavía no se ha registrado ninguna visita a este centro.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {[...visitas].sort((a, b) => fechaProgramadaDe(b).localeCompare(fechaProgramadaDe(a))).map((v) => {
+              const estado = estadoCanonico(v.estado);
+              const profNombre = profesores.find((p) => p.uid === profesorSupervisorIdDe(v))?.nombre || "—";
+              return (
+                <Link
+                  key={v.id}
+                  href={`/dashboard/visitas/${v.id}`}
+                  style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
+                  className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:[border-color:var(--accent)] transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium truncate">{formatearFecha(fechaProgramadaDe(v))}</p>
+                    <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">Profesor Supervisor: {profNombre}</p>
+                  </div>
+                  <span style={{ color: ESTADO_VISITA_COLOR[estado], background: `${ESTADO_VISITA_COLOR[estado]}22` }} className="text-xs px-2 py-1 rounded-full flex-shrink-0">
+                    {ESTADO_VISITA_LABEL[estado]}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         )}
       </Bloque>

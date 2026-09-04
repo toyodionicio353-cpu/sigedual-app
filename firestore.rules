@@ -262,6 +262,12 @@ service cloud.firestore {
           resource.data.profesorSupervisorId == request.auth.uid
           || resource.data.profesorId == request.auth.uid
           || (('estudianteId' in resource.data) && tieneAutorizacion('estudiante', resource.data.estudianteId))
+          // Solo cubre el primer estudiante de una visita multi-estudiante —
+          // el caso común (un profesor viendo el historial de un estudiante
+          // que él mismo no visitó) igual queda cubierto por profesorSupervisorId
+          // arriba en la inmensa mayoría de los casos reales.
+          || (('estudianteIds' in resource.data) && resource.data.estudianteIds.size() > 0
+              && tieneAutorizacion('estudiante', resource.data.estudianteIds[0]))
         ))
         || (datosUsuario().rol == 'centro_dual' && datosUsuario().centroDualId == resource.data.centroDualId)
       );
