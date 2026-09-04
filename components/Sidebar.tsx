@@ -16,7 +16,7 @@ import {
   ChevronDown, UserPlus, ClipboardList,
   UsersRound, Building, ShieldCheck,
   CalendarCheck, FileText, Handshake, ClipboardCheck, FolderOpen,
-  UserCog, School, SlidersHorizontal, LifeBuoy, User, ScrollText, Clock, MapPin,
+  UserCog, School, SlidersHorizontal, LifeBuoy, User, ScrollText, Clock, MapPin, History,
 } from "lucide-react";
 
 interface SubItem {
@@ -138,6 +138,7 @@ const MENUS: NavGroup[] = [
       { href: "/dashboard/administracion/configuracion", label: "Configuración", icon: <SlidersHorizontal size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
       { href: "/dashboard/administracion/privacidad", label: "Políticas", icon: <ScrollText size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
       { href: "/dashboard/administracion/tickets", label: "Tickets", icon: <LifeBuoy size={16} strokeWidth={2.25} />, roles: ["administrador"] },
+      { href: "/dashboard/administracion/auditoria", label: "Auditoría", icon: <History size={16} strokeWidth={2.25} />, roles: ["administrador"] },
     ],
   },
   {

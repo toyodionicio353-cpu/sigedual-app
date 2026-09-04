@@ -4,6 +4,7 @@ import { collection, getDocs, doc, updateDoc, setDoc } from "firebase/firestore"
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import { RefreshCw, Trash2, UserCog } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
@@ -151,6 +152,13 @@ export default function UsuariosPage() {
 
   async function toggleActivo(u: Usuario) {
     await updateDoc(doc(db, "usuarios", u.uid), { activo: !u.activo });
+    if (usuario) {
+      registrarEvento({
+        uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+        accion: !u.activo ? "activar_usuario" : "desactivar_usuario", recurso: "usuarios", recursoId: u.uid,
+        resultado: "permitido", detalle: `${u.nombre} (${u.email})`,
+      });
+    }
     cargar();
   }
 
