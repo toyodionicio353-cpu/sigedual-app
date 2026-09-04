@@ -8,9 +8,17 @@ import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAd
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { estadoEfectivo, disponibilidadDe, camposFaltantes } from "@/lib/compatibilidad";
+import { useVistaListado } from "@/lib/preferencias/useVistaListado";
+import EncabezadoListado from "@/components/listado/EncabezadoListado";
+import TarjetasEstadisticas from "@/components/listado/TarjetasEstadisticas";
+import BarraControles from "@/components/listado/BarraControles";
+import PanelFiltros from "@/components/listado/PanelFiltros";
+import ChipsFiltros from "@/components/listado/ChipsFiltros";
+import EstadoVacio from "@/components/listado/EstadoVacio";
+import ContadorResultados from "@/components/listado/ContadorResultados";
+import PaginacionListado from "@/components/listado/PaginacionListado";
 import type { Asignacion, CentroDual, EstadoCentroDual, Especialidad } from "@/types";
-import { Search, SlidersHorizontal, X, ChevronRight, ChevronLeft, AlertCircle, Building, School } from "lucide-react";
-import TituloPagina from "@/components/TituloPagina";
+import { Search, ChevronRight, AlertCircle, Building, School, Users2, BadgeCheck, DoorOpen, Handshake } from "lucide-react";
 import Select from "@/components/ui/Select";
 
 const PAGE_SIZE = 20;
@@ -53,6 +61,7 @@ export default function CentrosPage() {
   const [filtroLiceoId, setFiltroLiceoId] = useState("");
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   const [orden, setOrden] = useState("recomendado");
+  const [vista, setVista] = useVistaListado("centros");
   const [pagina, setPagina] = useState(1);
 
   const puedeGestionar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
@@ -154,71 +163,82 @@ export default function CentrosPage() {
   const inicio = (paginaSegura - 1) * PAGE_SIZE;
   const paginaCentros = ordenados.slice(inicio, inicio + PAGE_SIZE);
 
-  const hayFiltrosActivos = Boolean(busqueda.trim() || filtroEstado || filtroEspecialidad || filtroDisponibilidad || filtroLiceoId);
   const cantidadFiltrosActivos = [filtroEstado, filtroEspecialidad, filtroDisponibilidad, filtroLiceoId].filter(Boolean).length;
+
+  const filtrosActivosChips = useMemo(() => {
+    const chips: { key: string; label: string; onQuitar: () => void }[] = [];
+    if (filtroLiceoId) chips.push({ key: "liceo", label: liceoNombrePorId[filtroLiceoId] || "Liceo", onQuitar: () => setFiltroLiceoId("") });
+    if (filtroEstado) chips.push({ key: "estado", label: ESTADO_LABEL[filtroEstado as EstadoCentroDual] || filtroEstado, onQuitar: () => setFiltroEstado("") });
+    if (filtroEspecialidad) chips.push({ key: "especialidad", label: especialidadNombre(filtroEspecialidad), onQuitar: () => setFiltroEspecialidad("") });
+    if (filtroDisponibilidad) chips.push({ key: "disponibilidad", label: filtroDisponibilidad === "con_cupos" ? "Con cupos" : "Sin cupos", onQuitar: () => setFiltroDisponibilidad("") });
+    return chips;
+  }, [filtroLiceoId, filtroEstado, filtroEspecialidad, filtroDisponibilidad, liceoNombrePorId, especialidades]);
 
   function limpiarFiltros() {
     setBusqueda(""); setFiltroEstado(""); setFiltroEspecialidad(""); setFiltroDisponibilidad(""); setFiltroLiceoId(""); setPagina(1);
   }
 
+  const stats = useMemo(() => {
+    let cuposDisponibles = 0;
+    let estudiantesAsignados = 0;
+    centros.forEach((c) => {
+      const { disponibles, ocupados } = disponibilidadDe(c, asignaciones);
+      if (disponibles != null) cuposDisponibles += disponibles;
+      estudiantesAsignados += ocupados;
+    });
+    return {
+      total: centros.length,
+      activos: centros.filter((c) => estadoEfectivo(c) === "activo").length,
+      cuposDisponibles,
+      estudiantesAsignados,
+    };
+  }, [centros, asignaciones]);
+
   return (
     <div className="p-4 md:p-8">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-        <div>
-          <TituloPagina icon={<Building size={28} />}>Centros duales</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-            {modoGlobal
-              ? "Centros duales de todos los liceos. Usa el filtro \"Liceo\" para acotar a uno en particular."
-              : "Administra los centros disponibles para la formación dual."}
-          </p>
-        </div>
-        {puedeGestionar && (
-          <Link href="/dashboard/centros/nuevo" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity text-center flex-shrink-0">
-            + Agregar centro
-          </Link>
-        )}
-      </div>
+      <EncabezadoListado
+        icon={<Building size={28} />}
+        titulo="Centros duales"
+        descripcion={
+          modoGlobal
+            ? "Centros duales de todos los liceos. Usa el filtro \"Liceo\" para acotar a uno en particular."
+            : "Administra los centros disponibles para la formación dual."
+        }
+        acciones={
+          puedeGestionar && (
+            <Link href="/dashboard/centros/nuevo" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity text-center flex-shrink-0">
+              + Agregar centro
+            </Link>
+          )
+        }
+      />
 
-      {/* Buscador y filtros */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1">
-          <Search size={16} style={{ color: "var(--text-muted)" }} className="absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            value={busqueda}
-            onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }}
-            placeholder="Buscar centro, RUT o especialidad..."
-            style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-            className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
-          />
-        </div>
-        <button
-          onClick={() => setFiltrosAbiertos((v) => !v)}
-          style={{
-            background: filtrosAbiertos ? "var(--accent)" : "var(--bg-card)",
-            border: "1px solid var(--border-light)",
-            color: filtrosAbiertos ? "var(--text-on-accent)" : "var(--text-secondary)",
-          }}
-          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors flex-shrink-0 relative"
-        >
-          <SlidersHorizontal size={16} />
-          Filtros
-          {cantidadFiltrosActivos > 0 && (
-            <span style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="w-5 h-5 rounded-full text-xs flex items-center justify-center">
-              {cantidadFiltrosActivos}
-            </span>
-          )}
-        </button>
-        <Select
-          value={orden}
-          onChange={setOrden}
-          ariaLabel="Ordenar"
-          className="w-44 flex-shrink-0"
-          opciones={ORDEN_OPCIONES}
-        />
-      </div>
+      <TarjetasEstadisticas
+        loading={loading}
+        estadisticas={[
+          { label: "Total de Centros Duales", value: stats.total, icon: <Building size={18} />, color: "#2563eb" },
+          { label: "Centros activos", value: stats.activos, icon: <BadgeCheck size={18} />, color: "#22c55e" },
+          { label: "Cupos disponibles", value: stats.cuposDisponibles, icon: <DoorOpen size={18} />, color: "#f59e0b" },
+          { label: "Estudiantes asignados", value: stats.estudiantesAsignados, icon: <Handshake size={18} />, color: "#06b6d4" },
+        ]}
+      />
+
+      <BarraControles
+        busqueda={busqueda}
+        onBusqueda={(v) => { setBusqueda(v); setPagina(1); }}
+        placeholderBusqueda="Buscar centro, RUT o especialidad..."
+        filtrosAbiertos={filtrosAbiertos}
+        onToggleFiltros={() => setFiltrosAbiertos((v) => !v)}
+        cantidadFiltrosActivos={cantidadFiltrosActivos}
+        orden={orden}
+        onOrden={setOrden}
+        opcionesOrden={ORDEN_OPCIONES}
+        vista={vista}
+        onVista={setVista}
+      />
 
       {filtrosAbiertos && (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <PanelFiltros>
           {modoGlobal && (
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Liceo</label>
@@ -244,52 +264,52 @@ export default function CentrosPage() {
             <Select value={filtroDisponibilidad} onChange={(v) => { setFiltroDisponibilidad(v); setPagina(1); }} ariaLabel="Disponibilidad"
               opciones={[{ value: "", label: "Todos" }, { value: "con_cupos", label: "Con cupos" }, { value: "sin_cupos", label: "Sin cupos" }]} />
           </div>
-        </div>
+        </PanelFiltros>
       )}
 
-      {hayFiltrosActivos && (
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          {busqueda.trim() && (
-            <span style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-xs font-medium">
-              &quot;{busqueda.trim()}&quot;
-              <button onClick={() => setBusqueda("")} style={{ color: "var(--text-muted)" }}><X size={13} /></button>
-            </span>
-          )}
-          <button onClick={limpiarFiltros} style={{ color: "var(--accent-light)" }} className="text-xs font-semibold hover:underline">
-            Limpiar filtros
-          </button>
-        </div>
-      )}
+      <ChipsFiltros
+        busqueda={busqueda}
+        onQuitarBusqueda={() => setBusqueda("")}
+        chips={filtrosActivosChips}
+        onLimpiarTodo={limpiarFiltros}
+      />
 
       {/* Contenido */}
       {loading ? (
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
       ) : centros.length === 0 ? (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
-          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No hay centros duales registrados</p>
-          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Agrega el primer centro dual para comenzar a gestionar tus espacios de formación.</p>
-          {puedeGestionar && (
+        <EstadoVacio
+          icon={<Building size={24} style={{ color: "var(--accent-light)" }} />}
+          titulo="No hay centros duales registrados"
+          descripcion="Agrega el primer centro dual para comenzar a gestionar tus espacios de formación."
+          accion={puedeGestionar && (
             <Link href="/dashboard/centros/nuevo" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
               + Agregar centro
             </Link>
           )}
-        </div>
+        />
       ) : ordenados.length === 0 ? (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
-          <div style={{ background: "var(--bg-surface)", borderRadius: "9999px" }} className="w-14 h-14 flex items-center justify-center mx-auto mb-4">
-            <Search size={22} style={{ color: "var(--text-muted)" }} />
-          </div>
-          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No encontramos centros que coincidan con tu búsqueda.</p>
-          <button onClick={limpiarFiltros} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="px-5 py-2.5 rounded-xl text-sm font-medium mt-4">
-            Limpiar búsqueda
-          </button>
-        </div>
+        <EstadoVacio
+          icon={<Search size={22} style={{ color: "var(--text-muted)" }} />}
+          titulo="No encontramos centros"
+          descripcion="Prueba modificando la búsqueda o eliminando algunos filtros."
+          accion={
+            <button onClick={limpiarFiltros} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="px-5 py-2.5 rounded-xl text-sm font-medium">
+              Limpiar filtros
+            </button>
+          }
+        />
       ) : (
         <>
-          <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">
-            Mostrando {inicio + 1}–{Math.min(inicio + PAGE_SIZE, ordenados.length)} de {ordenados.length} centro(s)
-          </p>
+          <ContadorResultados
+            total={ordenados.length}
+            entidadSingular="centro"
+            entidadPlural="centros"
+            rango={{ inicio: inicio + 1, fin: Math.min(inicio + PAGE_SIZE, ordenados.length) }}
+          />
 
+          {vista === "lista" ? (
+          <>
           {/* Tabla — escritorio */}
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden mb-4 hidden md:block">
             <div style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }} className="grid grid-cols-[2fr_1.2fr_1.6fr_0.8fr_1.4fr_1fr_0.6fr] gap-3 px-5 py-3 text-[11px] font-semibold tracking-wide uppercase">
@@ -396,31 +416,55 @@ export default function CentrosPage() {
               );
             })}
           </div>
-
-          {/* Paginación */}
-          {totalPaginas > 1 && (
-            <div className="flex items-center justify-center gap-2">
-              <button
-                onClick={() => setPagina((p) => Math.max(1, p - 1))}
-                disabled={paginaSegura === 1}
-                style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-                className="p-2 rounded-lg disabled:opacity-40"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span style={{ color: "var(--text-secondary)" }} className="text-xs px-2">
-                Página {paginaSegura} de {totalPaginas}
-              </span>
-              <button
-                onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-                disabled={paginaSegura === totalPaginas}
-                style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-                className="p-2 rounded-lg disabled:opacity-40"
-              >
-                <ChevronRight size={16} />
-              </button>
+          </>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              {paginaCentros.map((c) => {
+                const estado = estadoEfectivo(c);
+                const { capacidad, ocupados, disponibles } = disponibilidadDe(c, asignaciones);
+                const especialidadesNombres = c.especialidades.map((id) => especialidadNombre(id));
+                return (
+                  <Link
+                    key={c.id}
+                    href={`/dashboard/centros/${c.id}`}
+                    style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }}
+                    className="p-4 flex flex-col gap-3 hover:[border-color:var(--accent)] transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{c.nombre}</p>
+                        {modoGlobal && (
+                          <p style={{ color: "var(--text-muted)" }} className="flex items-center gap-1 text-[11px] mt-0.5 truncate">
+                            <School size={11} /> {liceoNombrePorId[c.liceoId] || "—"}
+                          </p>
+                        )}
+                      </div>
+                      <span style={{ color: ESTADO_COLOR[estado], background: ESTADO_COLOR[estado] + "22" }} className="px-3 py-1 rounded-full text-xs font-medium flex-shrink-0">
+                        {ESTADO_LABEL[estado]}
+                      </span>
+                    </div>
+                    <div style={{ borderTop: "1px solid var(--border)" }} className="pt-3 flex flex-col gap-1">
+                      <p style={{ color: "var(--text-secondary)" }} className="text-xs">
+                        Cupos disponibles: {capacidad != null ? (disponibles ?? 0) : "Sin límite"}
+                      </p>
+                      <p style={{ color: "var(--text-secondary)" }} className="text-xs">Estudiantes: {ocupados}</p>
+                      <p style={{ color: "var(--text-secondary)" }} className="text-xs truncate">
+                        {especialidadesNombres.length === 0 ? "Sin especialidades" : especialidadesNombres.length <= 2
+                          ? especialidadesNombres.join(" · ")
+                          : `${especialidadesNombres.slice(0, 2).join(" · ")} +${especialidadesNombres.length - 2} más`}
+                      </p>
+                    </div>
+                    <span style={{ color: "var(--accent-light)" }} className="flex items-center gap-1 text-xs font-semibold mt-1">
+                      Ver <ChevronRight size={13} />
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           )}
+
+          {/* Paginación */}
+          <PaginacionListado paginaActual={paginaSegura} totalPaginas={totalPaginas} onCambiarPagina={setPagina} />
         </>
       )}
     </div>
