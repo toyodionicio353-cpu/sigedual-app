@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/eliminar-estudiantes-vencidos",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/notificar-pendientes",
+      "schedule": "30 8 * * *"
     }
   ]
 }
