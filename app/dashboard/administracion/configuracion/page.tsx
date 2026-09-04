@@ -5,6 +5,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { Building2, Bell, SlidersHorizontal } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import PaginaVacia from "@/components/PaginaVacia";
 import type { Liceo } from "@/types";
 
 const LICEO_VACIO: Omit<Liceo, "id" | "dominioCorreo"> = {
@@ -75,9 +76,11 @@ export default function ConfiguracionPage() {
 
   if (!puedeAcceder) {
     return (
-      <div className="p-4 md:p-8">
-        <p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p>
-      </div>
+      <PaginaVacia
+        icon={<SlidersHorizontal size={28} />}
+        titulo="Configuración"
+        descripcion="Ajustes generales de la aplicación para tu institución."
+      />
     );
   }
 
