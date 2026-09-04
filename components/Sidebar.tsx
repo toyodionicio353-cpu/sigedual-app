@@ -17,6 +17,7 @@ import {
   UsersRound, Building, ShieldCheck,
   CalendarCheck, FileText, Handshake, ClipboardCheck, FolderOpen,
   UserCog, School, SlidersHorizontal, LifeBuoy, User, ScrollText, Clock, MapPin, History,
+  Send, Inbox,
 } from "lucide-react";
 
 interface SubItem {
@@ -69,6 +70,8 @@ const MENUS: NavGroup[] = [
       { href: "/dashboard/centros/nuevo", label: "Agregar centro", icon: <Building2 size={16} strokeWidth={2.25} />, roles: ["administrador", "profesor"] },
       { href: "/dashboard/centros/maestros", label: "Lista de maestro guía", icon: <UsersRound size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor"] },
       { href: "/dashboard/centros/maestros/nuevo", label: "Agregar maestro guía", icon: <UserPlus size={16} strokeWidth={2.25} />, roles: ["administrador", "profesor"] },
+      { href: "/dashboard/centros/invitaciones/nueva", label: "Generar formulario para Empresa Dual", icon: <Send size={16} strokeWidth={2.25} />, roles: ["administrador", "profesor"] },
+      { href: "/dashboard/centros/invitaciones", label: "Formularios recibidos", icon: <Inbox size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor"] },
     ],
   },
   {
