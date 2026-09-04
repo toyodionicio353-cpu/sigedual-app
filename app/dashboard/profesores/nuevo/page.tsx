@@ -8,7 +8,7 @@ import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearRut, validarRut } from "@/lib/rut";
 import TituloPagina from "@/components/TituloPagina";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 
 export default function AgregarProfesorPage() {
   const { usuario } = useAuth();
@@ -61,21 +61,11 @@ export default function AgregarProfesorPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-lg">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-        <div>
-          <TituloPagina icon={<UserPlus size={28} />}>Agregar profesor</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-            Crea la cuenta de acceso de un profesor supervisor.
-          </p>
-        </div>
-        <Link
-          href="/dashboard/profesores"
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
-        >
-          <ArrowLeft size={16} />
-          Volver a profesores
-        </Link>
+      <div className="mb-6">
+        <TituloPagina icon={<UserPlus size={28} />}>Agregar profesor</TituloPagina>
+        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+          Crea la cuenta de acceso de un profesor supervisor.
+        </p>
       </div>
 
       {error && (

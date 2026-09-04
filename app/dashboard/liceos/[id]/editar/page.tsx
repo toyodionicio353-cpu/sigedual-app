@@ -218,19 +218,9 @@ export default function EditarLiceoPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-4xl">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-        <div>
-          <TituloPagina icon={<Pencil size={28} />}>Editar liceo</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Actualiza la información del establecimiento.</p>
-        </div>
-        <Link
-          href={`/dashboard/liceos/${id}`}
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
-        >
-          <ArrowLeft size={16} />
-          Volver a la ficha
-        </Link>
+      <div className="mb-6">
+        <TituloPagina icon={<Pencil size={28} />}>Editar liceo</TituloPagina>
+        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Actualiza la información del establecimiento.</p>
       </div>
 
       {mensaje && (

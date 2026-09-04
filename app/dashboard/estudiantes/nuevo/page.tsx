@@ -9,7 +9,7 @@ import { normalizarRut } from "@/lib/rut";
 import EstudianteForm, { ESTUDIANTE_FORM_VACIO, type EstudianteFormValues } from "../_components/EstudianteForm";
 import TituloPagina from "@/components/TituloPagina";
 import type { Estudiante, Especialidad } from "@/types";
-import { Users, ArrowLeft, UserPlus, CalendarClock, BadgeCheck, CheckCircle2, Eye } from "lucide-react";
+import { Users, UserPlus, CalendarClock, BadgeCheck, CheckCircle2, Eye } from "lucide-react";
 
 const ANIO_ACTUAL = new Date().getFullYear();
 
@@ -108,21 +108,11 @@ export default function AgregarEstudiantePage() {
   return (
     <div className="p-4 md:p-8 max-w-5xl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-        <div>
-          <TituloPagina icon={<UserPlus size={28} />}>Agregar estudiante</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-            Registra un nuevo estudiante en SIGEDUAL y completa su información académica.
-          </p>
-        </div>
-        <Link
-          href="/dashboard/estudiantes"
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
-        >
-          <ArrowLeft size={16} />
-          Volver al listado
-        </Link>
+      <div className="mb-6">
+        <TituloPagina icon={<UserPlus size={28} />}>Agregar estudiante</TituloPagina>
+        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+          Registra un nuevo estudiante en SIGEDUAL y completa su información académica.
+        </p>
       </div>
 
       {/* Estadísticas */}

@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
 import MaestroGuiaForm, { MAESTRO_GUIA_FORM_VACIO, type MaestroGuiaFormValues } from "../_components/MaestroGuiaForm";
 import type { CentroDual, Especialidad, MaestroGuia } from "@/types";
-import { ArrowLeft, CheckCircle2, Eye, UserPlus } from "lucide-react";
+import { CheckCircle2, Eye, UserPlus } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 
 export default function AgregarMaestroGuiaPage() {
@@ -99,21 +99,11 @@ export default function AgregarMaestroGuiaPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-4xl">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-        <div>
-          <TituloPagina icon={<UserPlus size={28} />}>Agregar maestro guía</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-            Registra a la persona que acompañará al estudiante en un centro dual.
-          </p>
-        </div>
-        <Link
-          href="/dashboard/centros/maestros"
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
-        >
-          <ArrowLeft size={16} />
-          Volver a maestros guía
-        </Link>
+      <div className="mb-6">
+        <TituloPagina icon={<UserPlus size={28} />}>Agregar maestro guía</TituloPagina>
+        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+          Registra a la persona que acompañará al estudiante en un centro dual.
+        </p>
       </div>
 
       {errorSistema && (

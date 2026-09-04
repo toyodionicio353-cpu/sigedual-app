@@ -143,19 +143,9 @@ export default function FichaProfesorPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-3xl">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-        <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">{profesor.nombre}</h1>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{profesor.especialidad || "Sin especialidad registrada"}</p>
-        </div>
-        <Link
-          href="/dashboard/profesores"
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
-        >
-          <ArrowLeft size={16} />
-          Volver a profesores
-        </Link>
+      <div className="mb-6">
+        <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">{profesor.nombre}</h1>
+        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{profesor.especialidad || "Sin especialidad registrada"}</p>
       </div>
 
       <div className="flex items-center gap-3 mb-6">
