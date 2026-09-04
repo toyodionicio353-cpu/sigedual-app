@@ -7,6 +7,7 @@ import {
 import { formatearRut, normalizarRut, validarRut, validarEmail, validarTelefonoChileno } from "@/lib/rut";
 import { AMBIENTES_CENTRO, HABILIDADES, AREAS_DESEMPENO } from "@/lib/caracteristicas";
 import { REGIONES } from "@/app/dashboard/liceos/_components/LiceoForm";
+import Select from "@/components/ui/Select";
 import type { Especialidad, TipoCentroDual, EstadoCentroDual } from "@/types";
 
 const TIPOS_CENTRO: { value: TipoCentroDual; label: string }[] = [
@@ -256,9 +257,8 @@ export default function CentroDualForm({
         <input value={form.rut} onChange={(e) => set("rut", formatearRut(e.target.value))} placeholder="76.123.456-7" style={inputStyle} className={inputClass} />
       </Campo>
       <Campo label="Tipo de centro" error={errores.tipo}>
-        <select value={form.tipo} onChange={(e) => set("tipo", e.target.value as TipoCentroDual)} style={inputStyle} className={inputClass}>
-          {TIPOS_CENTRO.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-        </select>
+        <Select value={form.tipo} onChange={(v) => set("tipo", v as TipoCentroDual)} ariaLabel="Tipo de centro"
+          opciones={TIPOS_CENTRO} />
       </Campo>
       <Campo label="Razón social (opcional)" error={errores.razonSocial}>
         <input value={form.razonSocial} onChange={(e) => set("razonSocial", e.target.value)} placeholder="Razón social registrada" style={inputStyle} className={inputClass} />
@@ -282,10 +282,8 @@ export default function CentroDualForm({
           <input value={form.ciudad} onChange={(e) => set("ciudad", e.target.value)} placeholder="Ciudad" style={inputStyle} className={inputClass} />
         </Campo>
         <Campo label="Región" error={errores.region}>
-          <select value={form.region} onChange={(e) => set("region", e.target.value)} style={inputStyle} className={inputClass}>
-            <option value="">Selecciona una región</option>
-            {REGIONES.map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
+          <Select value={form.region} onChange={(v) => set("region", v)} ariaLabel="Región"
+            opciones={[{ value: "", label: "Selecciona una región" }, ...REGIONES.map((r) => ({ value: r, label: r }))]} />
         </Campo>
         <Campo label="Teléfono (opcional)" error={errores.telefono}>
           <input value={form.telefono} onChange={(e) => set("telefono", e.target.value)} placeholder="+56 2 1234 5678" style={inputStyle} className={inputClass} />
@@ -394,9 +392,8 @@ export default function CentroDualForm({
   const seccionDisponibilidad = (
     <Seccion icon={<CalendarCheck size={16} />} titulo="Disponibilidad">
       <Campo label="Estado del centro" error={errores.estado} span>
-        <select value={form.estado} onChange={(e) => set("estado", e.target.value as EstadoCentroDual)} style={inputStyle} className={inputClass}>
-          {ESTADOS_CENTRO.map((es) => <option key={es.value} value={es.value}>{es.label}</option>)}
-        </select>
+        <Select value={form.estado} onChange={(v) => set("estado", v as EstadoCentroDual)} ariaLabel="Estado del centro"
+          opciones={ESTADOS_CENTRO} />
       </Campo>
       <p style={{ color: "var(--text-muted)" }} className="sm:col-span-2 text-xs -mt-2">
         Un centro Inactivo o En revisión no aparece entre los centros recomendados en una nueva asignación. Puede seguir viéndose en el historial.

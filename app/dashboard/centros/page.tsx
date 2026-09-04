@@ -8,6 +8,7 @@ import { estadoEfectivo, disponibilidadDe, camposFaltantes } from "@/lib/compati
 import type { Asignacion, CentroDual, EstadoCentroDual, Especialidad } from "@/types";
 import { Search, SlidersHorizontal, X, ChevronRight, ChevronLeft, AlertCircle, Building } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import Select from "@/components/ui/Select";
 
 const PAGE_SIZE = 20;
 
@@ -177,41 +178,34 @@ export default function CentrosPage() {
             </span>
           )}
         </button>
-        <select
+        <Select
           value={orden}
-          onChange={(e) => setOrden(e.target.value)}
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-          className="px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors flex-shrink-0"
-        >
-          {ORDEN_OPCIONES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+          onChange={setOrden}
+          ariaLabel="Ordenar"
+          className="w-44 flex-shrink-0"
+          opciones={ORDEN_OPCIONES}
+        />
       </div>
 
       {filtrosAbiertos && (
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Estado</label>
-            <select value={filtroEstado} onChange={(e) => { setFiltroEstado(e.target.value); setPagina(1); }} style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }} className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-              <option value="">Todos</option>
-              <option value="activo">Activos</option>
-              <option value="inactivo">Inactivos</option>
-              <option value="en_revision">En revisión</option>
-            </select>
+            <Select value={filtroEstado} onChange={(v) => { setFiltroEstado(v); setPagina(1); }} ariaLabel="Estado"
+              opciones={[
+                { value: "", label: "Todos" }, { value: "activo", label: "Activos" },
+                { value: "inactivo", label: "Inactivos" }, { value: "en_revision", label: "En revisión" },
+              ]} />
           </div>
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Especialidad</label>
-            <select value={filtroEspecialidad} onChange={(e) => { setFiltroEspecialidad(e.target.value); setPagina(1); }} style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }} className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-              <option value="">Todas</option>
-              {especialidades.map((esp) => <option key={esp.id} value={esp.id}>{esp.nombre}</option>)}
-            </select>
+            <Select value={filtroEspecialidad} onChange={(v) => { setFiltroEspecialidad(v); setPagina(1); }} ariaLabel="Especialidad"
+              opciones={[{ value: "", label: "Todas" }, ...especialidades.map((esp) => ({ value: esp.id, label: esp.nombre }))]} />
           </div>
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Disponibilidad</label>
-            <select value={filtroDisponibilidad} onChange={(e) => { setFiltroDisponibilidad(e.target.value); setPagina(1); }} style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }} className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-              <option value="">Todos</option>
-              <option value="con_cupos">Con cupos</option>
-              <option value="sin_cupos">Sin cupos</option>
-            </select>
+            <Select value={filtroDisponibilidad} onChange={(v) => { setFiltroDisponibilidad(v); setPagina(1); }} ariaLabel="Disponibilidad"
+              opciones={[{ value: "", label: "Todos" }, { value: "con_cupos", label: "Con cupos" }, { value: "sin_cupos", label: "Sin cupos" }]} />
           </div>
         </div>
       )}

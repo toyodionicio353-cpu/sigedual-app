@@ -5,6 +5,7 @@ import { usePreferencias } from "@/lib/preferencias/context";
 import { useFeedback } from "@/lib/preferencias/useFeedback";
 import SettingRow from "@/components/ui/SettingRow";
 import Switch from "@/components/ui/Switch";
+import Select from "@/components/ui/Select";
 import type { NotificacionesCategorias } from "@/types/preferencias";
 import type { Rol } from "@/types";
 
@@ -134,16 +135,17 @@ export default function NotificacionesSeccion() {
       </SettingRow>
 
       <SettingRow id="set-resumen" titulo="Frecuencia de resúmenes por email" descripcion="Al activarlo, el sistema de notificaciones podrá enviarte un resumen periódico. Cambiar esta opción no envía correos por sí sola." vertical>
-        <select
+        <Select
           value={preferencias.resumenEmail}
-          onChange={(e) => { actualizar("resumenEmail", e.target.value as typeof preferencias.resumenEmail); avisar("Configuración actualizada."); }}
-          style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-          className="w-full max-w-xs px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
-        >
-          <option value="desactivado">Desactivado</option>
-          <option value="diario">Diario</option>
-          <option value="semanal">Semanal</option>
-        </select>
+          onChange={(v) => { actualizar("resumenEmail", v as typeof preferencias.resumenEmail); avisar("Configuración actualizada."); }}
+          ariaLabel="Frecuencia de resúmenes por email"
+          className="max-w-xs"
+          opciones={[
+            { value: "desactivado", label: "Desactivado" },
+            { value: "diario", label: "Diario" },
+            { value: "semanal", label: "Semanal" },
+          ]}
+        />
       </SettingRow>
     </div>
   );

@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { Search, MoreVertical, FileStack, Inbox } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import Select from "@/components/ui/Select";
 
 export interface ItemBiblioteca {
   id: string;
@@ -216,14 +217,13 @@ export default function BibliotecaDocumental({
             className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
           />
         </div>
-        <select
+        <Select
           value={orden}
-          onChange={(e) => setOrden(e.target.value as Orden)}
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-          className="px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors flex-shrink-0"
-        >
-          {ORDEN_OPCIONES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+          onChange={(v) => setOrden(v as Orden)}
+          ariaLabel="Ordenar"
+          className="w-44 flex-shrink-0"
+          opciones={ORDEN_OPCIONES}
+        />
       </div>
 
       {/* Contenido */}

@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { calcularCompatibilidad, disponibleParaRecomendar, estadoEfectivo, capacidadDe } from "@/lib/compatibilidad";
 import { formatearFecha } from "@/lib/fecha";
 import TituloPagina from "@/components/TituloPagina";
+import Select from "@/components/ui/Select";
 import type { Asignacion, CentroDual, Compatibilidad, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia, Usuario } from "@/types";
 import {
   ArrowLeft, ArrowRight, Search, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, User, Users, CalendarCheck,
@@ -534,30 +535,24 @@ export default function NuevaAsignacionPage() {
       {paso === 1 && modo === "grupo" && (
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <select value={filtroNivel} onChange={(e) => { setFiltroNivel(e.target.value); setFiltroCurso(""); }}
-              style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-              <option value="">Todos los niveles</option>
-              {NIVELES.map((n) => <option key={n} value={n}>{n}</option>)}
-            </select>
-            <select value={filtroCurso} onChange={(e) => setFiltroCurso(e.target.value)} disabled={!filtroNivel}
-              style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors disabled:opacity-50">
-              <option value="">{filtroNivel ? "Todos los cursos" : "Selecciona primero un nivel"}</option>
-              {cursosDisponiblesGrupo.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select value={filtroEspecialidadId} onChange={(e) => setFiltroEspecialidadId(e.target.value)}
-              style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-              <option value="">Todas las especialidades</option>
-              {especialidades.map((esp) => <option key={esp.id} value={esp.id}>{esp.nombre}</option>)}
-            </select>
-            <select value={filtroEstadoEst} onChange={(e) => setFiltroEstadoEst(e.target.value as Estudiante["estado"] | "")}
-              style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-              <option value="">Todos los estados</option>
-              {ESTADOS_ESTUDIANTE.map((es) => <option key={es} value={es}>{es.charAt(0).toUpperCase() + es.slice(1)}</option>)}
-            </select>
+            <Select value={filtroNivel} onChange={(v) => { setFiltroNivel(v); setFiltroCurso(""); }}
+              ariaLabel="Nivel"
+              opciones={[{ value: "", label: "Todos los niveles" }, ...NIVELES.map((n) => ({ value: n, label: n }))]} />
+            <Select value={filtroCurso} onChange={setFiltroCurso} disabled={!filtroNivel}
+              ariaLabel="Curso"
+              opciones={[
+                { value: "", label: filtroNivel ? "Todos los cursos" : "Selecciona primero un nivel" },
+                ...cursosDisponiblesGrupo.map((c) => ({ value: c, label: c })),
+              ]} />
+            <Select value={filtroEspecialidadId} onChange={setFiltroEspecialidadId}
+              ariaLabel="Especialidad"
+              opciones={[{ value: "", label: "Todas las especialidades" }, ...especialidades.map((esp) => ({ value: esp.id, label: esp.nombre }))]} />
+            <Select value={filtroEstadoEst} onChange={(v) => setFiltroEstadoEst(v as Estudiante["estado"] | "")}
+              ariaLabel="Estado"
+              opciones={[
+                { value: "", label: "Todos los estados" },
+                ...ESTADOS_ESTUDIANTE.map((es) => ({ value: es, label: es.charAt(0).toUpperCase() + es.slice(1) })),
+              ]} />
           </div>
 
           <div className="relative mb-4">
@@ -783,20 +778,19 @@ export default function NuevaAsignacionPage() {
                   {opciones.length === 0 ? (
                     <p style={{ color: "var(--danger)" }} className="text-xs">No hay centros con la especialidad de este estudiante.</p>
                   ) : (
-                    <select
+                    <Select
                       value={centroIdActual}
-                      onChange={(e) => setCentroPorEstudianteGrupo((prev) => ({ ...prev, [estudiante.id]: e.target.value || null }))}
+                      onChange={(v) => setCentroPorEstudianteGrupo((prev) => ({ ...prev, [estudiante.id]: v || null }))}
                       disabled={excluido}
-                      style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                      className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors disabled:opacity-50"
-                    >
-                      <option value="">Sin centro asignado</option>
-                      {opciones.map(({ centro, compatibilidad, disponible }) => (
-                        <option key={centro.id} value={centro.id}>
-                          {centro.nombre} — {compatibilidad.limitada ? "compatibilidad limitada" : `${compatibilidad.puntaje}% compatible`}{!disponible ? " (sin disponibilidad)" : ""}
-                        </option>
-                      ))}
-                    </select>
+                      ariaLabel={`Centro para ${estudiante.nombres}`}
+                      opciones={[
+                        { value: "", label: "Sin centro asignado" },
+                        ...opciones.map(({ centro, compatibilidad, disponible }) => ({
+                          value: centro.id,
+                          label: `${centro.nombre} — ${compatibilidad.limitada ? "compatibilidad limitada" : `${compatibilidad.puntaje}% compatible`}${!disponible ? " (sin disponibilidad)" : ""}`,
+                        })),
+                      ]}
+                    />
                   )}
 
                   {!excluido && opcionActual && (
@@ -859,34 +853,26 @@ export default function NuevaAsignacionPage() {
             </div>
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Jornada</label>
-              <select value={jornada} onChange={(e) => setJornada(e.target.value)}
-                style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-                <option value="">Selecciona una jornada</option>
-                {JORNADAS.map((j) => <option key={j} value={j}>{j}</option>)}
-              </select>
+              <Select value={jornada} onChange={setJornada}
+                ariaLabel="Jornada"
+                placeholder="Selecciona una jornada"
+                opciones={JORNADAS.map((j) => ({ value: j, label: j }))} />
             </div>
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Profesor supervisor</label>
-              <select value={profesorSupervisorId} onChange={(e) => setProfesorSupervisorId(e.target.value)}
-                style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-                <option value="">{profesores.length === 0 ? "No hay profesores registrados" : "Selecciona un profesor"}</option>
-                {profesores.map((p) => <option key={p.uid} value={p.uid}>{p.nombre}</option>)}
-              </select>
+              <Select value={profesorSupervisorId} onChange={setProfesorSupervisorId}
+                ariaLabel="Profesor supervisor"
+                placeholder={profesores.length === 0 ? "No hay profesores registrados" : "Selecciona un profesor"}
+                opciones={profesores.map((p) => ({ value: p.uid, label: p.nombre }))} />
             </div>
             {modo === "individual" && (
               <div>
                 <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Maestro guía</label>
-                <select value={maestroGuiaId} onChange={(e) => setMaestroGuiaId(e.target.value)}
+                <Select value={maestroGuiaId} onChange={setMaestroGuiaId}
                   disabled={maestrosGuiaDelCentro.length === 0}
-                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors disabled:opacity-50">
-                  <option value="">{maestrosGuiaDelCentro.length === 0 ? "Sin maestros guía en este centro" : "Selecciona un maestro guía"}</option>
-                  {maestrosGuiaDelCentro.map((m) => (
-                    <option key={m.id} value={m.id}>{m.nombres} {m.apellidoPaterno} — {m.cargo}</option>
-                  ))}
-                </select>
+                  ariaLabel="Maestro guía"
+                  placeholder={maestrosGuiaDelCentro.length === 0 ? "Sin maestros guía en este centro" : "Selecciona un maestro guía"}
+                  opciones={maestrosGuiaDelCentro.map((m) => ({ value: m.id, label: `${m.nombres} ${m.apellidoPaterno} — ${m.cargo}` }))} />
                 {maestrosGuiaDelCentro.length === 0 && (
                   <p style={{ color: "var(--text-muted)" }} className="text-xs mt-1">
                     {centroSeleccionado?.nombre} no tiene maestros guía registrados. <Link href="/dashboard/centros/maestros/nuevo" style={{ color: "var(--accent-light)" }} className="hover:underline">Agregar uno</Link>.
@@ -896,11 +882,9 @@ export default function NuevaAsignacionPage() {
             )}
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Estado inicial</label>
-              <select value={estadoInicial} onChange={(e) => setEstadoInicial(e.target.value as EstadoAsignacion)}
-                style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors">
-                {ESTADOS_INICIALES.map((es) => <option key={es} value={es}>{ESTADO_LABEL[es]}</option>)}
-              </select>
+              <Select value={estadoInicial} onChange={(v) => setEstadoInicial(v as EstadoAsignacion)}
+                ariaLabel="Estado inicial"
+                opciones={ESTADOS_INICIALES.map((es) => ({ value: es, label: ESTADO_LABEL[es] }))} />
             </div>
             <div className="sm:col-span-2">
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Observaciones (opcional)</label>

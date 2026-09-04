@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
 import EstudianteForm, { type EstudianteFormValues } from "../../_components/EstudianteForm";
+import Select from "@/components/ui/Select";
 import type { Estudiante, Especialidad, Liceo } from "@/types";
 import { ArrowLeft, Pencil, School } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
@@ -220,14 +221,13 @@ export default function EditarEstudiantePage() {
             Solo el administrador puede mover un estudiante a otro liceo (ej. si quedó asignado por error).
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
-            <select
+            <Select
               value={liceoSeleccionado}
-              onChange={(e) => setLiceoSeleccionado(e.target.value)}
-              style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="flex-1 px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
-            >
-              {liceos.map((l) => <option key={l.id} value={l.id}>{l.nombre}</option>)}
-            </select>
+              onChange={setLiceoSeleccionado}
+              ariaLabel="Liceo"
+              className="flex-1"
+              opciones={liceos.map((l) => ({ value: l.id, label: l.nombre }))}
+            />
             <button
               onClick={cambiarLiceo}
               disabled={cambiandoLiceo || liceoSeleccionado === estudianteOriginal?.liceoId}

@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearFecha } from "@/lib/fecha";
 import TituloPagina from "@/components/TituloPagina";
+import Select from "@/components/ui/Select";
 import type { Asignacion, CentroDual, EstadoAsignacion, Estudiante, MaestroGuia, Usuario } from "@/types";
 import { ArrowLeft, CalendarCheck } from "lucide-react";
 
@@ -132,15 +133,14 @@ export default function FichaAsignacionPage() {
           {ESTADO_LABEL[asignacion.estado]}
         </span>
         {puedeEditar && (
-          <select
+          <Select
             value={asignacion.estado}
-            onChange={(e) => cambiarEstado(e.target.value as EstadoAsignacion)}
+            onChange={(v) => cambiarEstado(v as EstadoAsignacion)}
             disabled={actualizandoEstado}
-            style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-            className="px-3 py-1.5 rounded-lg text-xs outline-none focus:[border-color:var(--accent)] transition-colors disabled:opacity-50"
-          >
-            {ESTADOS.map((es) => <option key={es} value={es}>Cambiar a: {ESTADO_LABEL[es]}</option>)}
-          </select>
+            ariaLabel="Cambiar estado de la asignación"
+            className="w-52"
+            opciones={ESTADOS.map((es) => ({ value: es, label: `Cambiar a: ${ESTADO_LABEL[es]}` }))}
+          />
         )}
       </div>
 

@@ -5,6 +5,7 @@ import {
   Settings, Plus, X, RotateCcw,
 } from "lucide-react";
 import { validarEmail, validarTelefonoChileno, validarRut, formatearRut } from "@/lib/rut";
+import Select from "@/components/ui/Select";
 
 export const REGIONES = [
   "Arica y Parinacota", "Tarapacá", "Antofagasta", "Atacama", "Coquimbo",
@@ -232,16 +233,12 @@ export default function LiceoForm({
             <input value={form.rut} onChange={(e) => set("rut", formatearRut(e.target.value))} placeholder="65.123.456-7" style={inputStyle} className={inputClass} />
           </Campo>
           <Campo label="Tipo de establecimiento" error={errores.tipoEstablecimiento}>
-            <select value={form.tipoEstablecimiento} onChange={(e) => set("tipoEstablecimiento", e.target.value)} style={inputStyle} className={inputClass}>
-              <option value="">Selecciona una opción</option>
-              {TIPOS_ESTABLECIMIENTO.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <Select value={form.tipoEstablecimiento} onChange={(v) => set("tipoEstablecimiento", v)} ariaLabel="Tipo de establecimiento"
+              opciones={[{ value: "", label: "Selecciona una opción" }, ...TIPOS_ESTABLECIMIENTO.map((t) => ({ value: t, label: t }))]} />
           </Campo>
           <Campo label="Dependencia" error={errores.dependencia}>
-            <select value={form.dependencia} onChange={(e) => set("dependencia", e.target.value)} style={inputStyle} className={inputClass}>
-              <option value="">Selecciona una opción</option>
-              {DEPENDENCIAS.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
+            <Select value={form.dependencia} onChange={(v) => set("dependencia", v)} ariaLabel="Dependencia"
+              opciones={[{ value: "", label: "Selecciona una opción" }, ...DEPENDENCIAS.map((d) => ({ value: d, label: d }))]} />
           </Campo>
           <Campo label="Dirección" error={errores.direccion} span>
             <input value={form.direccion} onChange={(e) => set("direccion", e.target.value)} placeholder="Calle, número" style={inputStyle} className={inputClass} />
@@ -253,10 +250,8 @@ export default function LiceoForm({
             <input value={form.ciudad} onChange={(e) => set("ciudad", e.target.value)} placeholder="Ciudad" style={inputStyle} className={inputClass} />
           </Campo>
           <Campo label="Región" error={errores.region} span>
-            <select value={form.region} onChange={(e) => set("region", e.target.value)} style={inputStyle} className={inputClass}>
-              <option value="">Selecciona una región</option>
-              {REGIONES.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
+            <Select value={form.region} onChange={(v) => set("region", v)} ariaLabel="Región"
+              opciones={[{ value: "", label: "Selecciona una región" }, ...REGIONES.map((r) => ({ value: r, label: r }))]} />
           </Campo>
         </Seccion>
 
@@ -368,10 +363,8 @@ export default function LiceoForm({
 
         <Seccion icon={<Settings size={16} />} titulo="Configuración del liceo">
           <Campo label="Estado del liceo" error={errores.estado}>
-            <select value={form.estado} onChange={(e) => set("estado", e.target.value as LiceoFormValues["estado"])} style={inputStyle} className={inputClass}>
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-            </select>
+            <Select value={form.estado} onChange={(v) => set("estado", v as LiceoFormValues["estado"])} ariaLabel="Estado del liceo"
+              opciones={[{ value: "activo", label: "Activo" }, { value: "inactivo", label: "Inactivo" }]} />
           </Campo>
         </Seccion>
 
