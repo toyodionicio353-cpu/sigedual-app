@@ -459,13 +459,16 @@ export interface NecesidadesEmpresa {
 
 export interface RespuestaMaestroGuiaInvitacion {
   id: string;
-  nombreCompleto: string;
+  nombres: string;
+  apellidoPaterno?: string;
+  apellidoMaterno?: string;
   run?: string;
   cargo?: string;
   area?: string;
   email?: string;
   telefono?: string;
-  experiencia?: string;
+  aniosExperiencia?: string;
+  capacidad?: string;
   especialidad?: string;
   disponibilidad?: string;
   observaciones?: string;
@@ -479,9 +482,11 @@ export interface RespuestaInvitacion {
     razonSocial?: string;
     nombreFantasia?: string;
     rut?: string;
+    tipo?: TipoCentroDual;
     giro?: string;
     direccion?: string;
     comuna?: string;
+    ciudad?: string;
     region?: string;
     telefono?: string;
     email?: string;
@@ -501,6 +506,14 @@ export interface RespuestaInvitacion {
     caracteristicasImportantes?: string;
   };
   necesidades: NecesidadesEmpresa;
+  /** Mismo vocabulario que usa el formulario oficial de Empresa Dual
+   * (lib/caracteristicas.ts) — al usar los mismos catálogos, la selección
+   * de la empresa se puede prellenar 1:1 en CentroDualForm sin adivinar. */
+  caracteristicas: {
+    ambiente?: string[];
+    habilidadesValoradas?: string[];
+    areasDesempeno?: string[];
+  };
   capacidad: {
     cantidadEstudiantes?: number;
     especialidades?: string[];

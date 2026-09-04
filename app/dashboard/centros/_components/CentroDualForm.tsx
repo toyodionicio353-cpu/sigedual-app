@@ -10,7 +10,7 @@ import { REGIONES } from "@/app/dashboard/liceos/_components/LiceoForm";
 import Select from "@/components/ui/Select";
 import type { Especialidad, TipoCentroDual, EstadoCentroDual } from "@/types";
 
-const TIPOS_CENTRO: { value: TipoCentroDual; label: string }[] = [
+export const TIPOS_CENTRO: { value: TipoCentroDual; label: string }[] = [
   { value: "empresa", label: "Empresa" },
   { value: "institucion", label: "Institución" },
   { value: "organizacion", label: "Organización" },

@@ -10,7 +10,7 @@ import {
   ArrowLeft, Building2, User2, Sparkles, ClipboardCheck, Users2, CheckCircle2, AlertTriangle, MoreVertical, Wand2,
 } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
-import CentroDualForm, { CENTRO_FORM_VACIO, type CentroDualFormValues } from "../../_components/CentroDualForm";
+import CentroDualForm, { CENTRO_FORM_VACIO, TIPOS_CENTRO, type CentroDualFormValues } from "../../_components/CentroDualForm";
 import MaestroGuiaForm, { MAESTRO_GUIA_FORM_VACIO, type MaestroGuiaFormValues } from "../../maestros/_components/MaestroGuiaForm";
 
 const ESTADO_LABEL: Record<EstadoInvitacion, string> = {
@@ -44,10 +44,12 @@ function valoresCentroDesdeRespuesta(r: RespuestaInvitacion): CentroDualFormValu
     ...CENTRO_FORM_VACIO,
     nombre: r.empresa.razonSocial ?? "",
     rut: r.empresa.rut ?? "",
+    tipo: r.empresa.tipo ?? "empresa",
     razonSocial: r.empresa.razonSocial ?? "",
     nombreComercial: r.empresa.nombreFantasia ?? "",
     direccion: r.empresa.direccion ?? "",
     comuna: r.empresa.comuna ?? "",
+    ciudad: r.empresa.ciudad ?? "",
     region: r.empresa.region ?? "",
     telefono: r.empresa.telefono ?? "",
     email: r.empresa.email ?? "",
@@ -62,19 +64,22 @@ function valoresCentroDesdeRespuesta(r: RespuestaInvitacion): CentroDualFormValu
 
 function valoresMaestroDesdeRespuesta(m: RespuestaInvitacion["maestrosGuia"][number]): MaestroGuiaFormValues {
   const notasEmpresa = [
-    m.experiencia ? `Experiencia (según la empresa): ${m.experiencia}` : "",
     m.especialidad ? `Especialidad indicada: ${m.especialidad}` : "",
     m.disponibilidad ? `Disponibilidad: ${m.disponibilidad}` : "",
     m.observaciones ?? "",
   ].filter(Boolean).join("\n");
   return {
     ...MAESTRO_GUIA_FORM_VACIO,
-    nombres: m.nombreCompleto,
+    nombres: m.nombres,
+    apellidoPaterno: m.apellidoPaterno ?? "",
+    apellidoMaterno: m.apellidoMaterno ?? "",
     run: m.run ?? "",
     email: m.email ?? "",
     telefono: m.telefono ?? "",
     cargo: m.cargo ?? "",
     area: m.area ?? "",
+    aniosExperiencia: m.aniosExperiencia ?? "",
+    capacidad: m.capacidad ?? "",
     observaciones: notasEmpresa,
   };
 }
@@ -305,9 +310,11 @@ export default function VistaPreviaInvitacionPage() {
         <Dato label="Razón social" valor={respuesta.empresa.razonSocial} />
         <Dato label="Nombre de fantasía" valor={respuesta.empresa.nombreFantasia} />
         <Dato label="RUT" valor={respuesta.empresa.rut} />
+        <Dato label="Tipo" valor={TIPOS_CENTRO.find((t) => t.value === respuesta.empresa.tipo)?.label} />
         <Dato label="Giro" valor={respuesta.empresa.giro} />
         <Dato label="Dirección" valor={respuesta.empresa.direccion} />
         <Dato label="Comuna" valor={respuesta.empresa.comuna} />
+        <Dato label="Ciudad" valor={respuesta.empresa.ciudad} />
         <Dato label="Región" valor={respuesta.empresa.region} />
         <Dato label="Teléfono" valor={respuesta.empresa.telefono} />
         <Dato label="Correo" valor={respuesta.empresa.email} />
@@ -338,6 +345,12 @@ export default function VistaPreviaInvitacionPage() {
         <Dato label="Otras observaciones" valor={respuesta.necesidades.otras} />
       </Bloque>
 
+      <Bloque icon={<Sparkles size={16} />} titulo="Características del centro">
+        <Dato label="Ambiente de trabajo" valor={respuesta.caracteristicas.ambiente?.join(", ")} />
+        <Dato label="Habilidades valoradas" valor={respuesta.caracteristicas.habilidadesValoradas?.join(", ")} />
+        <Dato label="Áreas de desempeño" valor={respuesta.caracteristicas.areasDesempeno?.join(", ")} />
+      </Bloque>
+
       <Bloque icon={<ClipboardCheck size={16} />} titulo="Capacidad">
         <Dato label="Cantidad de estudiantes" valor={respuesta.capacidad.cantidadEstudiantes} />
         <Dato label="Especialidades de interés" valor={respuesta.capacidad.especialidades?.join(", ")} />
@@ -362,7 +375,9 @@ export default function VistaPreviaInvitacionPage() {
             return (
               <div key={m.id} style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)" }} className="rounded-xl p-4">
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">{m.nombreCompleto}</p>
+                  <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">
+                    {[m.nombres, m.apellidoPaterno, m.apellidoMaterno].filter(Boolean).join(" ")}
+                  </p>
                   {procesado ? (
                     <span style={{ color: "var(--success)" }} className="text-xs flex items-center gap-1 flex-shrink-0"><CheckCircle2 size={13} /> Autorrellenado</span>
                   ) : (
@@ -383,7 +398,8 @@ export default function VistaPreviaInvitacionPage() {
                   <Dato label="Especialidad" valor={m.especialidad} />
                   <Dato label="Correo" valor={m.email} />
                   <Dato label="Teléfono" valor={m.telefono} />
-                  <Dato label="Experiencia" valor={m.experiencia} />
+                  <Dato label="Años de experiencia" valor={m.aniosExperiencia} />
+                  <Dato label="Máximo de estudiantes" valor={m.capacidad} />
                   <Dato label="Disponibilidad" valor={m.disponibilidad} />
                   <Dato label="Observaciones" valor={m.observaciones} />
                 </div>
@@ -411,9 +427,9 @@ export default function VistaPreviaInvitacionPage() {
               modo={centroExistente ? "editar" : "crear"}
               valoresIniciales={valoresCentroDesdeRespuesta(respuesta)}
               especialidadesIniciales={[]}
-              areasIniciales={[]}
-              caracteristicasIniciales={[]}
-              habilidadesIniciales={[]}
+              areasIniciales={respuesta.caracteristicas.areasDesempeno ?? []}
+              caracteristicasIniciales={respuesta.caracteristicas.ambiente ?? []}
+              habilidadesIniciales={respuesta.caracteristicas.habilidadesValoradas ?? []}
               especialidadesDisponibles={especialidades}
               rutsOcupados={[]}
               guardando={guardandoCentro}
