@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { Search, MoreVertical, FileStack, Inbox } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 
 export interface ItemBiblioteca {
   id: string;
@@ -20,6 +21,7 @@ interface AccionMenu {
 
 interface BibliotecaDocumentalProps {
   titulo: string;
+  icono?: React.ReactNode;
   descripcion: string;
   placeholderBusqueda: string;
   labelTabCreados: string;
@@ -112,7 +114,7 @@ function MenuTarjeta({ item, acciones, abierto, onToggle }: { item: ItemBibliote
 }
 
 export default function BibliotecaDocumental({
-  titulo, descripcion, placeholderBusqueda, labelTabCreados, labelPlural,
+  titulo, icono, descripcion, placeholderBusqueda, labelTabCreados, labelPlural,
   plantillas, creados, cargando = false, accionPrincipal, acciones = [],
   onUsarPlantilla, onAbrirCreado, tabInicial, onCambiarTab,
 }: BibliotecaDocumentalProps) {
@@ -158,7 +160,9 @@ export default function BibliotecaDocumental({
       {/* Encabezado */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">{titulo}</h1>
+          {icono ? <TituloPagina icon={icono}>{titulo}</TituloPagina> : (
+            <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">{titulo}</h1>
+          )}
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{descripcion}</p>
         </div>
         {accionPrincipal && (

@@ -9,6 +9,7 @@ import { useDocumentosCreados } from "@/lib/plantillas/useDocumentosCreados";
 import { eliminarDocumento } from "@/lib/documentos/guardarDocumento";
 import type { DocumentoGenerado } from "@/types";
 import type { PlantillaDocumento } from "@/types/plantillas";
+import { FolderOpen } from "lucide-react";
 
 const TIPO_MODULO = "documento" as const;
 
@@ -85,6 +86,7 @@ export default function DocumentosPage() {
       )}
       <BibliotecaDocumental
         titulo="Documentos"
+        icono={<FolderOpen size={28} />}
         descripcion="Gestiona, consulta y utiliza los documentos disponibles en SIGEDUAL."
         placeholderBusqueda="Buscar documentos..."
         labelTabCreados="Documentos creados"

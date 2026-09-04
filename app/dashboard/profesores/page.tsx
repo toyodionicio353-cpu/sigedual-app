@@ -5,10 +5,11 @@ import { collection, query, where, getDocs, doc, updateDoc } from "firebase/fire
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { estudiantesAsignadosDe, especialidadesEnUso } from "@/lib/profesores";
+import TituloPagina from "@/components/TituloPagina";
 import type { Asignacion, Usuario } from "@/types";
 import {
   Search, SlidersHorizontal, X, ChevronRight, ChevronLeft, MoreVertical,
-  Eye, Pencil, Users, ClipboardCheck, MapPin, Power,
+  Eye, Pencil, Users, ClipboardCheck, MapPin, Power, ClipboardList,
 } from "lucide-react";
 
 const PAGE_SIZE = 20;
@@ -165,7 +166,7 @@ export default function ProfesoresPage() {
     <div className="p-4 md:p-8">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Profesores Supervisores</h1>
+          <TituloPagina icon={<ClipboardList size={28} />}>Profesores Supervisores</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Gestiona y consulta los profesores supervisores registrados en SIGEDUAL.</p>
         </div>
         {puedeGestionar && (

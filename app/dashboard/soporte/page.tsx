@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import TituloPagina from "@/components/TituloPagina";
 import { LifeBuoy, Mail, Phone, MapPin, Clock, Info, Pencil, Check } from "lucide-react";
 import type { Soporte } from "@/types";
 
@@ -73,7 +74,7 @@ export default function SoportePage() {
         <div style={{ background: "#14b8a622", borderRadius: 12 }} className="w-11 h-11 flex items-center justify-center flex-shrink-0">
           <LifeBuoy size={20} style={{ color: "#14b8a6" }} />
         </div>
-        <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Contacto de soporte</h1>
+        <TituloPagina icon={<LifeBuoy size={28} />}>Contacto de soporte</TituloPagina>
       </div>
       <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-8 ml-14">
         Información de contacto del administrador del sistema.

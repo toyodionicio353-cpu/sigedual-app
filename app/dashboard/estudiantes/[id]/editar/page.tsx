@@ -8,7 +8,8 @@ import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
 import EstudianteForm, { type EstudianteFormValues } from "../../_components/EstudianteForm";
 import type { Estudiante, Especialidad } from "@/types";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 
 export default function EditarEstudiantePage() {
   const { id } = useParams<{ id: string }>();
@@ -163,7 +164,7 @@ export default function EditarEstudiantePage() {
     <div className="p-4 md:p-8 max-w-5xl">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Editar estudiante</h1>
+          <TituloPagina icon={<Pencil size={28} />}>Editar estudiante</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             Actualiza los datos de {estudianteOriginal?.nombres} {estudianteOriginal?.apellidos}.
           </p>

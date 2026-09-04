@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { collection, query, where, getDocs, addDoc, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import TituloPagina from "@/components/TituloPagina";
+import { GraduationCap } from "lucide-react";
 import type { Especialidad } from "@/types";
 
 export default function EspecialidadesPage() {
@@ -47,7 +49,7 @@ export default function EspecialidadesPage() {
   return (
     <div className="p-4 md:p-8">
       <div className="mb-6">
-        <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Especialidades</h1>
+        <TituloPagina icon={<GraduationCap size={28} />}>Especialidades</TituloPagina>
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Carreras técnico-profesionales del establecimiento</p>
       </div>
 

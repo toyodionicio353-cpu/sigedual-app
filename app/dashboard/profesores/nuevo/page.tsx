@@ -7,7 +7,8 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearRut, validarRut } from "@/lib/rut";
-import { ArrowLeft } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
+import { ArrowLeft, UserPlus } from "lucide-react";
 
 export default function AgregarProfesorPage() {
   const { usuario } = useAuth();
@@ -62,7 +63,7 @@ export default function AgregarProfesorPage() {
     <div className="p-4 md:p-8 max-w-lg">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Agregar profesor</h1>
+          <TituloPagina icon={<UserPlus size={28} />}>Agregar profesor</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             Crea la cuenta de acceso de un profesor supervisor.
           </p>

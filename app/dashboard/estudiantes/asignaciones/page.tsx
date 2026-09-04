@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { Asignacion, CentroDual, EstadoAsignacion, Estudiante } from "@/types";
 import { CalendarCheck, Search, Eye, Handshake, CheckCircle2, Clock } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 
 const ESTADOS: EstadoAsignacion[] = ["pendiente", "en_proceso", "asignada", "activa", "finalizada", "cancelada"];
 
@@ -91,7 +92,7 @@ export default function AsignacionesPage() {
     <div className="p-4 md:p-8">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Asignaciones</h1>
+          <TituloPagina icon={<CalendarCheck size={28} />}>Asignaciones</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             Asigna estudiantes a centros duales con recomendaciones de compatibilidad.
           </p>

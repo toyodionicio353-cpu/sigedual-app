@@ -6,7 +6,8 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { estadoDisponibilidadMaestroGuia, disponibilidadMaestroGuiaDe, camposFaltantesMaestroGuia } from "@/lib/maestro-guia";
 import type { Asignacion, CentroDual, Especialidad, MaestroGuia } from "@/types";
-import { AlertCircle, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
+import { AlertCircle, ChevronRight, Search, SlidersHorizontal, X, UsersRound } from "lucide-react";
+import TituloPagina from "@/components/TituloPagina";
 
 const ESTADO_LABEL: Record<string, string> = { activo: "Activo", inactivo: "Inactivo" };
 const ESTADO_COLOR: Record<string, string> = { activo: "var(--success)", inactivo: "var(--danger)" };
@@ -161,7 +162,7 @@ export default function ListaMaestrosGuiaPage() {
     <div className="p-4 md:p-8">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <h1 style={{ color: "var(--text-primary)" }} className="text-3xl font-bold">Maestros guía</h1>
+          <TituloPagina icon={<UsersRound size={28} />}>Maestros guía</TituloPagina>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Administra las personas responsables de acompañar a los estudiantes en los centros duales.</p>
         </div>
         {puedeAgregar && (
