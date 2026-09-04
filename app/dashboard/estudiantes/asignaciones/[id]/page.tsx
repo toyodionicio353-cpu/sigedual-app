@@ -6,10 +6,11 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearFecha } from "@/lib/fecha";
+import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 import type { Asignacion, CentroDual, EstadoAsignacion, Estudiante, MaestroGuia, Usuario } from "@/types";
-import { ArrowLeft, CalendarCheck } from "lucide-react";
+import { ArrowLeft, CalendarCheck, ShieldAlert } from "lucide-react";
 
 const ESTADOS: EstadoAsignacion[] = ["pendiente", "en_proceso", "asignada", "activa", "finalizada", "cancelada"];
 
@@ -47,37 +48,56 @@ export default function FichaAsignacionPage() {
   const [responsable, setResponsable] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(true);
   const [noEncontrada, setNoEncontrada] = useState(false);
+  const [denegada, setDenegada] = useState(false);
   const [actualizandoEstado, setActualizandoEstado] = useState(false);
-
-  const puedeEditar = usuario?.rol === "administrador" || usuario?.rol === "profesor" || usuario?.rol === "coordinador" || usuario?.rol === "director";
 
   useEffect(() => {
     if (!usuario || !id) return;
     async function cargar() {
       setLoading(true);
-      const snapAsig = await getDoc(doc(db, "asignaciones", id));
-      if (!snapAsig.exists()) {
-        setNoEncontrada(true);
-        setLoading(false);
-        return;
-      }
-      const a = { id: snapAsig.id, ...snapAsig.data() } as Asignacion;
-      setAsignacion(a);
+      try {
+        const snapAsig = await getDoc(doc(db, "asignaciones", id));
+        if (!snapAsig.exists()) {
+          setNoEncontrada(true);
+          setLoading(false);
+          return;
+        }
+        const a = { id: snapAsig.id, ...snapAsig.data() } as Asignacion;
+        if (usuario!.rol === "profesor" && a.profesorSupervisorId !== usuario!.uid) {
+          setDenegada(true);
+          setLoading(false);
+          registrarEvento({
+            uid: usuario!.uid, nombre: usuario!.nombre, rol: usuario!.rol, liceoId: usuario!.liceoId,
+            accion: "ver_asignacion", recurso: "asignaciones", recursoId: id,
+            resultado: "denegado", detalle: "Asignación fuera del ámbito autorizado del profesor.",
+          });
+          return;
+        }
+        setAsignacion(a);
 
-      const [snapEst, snapCentro, snapResp, snapMg] = await Promise.all([
-        getDoc(doc(db, "estudiantes", a.estudianteId)),
-        getDoc(doc(db, "centros_duales", a.centroDualId)),
-        getDoc(doc(db, "usuarios", a.creadoPor)),
-        a.maestroGuiaId ? getDoc(doc(db, "maestros_guia", a.maestroGuiaId)) : Promise.resolve(null),
-      ]);
-      if (snapEst.exists()) setEstudiante({ id: snapEst.id, ...snapEst.data() } as Estudiante);
-      if (snapCentro.exists()) setCentro({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
-      if (snapResp.exists()) setResponsable(snapResp.data() as Usuario);
-      if (snapMg?.exists()) setMaestroGuia({ id: snapMg.id, ...snapMg.data() } as MaestroGuia);
-      setLoading(false);
+        const [snapEst, snapCentro, snapResp, snapMg] = await Promise.all([
+          getDoc(doc(db, "estudiantes", a.estudianteId)),
+          getDoc(doc(db, "centros_duales", a.centroDualId)),
+          getDoc(doc(db, "usuarios", a.creadoPor)),
+          a.maestroGuiaId ? getDoc(doc(db, "maestros_guia", a.maestroGuiaId)) : Promise.resolve(null),
+        ]);
+        if (snapEst.exists()) setEstudiante({ id: snapEst.id, ...snapEst.data() } as Estudiante);
+        if (snapCentro.exists()) setCentro({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
+        if (snapResp.exists()) setResponsable(snapResp.data() as Usuario);
+        if (snapMg?.exists()) setMaestroGuia({ id: snapMg.id, ...snapMg.data() } as MaestroGuia);
+      } catch {
+        setDenegada(true);
+      } finally {
+        setLoading(false);
+      }
     }
     cargar();
   }, [usuario, id]);
+
+  const puedeEditar = Boolean(usuario && (
+    usuario.rol === "administrador" || usuario.rol === "coordinador" || usuario.rol === "director"
+    || (usuario.rol === "profesor" && asignacion?.profesorSupervisorId === usuario.uid)
+  ));
 
   async function cambiarEstado(nuevoEstado: EstadoAsignacion) {
     if (!asignacion || actualizandoEstado) return;
@@ -101,6 +121,22 @@ export default function FichaAsignacionPage() {
     return (
       <div className="p-4 md:p-8">
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
+      </div>
+    );
+  }
+
+  if (denegada) {
+    return (
+      <div className="p-4 md:p-8 max-w-3xl">
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
+          <ShieldAlert size={22} style={{ color: "var(--text-muted)" }} className="mx-auto mb-3" />
+          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Acceso denegado</p>
+          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Esta asignación no está dentro de tu ámbito autorizado.</p>
+          <Link href="/dashboard/estudiantes/asignaciones" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
+            <ArrowLeft size={16} />
+            Volver al listado
+          </Link>
+        </div>
       </div>
     );
   }

@@ -6,10 +6,12 @@ import { doc, getDoc, deleteDoc, collection, query, where, getDocs } from "fireb
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearFecha } from "@/lib/fecha";
+import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import type { Estudiante, Especialidad } from "@/types";
 import {
   ArrowLeft, BadgeCheck, Phone, GraduationCap, HeartPulse,
-  Sparkles, FileText, Users, Pencil, History, Trash2,
+  Sparkles, FileText, Users, Pencil, History, Trash2, ShieldAlert,
 } from "lucide-react";
 
 const ESTADO_COLOR: Record<string, string> = {
@@ -53,31 +55,67 @@ export default function FichaEstudiantePage() {
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
+  const [denegado, setDenegado] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const ambito = useAmbitoProfesor();
 
   useEffect(() => {
     if (!usuario || !id) return;
+    if (usuario.rol === "profesor" && ambito.cargando) return;
+    if (usuario.rol === "profesor" && !ambito.idsEstudiantes.includes(id)) {
+      setDenegado(true);
+      setLoading(false);
+      registrarEvento({
+        uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+        accion: "ver_estudiante", recurso: "estudiantes", recursoId: id,
+        resultado: "denegado", detalle: "Estudiante fuera del ámbito autorizado del profesor.",
+      });
+      return;
+    }
     async function cargar() {
       setLoading(true);
-      const [snapEst, snapEsp] = await Promise.all([
-        getDoc(doc(db, "estudiantes", id)),
-        getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
-      ]);
-      if (snapEst.exists()) {
-        setEstudiante({ id: snapEst.id, ...snapEst.data() } as Estudiante);
-      } else {
-        setNoEncontrado(true);
+      try {
+        const [snapEst, snapEsp] = await Promise.all([
+          getDoc(doc(db, "estudiantes", id)),
+          getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
+        ]);
+        if (snapEst.exists()) {
+          setEstudiante({ id: snapEst.id, ...snapEst.data() } as Estudiante);
+        } else {
+          setNoEncontrado(true);
+        }
+        setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
+      } catch {
+        // Las reglas de Firestore denegaron la lectura (fuera de ámbito/liceo).
+        setDenegado(true);
+      } finally {
+        setLoading(false);
       }
-      setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
-      setLoading(false);
     }
     cargar();
-  }, [usuario, id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario, id, ambito.cargando, ambito.idsEstudiantes]);
 
   if (loading) {
     return (
       <div className="p-4 md:p-8">
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
+      </div>
+    );
+  }
+
+  if (denegado) {
+    return (
+      <div className="p-4 md:p-8 max-w-3xl">
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
+          <ShieldAlert size={22} style={{ color: "var(--text-muted)" }} className="mx-auto mb-3" />
+          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Acceso denegado</p>
+          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Este estudiante no está dentro de tu ámbito autorizado.</p>
+          <Link href="/dashboard/estudiantes" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+            <ArrowLeft size={16} />
+            Volver al listado
+          </Link>
+        </div>
       </div>
     );
   }

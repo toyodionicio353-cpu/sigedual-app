@@ -7,8 +7,11 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { disponibilidadMaestroGuiaDe, camposFaltantesMaestroGuia } from "@/lib/maestro-guia";
 import { formatearFecha } from "@/lib/fecha";
+import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
+import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import type { Asignacion, CentroDual, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia } from "@/types";
-import { AlertCircle, ArrowLeft, Pencil, Power, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Pencil, Power, Trash2, ShieldAlert } from "lucide-react";
 
 const ESTADO_ASIGNACION_LABEL: Record<EstadoAsignacion, string> = {
   pendiente: "Pendiente", en_proceso: "En proceso", asignada: "Asignada",
@@ -45,14 +48,28 @@ export default function FichaMaestroGuiaPage() {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
+  const [denegado, setDenegado] = useState(false);
   const [actualizando, setActualizando] = useState(false);
   const [error, setError] = useState(false);
   const [eliminando, setEliminando] = useState(false);
 
-  const puedeEditar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
+  const puedeEditar = Boolean(usuario && (usuario.rol === "administrador" || usuario.rol === "profesor"));
+  const puedeEliminar = usuario?.rol === "administrador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
+  const ambito = useAmbitoProfesor();
 
   useEffect(() => {
     if (!usuario || !id) return;
+    if (usuario.rol === "profesor" && ambito.cargando) return;
+    if (usuario.rol === "profesor" && !ambito.idsMaestros.includes(id)) {
+      setDenegado(true);
+      setLoading(false);
+      registrarEvento({
+        uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+        accion: "ver_maestro_guia", recurso: "maestros_guia", recursoId: id,
+        resultado: "denegado", detalle: "Maestro guía fuera del ámbito autorizado del profesor.",
+      });
+      return;
+    }
     async function cargar() {
       setLoading(true);
       setError(false);
@@ -66,16 +83,25 @@ export default function FichaMaestroGuiaPage() {
         const m = { id: snapMg.id, ...snapMg.data() } as MaestroGuia;
         setMg(m);
 
-        const [snapCentro, snapEsp, snapAsig, snapEst] = await Promise.all([
+        const [snapCentro, snapEsp] = await Promise.all([
           m.centroDualId ? getDoc(doc(db, "centros_duales", m.centroDualId)) : Promise.resolve(null),
           getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
-          getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario!.liceoId))),
-          getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
         ]);
         if (snapCentro?.exists()) setCentro({ id: snapCentro.id, ...snapCentro.data() } as CentroDual);
         setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
-        setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
-        setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
+
+        if (usuario!.rol === "profesor") {
+          const asigDeEsteGuia = ambito.asignaciones.filter((a) => a.maestroGuiaId === id);
+          setAsignaciones(asigDeEsteGuia);
+          setEstudiantes(await obtenerDocumentosPorId<Estudiante>("estudiantes", asigDeEsteGuia.map((a) => a.estudianteId)));
+        } else {
+          const [snapAsig, snapEst] = await Promise.all([
+            getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario!.liceoId))),
+            getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
+          ]);
+          setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
+          setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
+        }
       } catch (err) {
         console.error("Error al cargar ficha de maestro guía:", err);
         setError(true);
@@ -84,7 +110,8 @@ export default function FichaMaestroGuiaPage() {
       }
     }
     cargar();
-  }, [usuario, id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario, id, ambito.cargando, ambito.idsMaestros, ambito.asignaciones]);
 
   function especialidadNombre(espId: string): string {
     return especialidades.find((e) => e.id === espId)?.nombre || espId;
@@ -142,6 +169,22 @@ export default function FichaMaestroGuiaPage() {
     );
   }
 
+  if (denegado) {
+    return (
+      <div className="p-4 md:p-8 max-w-3xl">
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
+          <ShieldAlert size={22} style={{ color: "var(--text-muted)" }} className="mx-auto mb-3" />
+          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Acceso denegado</p>
+          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Este maestro guía no está dentro de tu ámbito autorizado.</p>
+          <Link href="/dashboard/centros/maestros" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
+            <ArrowLeft size={16} />
+            Volver a maestros guía
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (noEncontrado || !mg) {
     return (
       <div className="p-4 md:p-8 max-w-3xl">
@@ -185,7 +228,7 @@ export default function FichaMaestroGuiaPage() {
               <Power size={13} />
               {mg.estado === "activo" ? "Marcar inactivo" : "Marcar activo"}
             </button>
-            {asignacionesDeEsteGuia.length === 0 && (
+            {puedeEliminar && asignacionesDeEsteGuia.length === 0 && (
               <button onClick={eliminar} disabled={eliminando} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--danger)" }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--danger)] transition-colors disabled:opacity-50">
                 <Trash2 size={13} />
                 Eliminar
@@ -195,7 +238,7 @@ export default function FichaMaestroGuiaPage() {
         )}
       </div>
 
-      {puedeEditar && asignacionesDeEsteGuia.length > 0 && (
+      {puedeEliminar && asignacionesDeEsteGuia.length > 0 && (
         <p style={{ color: "var(--text-muted)" }} className="text-xs -mt-4 mb-6">
           No se puede eliminar: tiene historial de asignaciones. Usa &quot;Marcar inactivo&quot; para desvincularlo conservando el historial.
         </p>

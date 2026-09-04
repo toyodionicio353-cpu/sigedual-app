@@ -6,6 +6,8 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useAdvertenciaLiceoGlobal } from "@/lib/liceos/useAdvertenciaLiceoGlobal";
 import ModalAdvertenciaLiceo from "@/components/liceos/ModalAdvertenciaLiceo";
+import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 import type { CentroDual, EstadoVisita, Estudiante } from "@/types";
@@ -30,11 +32,25 @@ export default function RegistrarVisitaPage() {
   const [error, setError] = useState("");
 
   const puedeAgregar = ["administrador", "coordinador", "director", "profesor"].includes(usuario?.rol ?? "");
+  const ambito = useAmbitoProfesor();
 
   useEffect(() => {
     if (!usuario) return;
+    if (usuario.rol === "profesor" && ambito.cargando) return;
     async function cargar() {
       setCargandoDatos(true);
+      if (usuario!.rol === "profesor") {
+        // Un profesor solo puede registrar visitas a centros/estudiantes
+        // dentro de su propio ámbito autorizado.
+        const [centrosData, estudiantesData] = await Promise.all([
+          obtenerDocumentosPorId<CentroDual>("centros_duales", ambito.idsCentros),
+          obtenerDocumentosPorId<Estudiante>("estudiantes", ambito.idsEstudiantes),
+        ]);
+        setCentros(centrosData);
+        setEstudiantes(estudiantesData);
+        setCargandoDatos(false);
+        return;
+      }
       const [snapCentros, snapEst] = await Promise.all([
         getDocs(query(collection(db, "centros_duales"), where("liceoId", "==", usuario!.liceoId))),
         getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
@@ -44,7 +60,8 @@ export default function RegistrarVisitaPage() {
       setCargandoDatos(false);
     }
     cargar();
-  }, [usuario]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario, ambito.cargando, ambito.idsCentros, ambito.idsEstudiantes]);
 
   const puedeGuardar = Boolean(centroDualId && fecha);
 

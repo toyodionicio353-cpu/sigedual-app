@@ -196,16 +196,20 @@ service cloud.firestore {
         esAccesoCompletoLiceo(resource.data.liceoId)
         || resource.data.profesorSupervisorId == request.auth.uid
       );
-      allow create: if request.auth != null && (
-        esAccesoCompletoLiceo(request.resource.data.liceoId)
-        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == request.resource.data.liceoId)
-      );
-      // Un profesor solo puede modificar/eliminar una asignación de la que
-      // ya es responsable — no puede tocar la de un colega.
-      allow update, delete: if request.auth != null && (
+      // Crear una asignación requiere ver y elegir entre TODOS los
+      // estudiantes/centros del liceo todavía sin asignar — visión que un
+      // profesor no debe tener (rompería el aislamiento por ámbito). Por
+      // eso solo administrador/director/coordinador crean asignaciones; el
+      // ámbito de un profesor se gana automáticamente en cuanto una de
+      // ellas lo nombra profesorSupervisorId.
+      allow create: if request.auth != null && esAccesoCompletoLiceo(request.resource.data.liceoId);
+      // Un profesor solo puede modificar (nunca eliminar) una asignación
+      // de la que ya es responsable — no puede tocar la de un colega.
+      allow update: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
         || resource.data.profesorSupervisorId == request.auth.uid
       );
+      allow delete: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
     }
 
     match /centros_duales/{id} {

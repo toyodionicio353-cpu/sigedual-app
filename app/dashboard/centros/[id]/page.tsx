@@ -6,8 +6,11 @@ import { doc, getDoc, deleteDoc, collection, query, where, getDocs } from "fireb
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { estadoEfectivo, disponibilidadDe, camposFaltantes } from "@/lib/compatibilidad";
+import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
+import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import type { Asignacion, CentroDual, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia } from "@/types";
-import { AlertCircle, ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Pencil, Trash2, ShieldAlert } from "lucide-react";
 
 const ESTADO_CENTRO_LABEL: Record<string, string> = {
   activo: "Activo", inactivo: "Inactivo", en_revision: "En revisión",
@@ -53,36 +56,66 @@ export default function FichaCentroDualPage() {
   const [maestrosGuia, setMaestrosGuia] = useState<MaestroGuia[]>([]);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
+  const [denegado, setDenegado] = useState(false);
 
-  const puedeEditar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
+  const puedeEditar = Boolean(usuario && (usuario.rol === "administrador" || usuario.rol === "profesor"));
+  const puedeEliminar = usuario?.rol === "administrador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
+  const ambito = useAmbitoProfesor();
 
   useEffect(() => {
     if (!usuario || !id) return;
+    if (usuario.rol === "profesor" && ambito.cargando) return;
+    if (usuario.rol === "profesor" && !ambito.idsCentros.includes(id)) {
+      setDenegado(true);
+      setLoading(false);
+      registrarEvento({
+        uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+        accion: "ver_centro", recurso: "centros_duales", recursoId: id,
+        resultado: "denegado", detalle: "Centro dual fuera del ámbito autorizado del profesor.",
+      });
+      return;
+    }
     async function cargar() {
       setLoading(true);
-      const snapCentro = await getDoc(doc(db, "centros_duales", id));
-      if (!snapCentro.exists()) {
-        setNoEncontrado(true);
-        setLoading(false);
-        return;
-      }
-      const c = { id: snapCentro.id, ...snapCentro.data() } as CentroDual;
-      setCentro(c);
+      try {
+        const snapCentro = await getDoc(doc(db, "centros_duales", id));
+        if (!snapCentro.exists()) {
+          setNoEncontrado(true);
+          setLoading(false);
+          return;
+        }
+        const c = { id: snapCentro.id, ...snapCentro.data() } as CentroDual;
+        setCentro(c);
 
-      const [snapEsp, snapAsig, snapEst, snapMg] = await Promise.all([
-        getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
-        getDocs(query(collection(db, "asignaciones"), where("centroDualId", "==", id))),
-        getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
-        getDocs(query(collection(db, "maestros_guia"), where("centroDualId", "==", id))),
-      ]);
-      setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
-      setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
-      setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
-      setMaestrosGuia(snapMg.docs.map((d) => ({ id: d.id, ...d.data() } as MaestroGuia)));
-      setLoading(false);
+        const snapEsp = await getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId)));
+        setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
+
+        if (usuario!.rol === "profesor") {
+          // Las reglas de Firestore no permiten leer asignaciones/estudiantes
+          // de otros profesores: solo se muestran los propios de este centro.
+          const asigDeEsteCentro = ambito.asignaciones.filter((a) => a.centroDualId === id);
+          setAsignaciones(asigDeEsteCentro);
+          setEstudiantes(await obtenerDocumentosPorId<Estudiante>("estudiantes", asigDeEsteCentro.map((a) => a.estudianteId)));
+          setMaestrosGuia(await obtenerDocumentosPorId<MaestroGuia>("maestros_guia", ambito.idsMaestros));
+        } else {
+          const [snapAsig, snapEst, snapMg] = await Promise.all([
+            getDocs(query(collection(db, "asignaciones"), where("centroDualId", "==", id))),
+            getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))),
+            getDocs(query(collection(db, "maestros_guia"), where("centroDualId", "==", id))),
+          ]);
+          setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
+          setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
+          setMaestrosGuia(snapMg.docs.map((d) => ({ id: d.id, ...d.data() } as MaestroGuia)));
+        }
+      } catch {
+        setDenegado(true);
+      } finally {
+        setLoading(false);
+      }
     }
     cargar();
-  }, [usuario, id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario, id, ambito.cargando, ambito.asignaciones, ambito.idsMaestros]);
 
   function especialidadNombre(espId: string): string {
     return especialidades.find((e) => e.id === espId)?.nombre || espId;
@@ -108,6 +141,22 @@ export default function FichaCentroDualPage() {
     return (
       <div className="p-4 md:p-8">
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
+      </div>
+    );
+  }
+
+  if (denegado) {
+    return (
+      <div className="p-4 md:p-8 max-w-3xl">
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
+          <ShieldAlert size={22} style={{ color: "var(--text-muted)" }} className="mx-auto mb-3" />
+          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Acceso denegado</p>
+          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Este centro dual no está dentro de tu ámbito autorizado.</p>
+          <Link href="/dashboard/centros" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
+            <ArrowLeft size={16} />
+            Volver a centros duales
+          </Link>
+        </div>
       </div>
     );
   }
@@ -148,10 +197,12 @@ export default function FichaCentroDualPage() {
               <Pencil size={13} />
               Editar
             </Link>
-            <button onClick={eliminar} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--danger)" }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--danger)] transition-colors">
-              <Trash2 size={13} />
-              Eliminar
-            </button>
+            {puedeEliminar && (
+              <button onClick={eliminar} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--danger)" }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--danger)] transition-colors">
+                <Trash2 size={13} />
+                Eliminar
+              </button>
+            )}
           </>
         )}
       </div>

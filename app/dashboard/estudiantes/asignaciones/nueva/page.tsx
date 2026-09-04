@@ -365,6 +365,15 @@ export default function NuevaAsignacionPage() {
     }
   }
 
+  const puedeCrear = usuario?.rol === "administrador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
+  if (usuario && !puedeCrear) {
+    return (
+      <div className="p-4 md:p-8">
+        <p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p>
+      </div>
+    );
+  }
+
   if (cargando) {
     return (
       <div className="p-4 md:p-8">

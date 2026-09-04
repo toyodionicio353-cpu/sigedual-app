@@ -4,6 +4,8 @@ import Link from "next/link";
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import type { Estudiante, Especialidad, HistorialCurso } from "@/types";
 import { GraduationCap, CheckCircle2, RotateCcw } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
@@ -30,22 +32,27 @@ export default function PromocionCursoPage() {
   const [errorSistema, setErrorSistema] = useState("");
 
   const puedeGestionar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
+  const ambito = useAmbitoProfesor();
 
   useEffect(() => {
-    if (usuario && puedeGestionar) cargar();
+    if (!usuario || !puedeGestionar) return;
+    if (usuario.rol === "profesor" && ambito.cargando) return;
+    cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario]);
+  }, [usuario, ambito.cargando, ambito.idsEstudiantes]);
 
   async function cargar() {
     if (!usuario) return;
     setLoading(true);
-    const q = usuario.rol === "profesor"
-      ? query(collection(db, "estudiantes"), where("profesorId", "==", usuario.uid))
-      : query(collection(db, "estudiantes"), where("liceoId", "==", usuario.liceoId));
-    const [snapEst, snapEsp] = await Promise.all([
-      getDocs(q),
-      getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId))),
-    ]);
+    const snapEsp = await getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario.liceoId)));
+    if (usuario.rol === "profesor") {
+      const estudiantesData = await obtenerDocumentosPorId<Estudiante>("estudiantes", ambito.idsEstudiantes);
+      setEstudiantes(estudiantesData);
+      setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
+      setLoading(false);
+      return;
+    }
+    const snapEst = await getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario.liceoId)));
     setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
     setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
     setLoading(false);
