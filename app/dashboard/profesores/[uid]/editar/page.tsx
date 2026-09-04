@@ -2,13 +2,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearRut, validarRut } from "@/lib/rut";
-import type { Usuario } from "@/types";
+import type { Especialidad, Usuario } from "@/types";
 import { ArrowLeft, Pencil } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import Select from "@/components/ui/Select";
 
 export default function EditarProfesorPage() {
   const { uid } = useParams<{ uid: string }>();
@@ -19,6 +20,8 @@ export default function EditarProfesorPage() {
   const [nombre, setNombre] = useState("");
   const [run, setRun] = useState("");
   const [especialidad, setEspecialidad] = useState("");
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
+  const [cargandoEspecialidades, setCargandoEspecialidades] = useState(true);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -43,6 +46,15 @@ export default function EditarProfesorPage() {
       setRun(p.run ?? "");
       setEspecialidad(p.especialidad ?? "");
       setLoading(false);
+      setCargandoEspecialidades(true);
+      const snapEsp = await getDocs(query(collection(db, "especialidades"), where("liceoId", "==", p.liceoId)));
+      setEspecialidades(
+        snapEsp.docs
+          .map((d) => ({ id: d.id, ...d.data() } as Especialidad))
+          .filter((e) => e.estado !== "inactiva")
+          .sort((a, b) => a.nombre.localeCompare(b.nombre))
+      );
+      setCargandoEspecialidades(false);
     }
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -135,9 +147,19 @@ export default function EditarProfesorPage() {
         </div>
         <div>
           <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Especialidad (opcional)</label>
-          <input value={especialidad} onChange={(e) => setEspecialidad(e.target.value)} placeholder="Contabilidad"
-            style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-            className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
+          {!cargandoEspecialidades && especialidades.length === 0 ? (
+            <p style={{ color: "var(--text-muted)" }} className="text-xs">
+              Este liceo todavía no tiene especialidades registradas. Agrégalas en "Especialidades" antes de asignar una.
+            </p>
+          ) : (
+            <Select
+              value={especialidad}
+              onChange={setEspecialidad}
+              ariaLabel="Especialidad"
+              disabled={cargandoEspecialidades}
+              opciones={[{ value: "", label: "Sin especialidad" }, ...especialidades.map((e) => ({ value: e.nombre, label: e.nombre }))]}
+            />
+          )}
         </div>
 
         <div className="flex justify-end mt-2">
