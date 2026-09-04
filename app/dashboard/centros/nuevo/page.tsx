@@ -84,6 +84,7 @@ export default function AgregarCentroDualPage() {
         estado: form.estado,
         activo: form.estado === "activo",
         creadoEn: new Date().toISOString(),
+        creadoPor: usuario.uid,
       };
       const ref = await addDoc(collection(db, "centros_duales"), nuevo);
       if (nuevo.rut) {

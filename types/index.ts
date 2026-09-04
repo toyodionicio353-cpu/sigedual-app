@@ -227,6 +227,9 @@ export interface CentroDual {
   /** @deprecated usar estado; se mantiene espejado en escritura por compatibilidad con código que aún lo lea */
   activo: boolean;
   creadoEn?: string;
+  /** uid de quien creó el registro. Poblado desde esta fecha en adelante;
+   * los centros creados antes no lo tienen. */
+  creadoPor?: string;
 }
 
 export type EstadoAsignacion =

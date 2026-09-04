@@ -82,7 +82,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       rutAnterior = existente?.data.rut ? normalizarRut(existente.data.rut as string) : "";
       await updateDocumentFields(`centros_duales/${centroDualId}`, { ...datosCentro, actualizadoEn: ahora });
     } else {
-      centroDualId = await addDocument("centros_duales", { ...datosCentro, creadoEn: ahora });
+      centroDualId = await addDocument("centros_duales", { ...datosCentro, creadoEn: ahora, creadoPor: datosInvitacion.profesorUid });
     }
 
     if (rutAnterior && rutAnterior !== rutNuevo) {
