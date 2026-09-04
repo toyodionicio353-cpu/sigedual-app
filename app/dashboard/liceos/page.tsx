@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, deleteDoc, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { Liceo, Especialidad } from "@/types";
 import {
   Search, SlidersHorizontal, X, Plus, Eye, Pencil, Building2,
-  BadgeCheck, CircleSlash, CalendarClock, MapPin, GraduationCap, Power,
+  BadgeCheck, CircleSlash, CalendarClock, MapPin, GraduationCap, Power, Trash2,
 } from "lucide-react";
 import { REGIONES } from "./_components/LiceoForm";
 
@@ -39,6 +39,9 @@ export default function LiceosPage() {
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   const [cambiandoEstado, setCambiandoEstado] = useState<string | null>(null);
   const [confirmandoDesactivar, setConfirmandoDesactivar] = useState<Liceo | null>(null);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState<Liceo | null>(null);
+  const [eliminando, setEliminando] = useState<string | null>(null);
+  const [errorEliminar, setErrorEliminar] = useState("");
 
   const puedeGestionar = usuario?.rol === "administrador";
 
@@ -127,6 +130,34 @@ export default function LiceosPage() {
   }, [liceos]);
 
   const hayFiltrosActivos = filtrosActivos.length > 0 || busqueda.trim().length > 0;
+
+  async function eliminarLiceo(liceo: Liceo) {
+    setEliminando(liceo.id);
+    setErrorEliminar("");
+    try {
+      const [snapEst, snapUsuarios] = await Promise.all([
+        getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", liceo.id))),
+        getDocs(query(collection(db, "usuarios"), where("liceoId", "==", liceo.id))),
+      ]);
+      if (snapEst.size > 0 || snapUsuarios.size > 0) {
+        setErrorEliminar(
+          `No se puede eliminar: tiene ${snapEst.size} estudiante(s) y ${snapUsuarios.size} usuario(s) registrados. Desactívalo en su lugar, o elimina primero esos registros.`
+        );
+        setEliminando(null);
+        return;
+      }
+      const snapEsp = await getDocs(query(collection(db, "especialidades"), where("liceoId", "==", liceo.id)));
+      await Promise.all([
+        deleteDoc(doc(db, "liceos", liceo.id)),
+        ...snapEsp.docs.map((d) => deleteDoc(d.ref)),
+      ]);
+      setLiceos((prev) => prev.filter((l) => l.id !== liceo.id));
+      setEspecialidades((prev) => prev.filter((e) => e.liceoId !== liceo.id));
+      setConfirmandoEliminar(null);
+    } finally {
+      setEliminando(null);
+    }
+  }
 
   async function cambiarEstado(liceo: Liceo, nuevoEstado: "activo" | "inactivo") {
     setCambiandoEstado(liceo.id);
@@ -367,6 +398,15 @@ export default function LiceosPage() {
                   >
                     <Power size={14} />
                   </button>
+                  <button
+                    onClick={() => { setErrorEliminar(""); setConfirmandoEliminar(liceo); }}
+                    disabled={eliminando === liceo.id}
+                    title="Eliminar liceo"
+                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--danger)" }}
+                    className="p-2 rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50 flex-shrink-0"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
             );
@@ -397,6 +437,40 @@ export default function LiceosPage() {
                 className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
               >
                 {cambiandoEstado === confirmandoDesactivar.id ? "Desactivando..." : "Desactivar liceo"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmandoEliminar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-2">¿Eliminar este liceo?</h2>
+            <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-4">
+              <strong style={{ color: "var(--text-primary)" }}>{confirmandoEliminar.nombre}</strong> y sus especialidades se eliminarán permanentemente. Esta acción no se puede deshacer.
+            </p>
+            {errorEliminar && (
+              <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-4 py-3 mb-4">
+                <p style={{ color: "var(--danger)" }} className="text-xs font-medium">{errorEliminar}</p>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setConfirmandoEliminar(null); setErrorEliminar(""); }}
+                disabled={eliminando === confirmandoEliminar.id}
+                style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => eliminarLiceo(confirmandoEliminar)}
+                disabled={eliminando === confirmandoEliminar.id}
+                style={{ background: "var(--danger)" }}
+                className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
+              >
+                {eliminando === confirmandoEliminar.id ? "Eliminando..." : "Eliminar liceo"}
               </button>
             </div>
           </div>
