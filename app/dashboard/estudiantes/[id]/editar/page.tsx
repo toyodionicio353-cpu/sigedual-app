@@ -53,20 +53,21 @@ export default function EditarEstudiantePage() {
       const e = { id: snapEst.id, ...snapEst.data() } as Estudiante;
       setEstudianteOriginal(e);
       setLiceoSeleccionado(e.liceoId);
+      const s = (v: unknown) => (v == null ? "" : String(v));
       setValores({
-        run: e.run ?? "", nombres: e.nombres ?? "",
-        apellidoPaterno: e.apellidoPaterno ?? "", apellidoMaterno: e.apellidoMaterno ?? "",
-        fechaNacimiento: e.fechaNacimiento ?? "", sexo: e.sexo ?? "", nacionalidad: e.nacionalidad ?? "",
-        email: e.email ?? "", telefono: e.telefono ?? "", direccion: e.direccion ?? "",
-        comuna: e.comuna ?? "", ciudad: e.ciudad ?? "",
-        anioAcademico: e.anioAcademico ?? String(new Date(e.creadoEn).getFullYear()),
-        nivel: e.nivel ?? "", curso: e.curso ?? "", especialidadId: e.especialidadId ?? "",
-        jornada: e.jornada ?? "", estado: e.estado ?? "activo",
-        enfermedadesCronicas: e.enfermedadesCronicas ?? "", alergias: e.alergias ?? "",
-        apoderadoNombre: e.apoderadoNombre ?? "", apoderadoRun: e.apoderadoRun ?? "",
-        apoderadoParentesco: e.apoderadoParentesco ?? "", apoderadoTelefono: e.apoderadoTelefono ?? "",
-        apoderadoEmail: e.apoderadoEmail ?? "",
-        apoderadoDomicilio: e.apoderadoDomicilio ?? "", apoderadoCiudad: e.apoderadoCiudad ?? "",
+        run: s(e.run), nombres: s(e.nombres),
+        apellidoPaterno: s(e.apellidoPaterno), apellidoMaterno: s(e.apellidoMaterno),
+        fechaNacimiento: s(e.fechaNacimiento), sexo: s(e.sexo), nacionalidad: s(e.nacionalidad),
+        email: s(e.email), telefono: s(e.telefono), direccion: s(e.direccion),
+        comuna: s(e.comuna), ciudad: s(e.ciudad),
+        anioAcademico: e.anioAcademico != null ? s(e.anioAcademico) : String(new Date(e.creadoEn).getFullYear()),
+        nivel: s(e.nivel), curso: s(e.curso), especialidadId: s(e.especialidadId),
+        jornada: s(e.jornada), estado: e.estado ?? "activo",
+        enfermedadesCronicas: s(e.enfermedadesCronicas), alergias: s(e.alergias),
+        apoderadoNombre: s(e.apoderadoNombre), apoderadoRun: s(e.apoderadoRun),
+        apoderadoParentesco: s(e.apoderadoParentesco), apoderadoTelefono: s(e.apoderadoTelefono),
+        apoderadoEmail: s(e.apoderadoEmail),
+        apoderadoDomicilio: s(e.apoderadoDomicilio), apoderadoCiudad: s(e.apoderadoCiudad),
         observaciones: e.observaciones ?? "",
       });
       setOtrosMedicos(e.informacionMedicaAdicional ?? []);
