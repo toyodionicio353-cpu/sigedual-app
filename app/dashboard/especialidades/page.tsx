@@ -23,7 +23,7 @@ export default function EspecialidadesPage() {
   const [guardando, setGuardando] = useState(false);
   const [filtroLiceoId, setFiltroLiceoId] = useState("");
 
-  const puedeEditar = usuario?.rol === "administrador";
+  const puedeEditar = usuario?.rol === "administrador" && !modoGlobal;
 
   useEffect(() => { if (usuario) cargar(); }, [usuario, modoGlobal]);
 
