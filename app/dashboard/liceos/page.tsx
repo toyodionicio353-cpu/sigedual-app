@@ -141,8 +141,20 @@ export default function LiceosPage() {
         getDocs(query(collection(db, "usuarios"), where("liceoId", "==", liceo.id))),
       ]);
       if (snapEst.size > 0 || snapUsuarios.size > 0) {
+        const nombresEst = snapEst.docs.map((d) => {
+          const data = d.data() as { nombres?: string; apellidos?: string };
+          return `${data.nombres ?? ""} ${data.apellidos ?? ""}`.trim() || "(sin nombre)";
+        });
+        const nombresUsr = snapUsuarios.docs.map((d) => {
+          const data = d.data() as { nombre?: string; email?: string };
+          return data.nombre || data.email || "(sin nombre)";
+        });
+        const detalle = [
+          nombresEst.length > 0 ? `Estudiante(s): ${nombresEst.join(", ")}` : null,
+          nombresUsr.length > 0 ? `Usuario(s): ${nombresUsr.join(", ")}` : null,
+        ].filter(Boolean).join(". ");
         setErrorEliminar(
-          `No se puede eliminar: tiene ${snapEst.size} estudiante(s) y ${snapUsuarios.size} usuario(s) registrados. Desactívalo en su lugar, o elimina primero esos registros.`
+          `No se puede eliminar: tiene registros asociados. ${detalle}. Si alguno quedó asignado a este liceo por error, corrígelo en su ficha (Estudiantes/Usuarios) o elimínalo, y vuelve a intentar.`
         );
         setEliminando(null);
         return;
