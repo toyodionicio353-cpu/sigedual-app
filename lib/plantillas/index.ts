@@ -1,12 +1,10 @@
 import type { TipoModuloDocumento } from "@/types";
 import type { PlantillaDocumento } from "@/types/plantillas";
 import { PLANTILLAS_CONVENIOS } from "./convenios";
-import { PLANTILLAS_EVALUACIONES } from "./evaluaciones";
 import { PLANTILLAS_DOCUMENTOS } from "./documentos";
 
 const REGISTROS: Record<TipoModuloDocumento, PlantillaDocumento[]> = {
   convenio: PLANTILLAS_CONVENIOS,
-  evaluacion: PLANTILLAS_EVALUACIONES,
   documento: PLANTILLAS_DOCUMENTOS,
 };
 
@@ -17,6 +15,5 @@ export function plantillasParaModulo(tipo: TipoModuloDocumento): PlantillaDocume
 
 export const NOMBRE_MODULO: Record<TipoModuloDocumento, string> = {
   convenio: "Convenio",
-  evaluacion: "Evaluación",
   documento: "Documento",
 };
