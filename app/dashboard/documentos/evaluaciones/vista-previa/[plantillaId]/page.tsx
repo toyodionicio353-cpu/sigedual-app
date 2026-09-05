@@ -4,6 +4,7 @@ import Link from "next/link";
 import { plantillaEvaluacionPorId } from "@/lib/evaluaciones";
 import { NIVELES_LOGRO } from "@/lib/evaluaciones/tipos";
 import TituloPagina from "@/components/TituloPagina";
+import LeyendaNiveles from "@/components/evaluaciones/LeyendaNiveles";
 import { ArrowLeft, Eye } from "lucide-react";
 
 function NivelesSoloLectura() {
@@ -15,6 +16,7 @@ function NivelesSoloLectura() {
           <span style={{ color: "var(--text-muted)" }} className="text-sm">{n.label}</span>
         </span>
       ))}
+      <LeyendaNiveles />
     </div>
   );
 }
