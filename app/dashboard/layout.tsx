@@ -105,7 +105,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (!loading && !user) router.replace("/login");
   }, [user, loading, router]);
 
-  if (loading) {
+  if (loading || !user) {
     return (
       <div style={{ background: "var(--bg-base)" }} className="min-h-screen flex items-center justify-center">
         <div className="text-center">
