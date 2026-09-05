@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc, writeBatch } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, updateDoc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { Notificacion } from "@/types";
@@ -21,16 +21,29 @@ export function useNotificaciones(limite = 30) {
       return;
     }
     setCargando(true);
+    // Sin orderBy en la consulta a propósito: combinar el where con un
+    // orderBy en otro campo exige un índice compuesto que este proyecto no
+    // tiene desplegado — se ordena y se recorta al límite en el cliente en
+    // vez de depender de un índice que podría no existir en Firestore.
     const q = query(
       collection(db, "notificaciones"),
-      where("destinatarioUid", "==", usuario.uid),
-      orderBy("creadoEn", "desc"),
-      limit(limite)
+      where("destinatarioUid", "==", usuario.uid)
     );
-    const unsub = onSnapshot(q, (snap) => {
-      setNotificaciones(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notificacion)));
-      setCargando(false);
-    });
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const lista = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notificacion));
+        lista.sort((a, b) => (b.creadoEn ?? "").localeCompare(a.creadoEn ?? ""));
+        setNotificaciones(lista.slice(0, limite));
+        setCargando(false);
+      },
+      () => {
+        // Un error de Firestore (permisos, red, etc.) no debe dejar el
+        // spinner girando para siempre.
+        setNotificaciones([]);
+        setCargando(false);
+      }
+    );
     return () => unsub();
   }, [usuario, limite]);
 
