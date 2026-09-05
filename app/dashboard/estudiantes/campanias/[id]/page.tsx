@@ -294,7 +294,7 @@ export default function CampaniaEstudiantePage() {
                       <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">
                         {r.run} · {r.curso} · {especialidades.find((e) => e.id === r.especialidadId)?.nombre || "—"}
                       </p>
-                      {duplicado && (
+                      {duplicado && r.estado !== "traspasado" && (
                         <p style={{ color: "var(--warning)" }} className="text-xs mt-1 flex items-center gap-1">
                           <AlertTriangle size={12} /> Ya existe: {duplicado.nombres} {duplicado.apellidos} — requiere revisión individual
                         </p>
@@ -303,9 +303,12 @@ export default function CampaniaEstudiantePage() {
                         <p style={{ color: "var(--danger)" }} className="text-xs mt-1">{r.errorDetalle}</p>
                       )}
                       {r.estado === "traspasado" && r.estudianteIdResultado && (
-                        <Link href={`/dashboard/estudiantes/${r.estudianteIdResultado}`} style={{ color: "var(--accent-light)" }} className="text-xs mt-1 inline-flex items-center gap-1 hover:underline">
-                          <Eye size={12} /> Ver estudiante
-                        </Link>
+                        <p style={{ color: "var(--success)" }} className="text-xs mt-1 flex items-center gap-2 flex-wrap">
+                          <span className="inline-flex items-center gap-1"><CheckCircle2 size={12} /> Listo{duplicado ? " — se actualizó el registro existente" : ""}</span>
+                          <Link href={`/dashboard/estudiantes/${r.estudianteIdResultado}`} style={{ color: "var(--accent-light)" }} className="inline-flex items-center gap-1 hover:underline">
+                            <Eye size={12} /> Ver estudiante
+                          </Link>
+                        </p>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">

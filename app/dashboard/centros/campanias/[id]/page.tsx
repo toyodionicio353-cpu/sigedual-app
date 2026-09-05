@@ -7,7 +7,7 @@ import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { CampaniaInvitacionEmpresa, RespuestaCampaniaEmpresa, CentroDual, Especialidad, EstadoRespuestaCampania } from "@/types";
 import {
-  ArrowLeft, AlertTriangle, Wand2, Layers, Check, X, Eye,
+  ArrowLeft, AlertTriangle, CheckCircle2, Wand2, Layers, Check, X, Eye,
 } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import CentroDualForm, { CENTRO_FORM_VACIO, type CentroDualFormValues } from "../../_components/CentroDualForm";
@@ -380,7 +380,7 @@ export default function CampaniaEmpresaPage() {
                       <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">
                         {r.empresa.rut || "Sin RUT"} · Maestro guía: {r.maestrosGuia.map((m) => m.nombres).join(", ") || "—"}
                       </p>
-                      {duplicado && (
+                      {duplicado && r.estado !== "traspasado" && (
                         <p style={{ color: "var(--warning)" }} className="text-xs mt-1 flex items-center gap-1">
                           <AlertTriangle size={12} /> Ya existe: {duplicado.nombre} — requiere revisión individual
                         </p>
@@ -389,9 +389,12 @@ export default function CampaniaEmpresaPage() {
                         <p style={{ color: "var(--danger)" }} className="text-xs mt-1">{r.errorDetalle}</p>
                       )}
                       {r.estado === "traspasado" && r.centroDualIdResultado && (
-                        <Link href={`/dashboard/centros/${r.centroDualIdResultado}`} style={{ color: "var(--accent-light)" }} className="text-xs mt-1 inline-flex items-center gap-1 hover:underline">
-                          <Eye size={12} /> Ver centro
-                        </Link>
+                        <p style={{ color: "var(--success)" }} className="text-xs mt-1 flex items-center gap-2 flex-wrap">
+                          <span className="inline-flex items-center gap-1"><CheckCircle2 size={12} /> Listo{duplicado ? " — se actualizó el registro existente" : ""}</span>
+                          <Link href={`/dashboard/centros/${r.centroDualIdResultado}`} style={{ color: "var(--accent-light)" }} className="inline-flex items-center gap-1 hover:underline">
+                            <Eye size={12} /> Ver centro
+                          </Link>
+                        </p>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
