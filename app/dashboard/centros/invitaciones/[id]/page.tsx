@@ -278,7 +278,14 @@ export default function VistaPreviaInvitacionPage() {
         </div>
       </div>
 
-      {centroExistente ? (
+      {centroResultado ? (
+        <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
+          <CheckCircle2 size={16} style={{ color: "var(--success)" }} className="flex-shrink-0" />
+          <p style={{ color: "var(--text-secondary)" }} className="text-xs">
+            Listo — {centroExistente ? "se actualizó el registro existente" : "centro dual autorrellenado"}: <strong style={{ color: "var(--text-primary)" }}>{centroResultado.nombre}</strong>. Ya puedes autorrellenar los Maestros Guía.
+          </p>
+        </div>
+      ) : centroExistente ? (
         <div style={{ background: "var(--warning)22", border: "1px solid var(--warning)" }} className="rounded-xl px-4 py-3 mb-6 flex items-start gap-2">
           <AlertTriangle size={16} style={{ color: "var(--warning)" }} className="flex-shrink-0 mt-0.5" />
           <div>
@@ -288,19 +295,10 @@ export default function VistaPreviaInvitacionPage() {
             </p>
           </div>
         </div>
-      ) : !centroResultado ? (
+      ) : (
         <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
           <CheckCircle2 size={16} style={{ color: "var(--success)" }} className="flex-shrink-0" />
           <p style={{ color: "var(--text-secondary)" }} className="text-xs">No se encontró ninguna empresa con este RUT registrada en SIGEDUAL — se creará un nuevo centro dual.</p>
-        </div>
-      ) : null}
-
-      {centroResultado && (
-        <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
-          <CheckCircle2 size={16} style={{ color: "var(--success)" }} className="flex-shrink-0" />
-          <p style={{ color: "var(--text-secondary)" }} className="text-xs">
-            Centro dual autorrellenado: <strong style={{ color: "var(--text-primary)" }}>{centroResultado.nombre}</strong>. Ya puedes autorrellenar los Maestros Guía.
-          </p>
         </div>
       )}
 

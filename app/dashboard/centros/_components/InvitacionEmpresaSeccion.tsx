@@ -2,13 +2,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { collection, query, where, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
 import { useAdvertenciaLiceoGlobal } from "@/lib/liceos/useAdvertenciaLiceoGlobal";
 import ModalAdvertenciaLiceo from "@/components/liceos/ModalAdvertenciaLiceo";
 import type { InvitacionEmpresa, EstadoInvitacion, CampaniaInvitacionEmpresa, EstadoCampania } from "@/types";
-import { Send, Inbox, Copy, Ban, ChevronRight, CheckCircle2, Wand2, Layers } from "lucide-react";
+import { Send, Inbox, Copy, Ban, ChevronRight, CheckCircle2, Wand2, Layers, Trash2 } from "lucide-react";
 
 const HORAS_EXPIRACION = 24;
 
@@ -58,6 +58,7 @@ export default function InvitacionEmpresaSeccion() {
   const [enlaceGenerado, setEnlaceGenerado] = useState<string | null>(null);
   const [copiadoId, setCopiadoId] = useState<string | null>(null);
   const [revocando, setRevocando] = useState<string | null>(null);
+  const [eliminando, setEliminando] = useState<string | null>(null);
 
   const [campanias, setCampanias] = useState<CampaniaInvitacionEmpresa[]>([]);
   const [loadingCampanias, setLoadingCampanias] = useState(true);
@@ -180,6 +181,23 @@ export default function InvitacionEmpresaSeccion() {
       setInvitaciones((lista) => lista.map((inv) => (inv.id === id ? { ...inv, estado: "revocado" } : inv)));
     } finally {
       setRevocando(null);
+    }
+  }
+
+  async function eliminarInvitacion(id: string) {
+    if (eliminando || !confirm("¿Eliminar este formulario recibido? Esto no borra ningún centro/maestro guía ya creado a partir de él.")) return;
+    setEliminando(id);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch(`/api/invitaciones/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setInvitaciones((lista) => lista.filter((inv) => inv.id !== id));
+      }
+    } finally {
+      setEliminando(null);
     }
   }
 
@@ -309,6 +327,16 @@ export default function InvitacionEmpresaSeccion() {
                           Ver formulario <ChevronRight size={13} />
                         </Link>
                       )}
+                      <button
+                        onClick={() => eliminarInvitacion(inv.id)}
+                        disabled={eliminando === inv.id}
+                        title="Eliminar formulario"
+                        aria-label="Eliminar formulario"
+                        style={{ color: "var(--text-muted)" }}
+                        className="p-1.5 rounded-lg hover:[color:var(--danger)] hover:[background:var(--hover-overlay)] transition-colors disabled:opacity-50"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </div>
                 ))}

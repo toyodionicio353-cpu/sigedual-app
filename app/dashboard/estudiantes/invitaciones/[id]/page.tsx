@@ -211,7 +211,14 @@ export default function VistaPreviaInvitacionEstudiantePage() {
         </div>
       </div>
 
-      {estudianteExistente ? (
+      {estudianteResultado ? (
+        <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
+          <CheckCircle2 size={16} style={{ color: "var(--success)" }} className="flex-shrink-0" />
+          <p style={{ color: "var(--text-secondary)" }} className="text-xs">
+            Listo — {estudianteExistente ? "se actualizó el registro existente" : "estudiante autorrellenado"}: <Link href={`/dashboard/estudiantes/${estudianteResultado.id}`} style={{ color: "var(--text-primary)" }} className="font-semibold underline">{estudianteResultado.nombres} {estudianteResultado.apellidos}</Link>.
+          </p>
+        </div>
+      ) : estudianteExistente ? (
         <div style={{ background: "var(--warning)22", border: "1px solid var(--warning)" }} className="rounded-xl px-4 py-3 mb-6 flex items-start gap-2">
           <AlertTriangle size={16} style={{ color: "var(--warning)" }} className="flex-shrink-0 mt-0.5" />
           <div>
@@ -221,19 +228,10 @@ export default function VistaPreviaInvitacionEstudiantePage() {
             </p>
           </div>
         </div>
-      ) : !estudianteResultado ? (
+      ) : (
         <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
           <CheckCircle2 size={16} style={{ color: "var(--success)" }} className="flex-shrink-0" />
           <p style={{ color: "var(--text-secondary)" }} className="text-xs">No se encontró ningún estudiante con este RUN registrado en SIGEDUAL — se creará un estudiante nuevo.</p>
-        </div>
-      ) : null}
-
-      {estudianteResultado && (
-        <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
-          <CheckCircle2 size={16} style={{ color: "var(--success)" }} className="flex-shrink-0" />
-          <p style={{ color: "var(--text-secondary)" }} className="text-xs">
-            Estudiante autorrellenado: <Link href={`/dashboard/estudiantes/${estudianteResultado.id}`} style={{ color: "var(--text-primary)" }} className="font-semibold underline">{estudianteResultado.nombres} {estudianteResultado.apellidos}</Link>.
-          </p>
         </div>
       )}
 
