@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { collection, query, where, onSnapshot, doc, updateDoc, writeBatch } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { Notificacion } from "@/types";
@@ -61,5 +61,16 @@ export function useNotificaciones(limite = 30) {
     await batch.commit();
   }
 
-  return { notificaciones, noLeidas, cargando, marcarLeida, marcarTodasLeidas };
+  async function eliminarNotificacion(id: string) {
+    await deleteDoc(doc(db, "notificaciones", id));
+  }
+
+  async function eliminarTodas() {
+    if (notificaciones.length === 0) return;
+    const batch = writeBatch(db);
+    notificaciones.forEach((n) => batch.delete(doc(db, "notificaciones", n.id)));
+    await batch.commit();
+  }
+
+  return { notificaciones, noLeidas, cargando, marcarLeida, marcarTodasLeidas, eliminarNotificacion, eliminarTodas };
 }
