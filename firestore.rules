@@ -43,7 +43,8 @@ service cloud.firestore {
         'maestros_guia', 'visitas', 'autorizaciones', 'conversaciones',
         'invitaciones', 'respuestas_invitacion', 'centros_duales_por_rut',
         'evaluaciones', 'invitaciones_estudiante', 'respuestas_invitacion_estudiante',
-        'estudiantes_por_run'
+        'estudiantes_por_run', 'campanias_invitacion', 'campanias_invitacion_estudiante',
+        'respuestas_campania', 'respuestas_campania_estudiante'
       ];
     }
 
@@ -402,6 +403,59 @@ service cloud.firestore {
         datosUsuario().rol == 'administrador'
         || (datosUsuario().liceoId == request.resource.data.liceoId && datosUsuario().rol in ['director', 'coordinador', 'profesor'])
       );
+    }
+
+    // Formulario masivo (campaña): mismo criterio de acceso que una
+    // invitación individual — la campaña la crea/lee/actualiza (revocar,
+    // cambiar capacidad) el profesor que la generó o acceso completo de
+    // liceo. El incremento de `respuestasCount` en cada envío externo lo
+    // hace únicamente la ruta de API (commit atómico con precondición),
+    // nunca el cliente, por eso "update" también exige la misma condición
+    // de dueño/liceo — evita que cualquier usuario autenticado manipule el
+    // cupo de una campaña ajena.
+    match /campanias_invitacion/{id} {
+      allow read, update: if request.auth != null && (
+        resource.data.profesorUid == request.auth.uid
+        || esAccesoCompletoLiceo(resource.data.liceoId)
+      );
+      allow create: if request.auth != null && (
+        request.resource.data.profesorUid == request.auth.uid
+        || esAccesoCompletoLiceo(request.resource.data.liceoId)
+      );
+      allow delete: if false;
+    }
+
+    match /campanias_invitacion_estudiante/{id} {
+      allow read, update: if request.auth != null && (
+        resource.data.profesorUid == request.auth.uid
+        || esAccesoCompletoLiceo(resource.data.liceoId)
+      );
+      allow create: if request.auth != null && (
+        request.resource.data.profesorUid == request.auth.uid
+        || esAccesoCompletoLiceo(request.resource.data.liceoId)
+      );
+      allow delete: if false;
+    }
+
+    // Respuestas de una campaña: a diferencia de respuestas_invitacion, el
+    // id de la respuesta NO coincide con el de la campaña (una campaña
+    // tiene muchas respuestas), así que la regla resuelve el dueño vía
+    // `campaniaId`. Toda escritura (envío externo, cambios de estado,
+    // traspaso) pasa por rutas de API con privilegio de servidor.
+    match /respuestas_campania/{id} {
+      allow read: if request.auth != null && (
+        get(/databases/$(database)/documents/campanias_invitacion/$(resource.data.campaniaId)).data.profesorUid == request.auth.uid
+        || esAccesoCompletoLiceo(resource.data.liceoId)
+      );
+      allow write: if false;
+    }
+
+    match /respuestas_campania_estudiante/{id} {
+      allow read: if request.auth != null && (
+        get(/databases/$(database)/documents/campanias_invitacion_estudiante/$(resource.data.campaniaId)).data.profesorUid == request.auth.uid
+        || esAccesoCompletoLiceo(resource.data.liceoId)
+      );
+      allow write: if false;
     }
 
     // Conversaciones: visibles y editables únicamente por sus participantes

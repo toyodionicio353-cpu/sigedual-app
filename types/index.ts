@@ -679,6 +679,113 @@ export interface IndiceEstudiantePorRun {
   liceoId: string;
 }
 
+// ── Formularios masivos (campañas): un mismo enlace recibe muchas
+// respuestas independientes hasta un cupo, a diferencia de las
+// invitaciones individuales de arriba (un enlace = una respuesta, se
+// inutiliza al enviarse). Colecciones y tipos propios, en paralelo —
+// ver app/api/campanias(-estudiante)/. ──────────────────────────────────
+
+export type EstadoCampania = "activa" | "completa" | "expirada" | "revocada";
+
+export type EstadoRespuestaCampania =
+  | "recibido"
+  | "revision"
+  | "aprobado"
+  | "rechazado"
+  | "traspasado"
+  | "error"
+  | "duplicado";
+
+export interface CampaniaInvitacionEstudiante {
+  id: string;
+  liceoId: string;
+  profesorUid: string;
+  profesorNombre: string;
+  nombre: string;
+  capacidad: number;
+  respuestasCount: number;
+  estado: EstadoCampania;
+  creadoEn: string;
+  expiraEn?: string;
+  ultimoAccesoEn?: string;
+}
+
+export interface RespuestaCampaniaEstudiante {
+  id: string;
+  campaniaId: string;
+  liceoId: string;
+  numero: number;
+  estado: EstadoRespuestaCampania;
+  run: string;
+  nombres: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  fechaNacimiento: string;
+  sexo: string;
+  nacionalidad: string;
+  email: string;
+  telefono: string;
+  direccion: string;
+  comuna: string;
+  ciudad: string;
+  anioAcademico: string;
+  nivel: string;
+  curso: string;
+  especialidadId: string;
+  jornada: string;
+  enfermedadesCronicas: string;
+  alergias: string;
+  informacionMedicaAdicional: string[];
+  rasgos: string[];
+  habilidades: string[];
+  apoderadoNombre: string;
+  apoderadoRun: string;
+  apoderadoParentesco: string;
+  apoderadoTelefono: string;
+  apoderadoEmail: string;
+  apoderadoDomicilio: string;
+  apoderadoCiudad: string;
+  observaciones: string;
+  creadoEn: string;
+  enviadoEn: string;
+  procesadoEn?: string;
+  estudianteIdResultado?: string;
+  errorDetalle?: string;
+}
+
+export interface CampaniaInvitacionEmpresa {
+  id: string;
+  liceoId: string;
+  profesorUid: string;
+  profesorNombre: string;
+  nombre: string;
+  capacidad: number;
+  respuestasCount: number;
+  estado: EstadoCampania;
+  creadoEn: string;
+  expiraEn?: string;
+  ultimoAccesoEn?: string;
+}
+
+export interface RespuestaCampaniaEmpresa {
+  id: string;
+  campaniaId: string;
+  liceoId: string;
+  numero: number;
+  estado: EstadoRespuestaCampania;
+  empresa: RespuestaInvitacion["empresa"];
+  perfil: RespuestaInvitacion["perfil"];
+  necesidades: NecesidadesEmpresa;
+  caracteristicas: RespuestaInvitacion["caracteristicas"];
+  capacidad: RespuestaInvitacion["capacidad"];
+  maestrosGuia: RespuestaMaestroGuiaInvitacion[];
+  creadoEn: string;
+  enviadoEn: string;
+  procesadoEn?: string;
+  centroDualIdResultado?: string;
+  errorDetalle?: string;
+}
+
 // ── Evaluaciones (desempeño del estudiante en su Centro Dual) ──────────
 
 /** Escala de logro de la pauta: I (Insuficiente), R (Regular), B (Bueno),
