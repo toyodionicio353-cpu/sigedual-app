@@ -9,26 +9,30 @@ import { plantillaEvaluacionPorId } from "@/lib/evaluaciones";
 import { NIVELES_LOGRO } from "@/lib/evaluaciones/tipos";
 import type { Evaluacion, Estudiante, CentroDual, MaestroGuia, NivelLogro } from "@/types";
 import TituloPagina from "@/components/TituloPagina";
+import LeyendaNiveles from "@/components/evaluaciones/LeyendaNiveles";
 import { ArrowLeft, ClipboardCheck, AlertCircle } from "lucide-react";
 
 function NivelesConValor({ valor }: { valor?: NivelLogro }) {
   return (
-    <div className="flex items-center gap-4 flex-wrap">
-      {NIVELES_LOGRO.map((n) => {
-        const activo = valor === n.value;
-        return (
-          <span key={n.value} className="flex items-center gap-1.5" title={n.descripcion}>
-            <span
-              style={{
-                border: `1px solid ${activo ? "var(--accent)" : "var(--border-light)"}`,
-                background: activo ? "var(--accent)" : "transparent",
-              }}
-              className="w-3.5 h-3.5 rounded-full inline-block"
-            />
-            <span style={{ color: activo ? "var(--text-primary)" : "var(--text-muted)" }} className="text-sm font-medium">{n.label}</span>
-          </span>
-        );
-      })}
+    <div>
+      <div className="flex items-center gap-4 flex-wrap">
+        {NIVELES_LOGRO.map((n) => {
+          const activo = valor === n.value;
+          return (
+            <span key={n.value} className="flex items-center gap-1.5" title={n.descripcion}>
+              <span
+                style={{
+                  border: `1px solid ${activo ? "var(--accent)" : "var(--border-light)"}`,
+                  background: activo ? "var(--accent)" : "transparent",
+                }}
+                className="w-3.5 h-3.5 rounded-full inline-block"
+              />
+              <span style={{ color: activo ? "var(--text-primary)" : "var(--text-muted)" }} className="text-sm font-medium">{n.label}</span>
+            </span>
+          );
+        })}
+        <LeyendaNiveles />
+      </div>
     </div>
   );
 }

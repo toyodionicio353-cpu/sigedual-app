@@ -14,6 +14,7 @@ import { NIVELES_LOGRO } from "@/lib/evaluaciones/tipos";
 import type { NivelLogro, TareaAdicionalEvaluacion, Asignacion, Estudiante, CentroDual, MaestroGuia, Especialidad } from "@/types";
 import Select from "@/components/ui/Select";
 import TituloPagina from "@/components/TituloPagina";
+import LeyendaNiveles from "@/components/evaluaciones/LeyendaNiveles";
 import { ArrowLeft, ArrowRight, ClipboardCheck, Plus, Trash2, AlertTriangle } from "lucide-react";
 
 const inputStyle = { background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" };
@@ -37,6 +38,7 @@ function SelectorNivel({ valor, onChange }: { valor?: NivelLogro; onChange: (v: 
           <span style={{ color: valor === n.value ? "var(--text-primary)" : "var(--text-secondary)" }} className="text-sm font-medium">{n.label}</span>
         </label>
       ))}
+      <LeyendaNiveles />
     </div>
   );
 }
