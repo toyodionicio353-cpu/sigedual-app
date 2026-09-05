@@ -57,7 +57,7 @@ export default function DashboardPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [cargando, setCargando] = useState(true);
 
-  const { notificaciones, cargando: cargandoNotif, marcarLeida } = useNotificaciones(6);
+  const { notificaciones, cargando: cargandoNotif, marcarLeida, eliminarNotificacion } = useNotificaciones(6);
 
   useEffect(() => {
     if (!usuario) return;
@@ -323,7 +323,7 @@ export default function DashboardPage() {
                 Ver todas
               </Link>
             </div>
-            <ListaNotificaciones notificaciones={notificaciones} cargando={cargandoNotif} onMarcarLeida={marcarLeida} />
+            <ListaNotificaciones notificaciones={notificaciones} cargando={cargandoNotif} onMarcarLeida={marcarLeida} onEliminar={eliminarNotificacion} />
           </div>
 
           {/* Tickets — solo administrador */}

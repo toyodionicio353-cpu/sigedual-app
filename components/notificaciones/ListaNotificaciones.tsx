@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Bell, Check } from "lucide-react";
+import { Bell, Check, Trash2 } from "lucide-react";
 import type { Notificacion, TipoNotificacion } from "@/types";
 
 const TIPO_LABEL: Record<TipoNotificacion, string> = {
@@ -31,6 +31,7 @@ interface Props {
   notificaciones: Notificacion[];
   cargando: boolean;
   onMarcarLeida: (id: string) => void;
+  onEliminar?: (id: string) => void;
   onItemClick?: () => void;
   vacioTitulo?: string;
   vacioDescripcion?: string;
@@ -44,6 +45,7 @@ export default function ListaNotificaciones({
   notificaciones,
   cargando,
   onMarcarLeida,
+  onEliminar,
   onItemClick,
   vacioTitulo = "Todo al día",
   vacioDescripcion = "No tienes notificaciones nuevas.",
@@ -100,6 +102,17 @@ export default function ListaNotificaciones({
                 className="text-[11px] hover:[color:var(--text-primary)] transition-colors flex items-center gap-1"
               >
                 <Check size={11} /> Marcar leída
+              </button>
+            )}
+            {onEliminar && (
+              <button
+                onClick={() => onEliminar(n.id)}
+                title="Eliminar notificación"
+                aria-label="Eliminar notificación"
+                style={{ color: "var(--text-muted)" }}
+                className="text-[11px] hover:[color:var(--danger)] transition-colors flex items-center gap-1 ml-auto"
+              >
+                <Trash2 size={11} />
               </button>
             )}
           </div>
