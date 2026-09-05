@@ -314,3 +314,78 @@ export async function deleteDocument(path: string): Promise<void> {
   );
   if (!res.ok) throw new Error(`No se pudo eliminar ${path}: ${await res.text()}`);
 }
+
+/** Igual que `getDocument`, pero además devuelve `updateTime` — necesario
+ * para usar el documento como precondición optimista en `commitTransaccional`. */
+export async function getDocumentConVersion(path: string): Promise<{ id: string; data: Record<string, unknown>; updateTime: string } | null> {
+  const sa = getServiceAccount();
+  const token = await getAccessToken();
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${sa.project_id}/databases/(default)/documents/${path}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`No se pudo leer ${path}: ${await res.text()}`);
+  const doc = (await res.json()) as { name: string; updateTime: string; fields?: Record<string, FirestoreValue> };
+  const id = doc.name.split("/").pop() as string;
+  const fields = doc.fields ?? {};
+  const data = Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, firestoreValueToJs(v)]));
+  return { id, data, updateTime: doc.updateTime };
+}
+
+export interface EscrituraTransaccional {
+  /** "update" exige que el documento no haya cambiado desde `updateTime`
+   * (falla si otra escritura concurrente lo modificó primero — es lo que
+   * evita superar un cupo compartido). "create" exige que el documento
+   * todavía no exista. */
+  tipo: "update" | "create";
+  path: string;
+  data: Record<string, unknown>;
+  updateTime?: string;
+}
+
+/** Indica si un error de `commitTransaccional` fue por precondición no
+ * cumplida (alguien más escribió primero) — en ese caso conviene releer y
+ * reintentar, a diferencia de un error real (permisos, red, etc.). */
+export function esConflictoDeEscritura(err: unknown): boolean {
+  return err instanceof Error && (err as Error & { conflicto?: boolean }).conflicto === true;
+}
+
+/**
+ * Aplica varias escrituras en un solo commit atómico de Firestore (REST
+ * `:commit`), cada una con su propia precondición — se usa para incrementar
+ * el contador de una campaña y crear su respuesta a la vez, sin necesitar
+ * `:beginTransaction` (el único recurso disputado es el documento de la
+ * propia campaña). Si otra escritura concurrente ya cambió alguno de los
+ * documentos con precondición "update", todo el commit falla y no se aplica
+ * ninguna escritura — quien llama debe releer y reintentar (ver
+ * `esConflictoDeEscritura`).
+ */
+export async function commitTransaccional(writes: EscrituraTransaccional[]): Promise<void> {
+  const sa = getServiceAccount();
+  const token = await getAccessToken();
+  const base = `projects/${sa.project_id}/databases/(default)/documents`;
+  const body = {
+    writes: writes.map((w) => {
+      const fields = Object.fromEntries(Object.entries(w.data).map(([k, v]) => [k, jsToFirestoreValue(v)]));
+      const write: Record<string, unknown> = { update: { name: `${base}/${w.path}`, fields } };
+      if (w.tipo === "update") {
+        write.updateMask = { fieldPaths: Object.keys(w.data) };
+        write.currentDocument = { updateTime: w.updateTime };
+      } else {
+        write.currentDocument = { exists: false };
+      }
+      return write;
+    }),
+  };
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${sa.project_id}/databases/(default)/documents:commit`,
+    { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(body) }
+  );
+  if (!res.ok) {
+    const texto = await res.text();
+    const error: Error & { conflicto?: boolean } = new Error(`No se pudo completar la escritura atómica: ${texto}`);
+    error.conflicto = res.status === 409 || /FAILED_PRECONDITION|ABORTED|already exists/i.test(texto);
+    throw error;
+  }
+}
