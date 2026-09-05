@@ -6,7 +6,9 @@ import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
+import { sincronizarIndiceRunEstudiante } from "@/lib/estudiantes/indiceRun";
 import EstudianteForm, { ESTUDIANTE_FORM_VACIO, type EstudianteFormValues } from "../_components/EstudianteForm";
+import InvitacionEstudianteSeccion from "../_components/InvitacionEstudianteSeccion";
 import TituloPagina from "@/components/TituloPagina";
 import type { Estudiante, Especialidad } from "@/types";
 import { usePreferencias } from "@/lib/preferencias/context";
@@ -114,6 +116,7 @@ export default function AgregarEstudiantePage() {
         creadoEn: new Date().toISOString(),
       };
       const ref = await addDoc(collection(db, "estudiantes"), nuevo);
+      await sincronizarIndiceRunEstudiante(ref.id, usuario.liceoId, nuevo.run);
       setRegistrado({ id: ref.id, ...nuevo } as Estudiante);
       limpiarBorrador();
     } catch (err) {
@@ -229,6 +232,8 @@ export default function AgregarEstudiantePage() {
       {mostrarAdvertencia && liceoPredeterminado && (
         <ModalAdvertenciaLiceo entidad="un estudiante" liceoNombre={liceoPredeterminado.nombre} onConfirmar={confirmar} onCancelar={cancelar} />
       )}
+
+      <InvitacionEstudianteSeccion />
 
       {/* Confirmación de éxito */}
       {registrado && (

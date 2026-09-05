@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "fireb
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
+import { sincronizarIndiceRunEstudiante } from "@/lib/estudiantes/indiceRun";
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
@@ -172,6 +173,7 @@ export default function EditarEstudiantePage() {
         observaciones: form.observaciones.trim(),
         actualizadoEn: new Date().toISOString(),
       });
+      await sincronizarIndiceRunEstudiante(id, estudianteOriginal.liceoId, normalizarRut(form.run), estudianteOriginal.run);
       setMensaje("Cambios guardados correctamente.");
     } catch (err) {
       const detalle = err instanceof Error ? err.message : String(err);

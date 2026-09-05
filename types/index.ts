@@ -615,6 +615,70 @@ export interface IndiceCentroDualPorRut {
   liceoId: string;
 }
 
+// ── Invitación a Estudiante (mismo patrón que InvitacionEmpresa, pero
+// colecciones y flujo propios — ver lib/estudiantes/indiceRun.ts y
+// app/api/invitaciones-estudiante/) ────────────────────────────────────
+
+export interface InvitacionEstudiante {
+  id: string;
+  liceoId: string;
+  profesorUid: string;
+  profesorNombre: string;
+  nombrePreliminar?: string;
+  estado: EstadoInvitacion;
+  creadoEn: string;
+  expiraEn?: string;
+  ultimoAccesoEn?: string;
+  enviadoEn?: string;
+  procesadoEn?: string;
+  estudianteIdResultado?: string;
+}
+
+export interface RespuestaInvitacionEstudiante {
+  id: string;
+  invitacionId: string;
+  liceoId: string;
+  run: string;
+  nombres: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  fechaNacimiento: string;
+  sexo: string;
+  nacionalidad: string;
+  email: string;
+  telefono: string;
+  direccion: string;
+  comuna: string;
+  ciudad: string;
+  anioAcademico: string;
+  nivel: string;
+  curso: string;
+  especialidadId: string;
+  jornada: string;
+  enfermedadesCronicas: string;
+  alergias: string;
+  informacionMedicaAdicional: string[];
+  rasgos: string[];
+  habilidades: string[];
+  apoderadoNombre: string;
+  apoderadoRun: string;
+  apoderadoParentesco: string;
+  apoderadoTelefono: string;
+  apoderadoEmail: string;
+  apoderadoDomicilio: string;
+  apoderadoCiudad: string;
+  observaciones: string;
+  creadoEn: string;
+  enviadoEn: string;
+}
+
+/** Índice inverso RUN → Estudiante, mismo patrón que IndiceCentroDualPorRut
+ * — usado por el flujo de invitación a estudiante para detectar duplicados. */
+export interface IndiceEstudiantePorRun {
+  estudianteId: string;
+  liceoId: string;
+}
+
 // ── Evaluaciones (desempeño del estudiante en su Centro Dual) ──────────
 
 /** Escala de logro de la pauta: I (Insuficiente), R (Regular), B (Bueno),

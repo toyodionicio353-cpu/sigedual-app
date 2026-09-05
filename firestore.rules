@@ -42,7 +42,8 @@ service cloud.firestore {
         'notificaciones', 'estudiantes', 'asignaciones', 'centros_duales',
         'maestros_guia', 'visitas', 'autorizaciones', 'conversaciones',
         'invitaciones', 'respuestas_invitacion', 'centros_duales_por_rut',
-        'evaluaciones'
+        'evaluaciones', 'invitaciones_estudiante', 'respuestas_invitacion_estudiante',
+        'estudiantes_por_run'
       ];
     }
 
@@ -363,6 +364,40 @@ service cloud.firestore {
       allow read: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
       // Mismo criterio que la creación/edición de un centro dual: quien
       // puede escribir el centro puede mantener su entrada en el índice.
+      allow write: if request.auth != null && (
+        datosUsuario().rol == 'administrador'
+        || (datosUsuario().liceoId == request.resource.data.liceoId && datosUsuario().rol in ['director', 'coordinador', 'profesor'])
+      );
+    }
+
+    // Invitación a Estudiante: mismo patrón que la invitación a Empresa
+    // Dual de arriba, pero en colecciones separadas — el estudiante
+    // invitado tampoco tiene sesión de Firebase Auth, así que su envío
+    // pasa exclusivamente por app/api/invitaciones-estudiante/.
+    match /invitaciones_estudiante/{id} {
+      allow read, update: if request.auth != null && (
+        resource.data.profesorUid == request.auth.uid
+        || esAccesoCompletoLiceo(resource.data.liceoId)
+      );
+      allow create: if request.auth != null && (
+        request.resource.data.profesorUid == request.auth.uid
+        || esAccesoCompletoLiceo(request.resource.data.liceoId)
+      );
+      allow delete: if false;
+    }
+
+    match /respuestas_invitacion_estudiante/{id} {
+      allow read: if request.auth != null && (
+        get(/databases/$(database)/documents/invitaciones_estudiante/$(id)).data.profesorUid == request.auth.uid
+        || esAccesoCompletoLiceo(resource.data.liceoId)
+      );
+      allow write: if false;
+    }
+
+    // Índice inverso RUN → Estudiante, mismo patrón que
+    // centros_duales_por_rut.
+    match /estudiantes_por_run/{runNormalizado} {
+      allow read: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
       allow write: if request.auth != null && (
         datosUsuario().rol == 'administrador'
         || (datosUsuario().liceoId == request.resource.data.liceoId && datosUsuario().rol in ['director', 'coordinador', 'profesor'])
