@@ -1,17 +1,18 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { addDoc, collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { useAmbitoMaestroGuia } from "@/lib/permisos/useAmbitoMaestroGuia";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { plantillaEvaluacionPorId } from "@/lib/evaluaciones";
+import { estadoEnvioEvaluacion } from "@/lib/evaluaciones/envios";
 import { calcularResultado, evaluacionCompleta } from "@/lib/evaluaciones/calcular";
 import { NIVELES_LOGRO } from "@/lib/evaluaciones/tipos";
-import type { NivelLogro, TareaAdicionalEvaluacion, Asignacion, Estudiante, CentroDual, MaestroGuia, Especialidad } from "@/types";
+import type { NivelLogro, TareaAdicionalEvaluacion, Asignacion, Estudiante, CentroDual, MaestroGuia, Especialidad, EnvioEvaluacion } from "@/types";
 import Select from "@/components/ui/Select";
 import TituloPagina from "@/components/TituloPagina";
 import LeyendaNiveles from "@/components/evaluaciones/LeyendaNiveles";
@@ -45,6 +46,8 @@ function SelectorNivel({ valor, onChange }: { valor?: NivelLogro; onChange: (v: 
 
 export default function RealizarEvaluacionPage() {
   const { plantillaId } = useParams<{ plantillaId: string }>();
+  const searchParams = useSearchParams();
+  const envioId = searchParams.get("envioId");
   const { usuario } = useAuth();
   const router = useRouter();
 
@@ -59,6 +62,11 @@ export default function RealizarEvaluacionPage() {
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [cargandoDatos, setCargandoDatos] = useState(true);
+  // Un Centro Dual solo llega aquí a través de un envío puntual del
+  // Profesor Supervisor (con su propio plazo) — nunca elige libremente a
+  // qué estudiante evaluar.
+  const [envio, setEnvio] = useState<EnvioEvaluacion | null>(null);
+  const [errorEnvio, setErrorEnvio] = useState("");
 
   const [paso, setPaso] = useState<0 | 1>(0);
   const [asignacionSeleccionada, setAsignacionSeleccionada] = useState<Asignacion | null>(null);
@@ -90,9 +98,53 @@ export default function RealizarEvaluacionPage() {
         setAsignaciones(vigentes);
         setEstudiantes(await obtenerDocumentosPorId<Estudiante>("estudiantes", vigentes.map((a) => a.estudianteId)));
       } else if (esCentroDual) {
-        const vigentes = ambitoMaestroGuia.asignaciones.filter((a) => a.estado === "asignada" || a.estado === "activa");
-        setAsignaciones(vigentes);
-        setEstudiantes(await obtenerDocumentosPorId<Estudiante>("estudiantes", vigentes.map((a) => a.estudianteId)));
+        if (!envioId) {
+          setErrorEnvio("Esta evaluación debe ser enviada por tu Profesor Supervisor.");
+          setCargandoDatos(false);
+          return;
+        }
+        const snapEnvio = await getDoc(doc(db, "envios_evaluacion", envioId));
+        if (!snapEnvio.exists()) {
+          setErrorEnvio("Este envío ya no existe.");
+          setCargandoDatos(false);
+          return;
+        }
+        const envioData = { id: snapEnvio.id, ...snapEnvio.data() } as EnvioEvaluacion;
+        if (envioData.plantillaId !== plantillaId) {
+          setErrorEnvio("Este envío corresponde a otra evaluación.");
+          setCargandoDatos(false);
+          return;
+        }
+        const estadoEnvio = estadoEnvioEvaluacion(envioData);
+        if (estadoEnvio !== "disponible") {
+          setErrorEnvio(
+            estadoEnvio === "completado" ? "Esta evaluación ya fue realizada."
+            : estadoEnvio === "vencido" ? "El plazo para realizar esta evaluación ya venció."
+            : "Esta evaluación todavía no está disponible."
+          );
+          setCargandoDatos(false);
+          return;
+        }
+        setEnvio(envioData);
+        const asignacionEnvio: Asignacion = ambitoMaestroGuia.asignaciones.find((a) => a.id === envioData.asignacionId)
+          ?? ({
+            id: envioData.asignacionId, liceoId: envioData.liceoId, estudianteId: envioData.estudianteId,
+            centroDualId: envioData.centroDualId, maestroGuiaId: envioData.maestroGuiaId, estado: "activa",
+          } as Asignacion);
+        const estudiantesData = await obtenerDocumentosPorId<Estudiante>("estudiantes", [envioData.estudianteId]);
+        setAsignaciones([asignacionEnvio]);
+        setEstudiantes(estudiantesData);
+        setAsignacionSeleccionada(asignacionEnvio);
+        const estudianteEnvio = estudiantesData.find((e) => e.id === envioData.estudianteId);
+        const [snapCentro, snapMg, snapEsp] = await Promise.all([
+          getDoc(doc(db, "centros_duales", envioData.centroDualId)),
+          envioData.maestroGuiaId ? getDoc(doc(db, "maestros_guia", envioData.maestroGuiaId)) : Promise.resolve(null),
+          estudianteEnvio?.especialidadId ? getDoc(doc(db, "especialidades", estudianteEnvio.especialidadId)) : Promise.resolve(null),
+        ]);
+        setCentro(snapCentro.exists() ? ({ id: snapCentro.id, ...snapCentro.data() } as CentroDual) : null);
+        setMaestroGuia(snapMg?.exists() ? ({ id: snapMg.id, ...snapMg.data() } as MaestroGuia) : null);
+        setEspecialidad(snapEsp?.exists() ? ({ id: snapEsp.id, ...snapEsp.data() } as Especialidad) : null);
+        setPaso(1);
       } else {
         const [snapAsig, snapEst] = await Promise.all([
           getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario!.liceoId))),
@@ -106,7 +158,7 @@ export default function RealizarEvaluacionPage() {
     }
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario, cargandoAmbito, ambitoProfesor.asignaciones, ambitoMaestroGuia.asignaciones]);
+  }, [usuario, cargandoAmbito, ambitoProfesor.asignaciones, ambitoMaestroGuia.asignaciones, envioId, plantillaId]);
 
   const opcionesEstudiante = useMemo(
     () => asignaciones.map((a) => {
@@ -190,7 +242,10 @@ export default function RealizarEvaluacionPage() {
         resultados: resultado,
         ...(observaciones.trim() ? { observaciones: observaciones.trim() } : {}),
       };
-      await addDoc(collection(db, "evaluaciones"), nueva);
+      const ref = await addDoc(collection(db, "evaluaciones"), nueva);
+      if (envio) {
+        await updateDoc(doc(db, "envios_evaluacion", envio.id), { evaluacionId: ref.id });
+      }
       router.push("/dashboard/documentos/evaluaciones");
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible guardar la evaluación.");
@@ -211,6 +266,20 @@ export default function RealizarEvaluacionPage() {
     return (
       <div className="p-4 md:p-8">
         <p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p>
+      </div>
+    );
+  }
+
+  if (usuario?.rol === "centro_dual" && !cargandoAmbito && !cargandoDatos && errorEnvio) {
+    return (
+      <div className="p-4 md:p-8">
+        <div className="mb-6 flex items-center gap-3">
+          <Link href="/dashboard/documentos/evaluaciones" style={{ color: "var(--text-muted)" }}>
+            <ArrowLeft size={20} />
+          </Link>
+          <TituloPagina icon={<ClipboardCheck size={28} />}>{plantilla.nombre}</TituloPagina>
+        </div>
+        <p style={{ color: "var(--danger)" }} className="text-sm">{errorEnvio}</p>
       </div>
     );
   }

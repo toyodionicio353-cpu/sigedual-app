@@ -957,3 +957,30 @@ export interface Evaluacion {
   creadoEn: string;
   actualizadoEn?: string;
 }
+
+/**
+ * Envío de una plantilla de Evaluación desde un Profesor Supervisor hacia
+ * el Centro Dual de una Asignacion puntual, con un plazo (fechaInicio -
+ * fechaFin). Antes de fechaInicio, y después de completarse
+ * (`evaluacionId` poblado), no cuenta como "disponible" — ver
+ * `lib/evaluaciones/envios.ts` para la lógica derivada del estado. No se
+ * guarda un campo "estado" aparte: se deriva siempre de la fecha de hoy y
+ * de si ya existe `evaluacionId`, para que abrir/cerrar el plazo sea
+ * automático (sin depender de un cron).
+ */
+export interface EnvioEvaluacion {
+  id: string;
+  liceoId: string;
+  plantillaId: string;
+  asignacionId: string;
+  estudianteId: string;
+  centroDualId: string;
+  maestroGuiaId?: string;
+  profesorSupervisorId: string;
+  profesorSupervisorNombre?: string;
+  fechaInicio: string;
+  fechaFin: string;
+  /** Poblado por quien completa la evaluación (el Centro Dual) al guardarla. */
+  evaluacionId?: string;
+  creadoEn: string;
+}
