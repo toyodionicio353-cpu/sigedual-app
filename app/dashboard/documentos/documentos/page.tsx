@@ -24,6 +24,13 @@ export default function DocumentosPage() {
   const plantillasDefinidas = plantillasParaModulo(TIPO_MODULO);
   const { contexto, cargando: cargandoContexto } = useContextoDocumentos();
   const { documentos, items: itemsCreados, cargando: cargandoCreados, recargar } = useDocumentosCreados(TIPO_MODULO);
+  // Centro Dual/Estudiante solo ven lo suyo (ver useDocumentosCreados); para
+  // no editar/eliminar por error un documento que otro creó sobre ellos,
+  // el menú de acciones de la biblioteca queda solo para el que lo creó.
+  function puedeGestionar(doc: DocumentoGenerado): boolean {
+    if (usuario?.rol !== "centro_dual" && usuario?.rol !== "estudiante") return true;
+    return doc.creadoPor === usuario?.uid;
+  }
 
   const plantillas: ItemBiblioteca[] = plantillasDefinidas.map((p) => ({
     id: p.id,
@@ -52,6 +59,10 @@ export default function DocumentosPage() {
   async function eliminarCreado(item: ItemBiblioteca) {
     const doc = documentos.find((d) => d.id === item.id);
     if (!doc || !usuario) return;
+    if (!puedeGestionar(doc)) {
+      mostrarAviso("Solo puedes eliminar los documentos que tú creaste.");
+      return;
+    }
     if (!confirm(`¿Eliminar "${doc.nombre}"? Esta acción no se puede deshacer.`)) return;
     await eliminarDocumento({
       documentoId: doc.id, liceoId: usuario.liceoId, tipoModulo: TIPO_MODULO, nombre: doc.nombre,
