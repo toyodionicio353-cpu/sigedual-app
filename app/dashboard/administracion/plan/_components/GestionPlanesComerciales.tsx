@@ -8,7 +8,7 @@ import { formatearCLP, ETIQUETA_PERIODICIDAD, ETIQUETA_ESTADO_PLAN } from "@/lib
 import Select from "@/components/ui/Select";
 import Switch from "@/components/ui/Switch";
 import type { EstadoPlanComercial, PeriodicidadPlan, PlanComercial } from "@/types";
-import { Plus, Pencil, Star, ListChecks, X } from "lucide-react";
+import { Plus, Pencil, Star, ListChecks, X, Eye } from "lucide-react";
 
 const OPCIONES_PERIODICIDAD = [
   { value: "mensual", label: "Mensual" },
@@ -285,14 +285,26 @@ export default function GestionPlanesComerciales() {
             desactivado: esto solo controla qué se muestra en <code>/planes</code>.
           </p>
         </div>
-        <button
-          onClick={() => setFormulario({ modo: "crear" })}
-          style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity flex-shrink-0"
-        >
-          <Plus size={16} />
-          Agregar plan
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <a
+            href="/planes"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors"
+          >
+            <Eye size={16} />
+            Ver como institución
+          </a>
+          <button
+            onClick={() => setFormulario({ modo: "crear" })}
+            style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            <Plus size={16} />
+            Agregar plan
+          </button>
+        </div>
       </div>
 
       {cargando ? (
