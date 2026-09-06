@@ -45,12 +45,28 @@ service cloud.firestore {
         'evaluaciones', 'invitaciones_estudiante', 'respuestas_invitacion_estudiante',
         'estudiantes_por_run', 'campanias_invitacion', 'campanias_invitacion_estudiante',
         'respuestas_campania', 'respuestas_campania_estudiante', 'demos',
-        'planes_comerciales', 'configuracion_comercial', 'documentos_generados'
+        'planes_comerciales', 'configuracion_comercial', 'documentos_generados', 'especialidades'
       ];
     }
 
     match /usuarios/{docId} {
-      allow read: if request.auth != null;
+      // Antes: cualquier autenticado podía leer la cuenta de cualquier
+      // otro usuario, de cualquier liceo — un estudiante o Centro Dual
+      // podía así "navegar" los datos de otro estudiante/empresa/director.
+      // Ahora: su propia cuenta, acceso completo de liceo (admin/director/
+      // coordinador), un profesor viendo a cualquiera de su liceo (lo
+      // necesita para gestión), o cualquiera viendo la cuenta de UN
+      // profesor o administrador puntual (nombre del Profesor Supervisor
+      // mostrado en Visitas/Centros, o del administrador al notificar un
+      // ticket — dato de personal institucional, no de otro
+      // estudiante/empresa/director cuya cuenta sí debe quedar protegida).
+      allow read: if request.auth != null && (
+        request.auth.uid == docId
+        || esAccesoCompletoLiceo(resource.data.liceoId)
+        || (datosUsuario().liceoId == resource.data.liceoId && datosUsuario().rol == 'profesor')
+        || resource.data.rol == 'profesor'
+        || resource.data.rol == 'administrador'
+      );
       // Creación: el propio usuario (alta de cuenta, incluida la firma
       // de Firebase Auth que queda momentáneamente autenticada como el
       // nuevo usuario al crearlo) o un administrador completando una
@@ -259,6 +275,26 @@ service cloud.firestore {
         || resource.data.profesorSupervisorId == request.auth.uid
       );
       allow delete: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
+    }
+
+    // Catálogo de especialidades del liceo: dato de referencia (nombres),
+    // no personal — cualquier rol de ESE liceo puede leerlo (lo necesitan
+    // todas las fichas/formularios), pero antes no tenía regla propia y
+    // caía en el catch-all: cualquier autenticado, de CUALQUIER liceo,
+    // podía leer y también escribir/borrar el catálogo de otro liceo.
+    match /especialidades/{id} {
+      allow read: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || datosUsuario().liceoId == resource.data.liceoId
+      );
+      allow create: if request.auth != null && (
+        datosUsuario().rol == 'administrador'
+        || (datosUsuario().liceoId == request.resource.data.liceoId && datosUsuario().rol in ['director', 'coordinador'])
+      );
+      allow update, delete: if request.auth != null && (
+        datosUsuario().rol == 'administrador'
+        || (datosUsuario().liceoId == resource.data.liceoId && datosUsuario().rol in ['director', 'coordinador'])
+      );
     }
 
     match /centros_duales/{id} {

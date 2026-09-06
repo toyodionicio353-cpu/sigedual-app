@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { useAmbitoMaestroGuia } from "@/lib/permisos/useAmbitoMaestroGuia";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { estadoEfectivo, disponibilidadDe, camposFaltantes } from "@/lib/compatibilidad";
 import { useVistaListado } from "@/lib/preferencias/useVistaListado";
@@ -49,6 +50,7 @@ export default function CentrosPage() {
   const { liceos } = useCatalogoLiceos(modoGlobal);
   const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
   const ambito = useAmbitoProfesor();
+  const ambitoMaestroGuia = useAmbitoMaestroGuia();
   const [centros, setCentros] = useState<CentroDual[]>([]);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
@@ -83,6 +85,19 @@ export default function CentrosPage() {
       setLoading(false);
       return;
     }
+    if (usuario.rol === "centro_dual") {
+      // Un Centro Dual nunca ve la lista completa del liceo, solo su propia
+      // ficha (y, si es cuenta de empresa, sus propias asignaciones).
+      const [centrosData, snapEsp] = await Promise.all([
+        usuario.centroDualId ? obtenerDocumentosPorId<CentroDual>("centros_duales", [usuario.centroDualId]) : Promise.resolve([]),
+        getDocs(qEsp),
+      ]);
+      setCentros(centrosData);
+      setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
+      setAsignaciones(ambitoMaestroGuia.asignaciones);
+      setLoading(false);
+      return;
+    }
     const qCentros = modoGlobal ? collection(db, "centros_duales") : query(collection(db, "centros_duales"), where("liceoId", "==", usuario.liceoId));
     const qAsig = modoGlobal ? collection(db, "asignaciones") : query(collection(db, "asignaciones"), where("liceoId", "==", usuario.liceoId));
     const [snapCentros, snapEsp, snapAsig] = await Promise.all([getDocs(qCentros), getDocs(qEsp), getDocs(qAsig)]);
@@ -95,9 +110,10 @@ export default function CentrosPage() {
   useEffect(() => {
     if (!usuario) return;
     if (usuario.rol === "profesor" && ambito.cargando) return;
+    if (usuario.rol === "centro_dual" && ambitoMaestroGuia.cargando) return;
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario, modoGlobal, ambito.cargando, ambito.idsCentros, ambito.asignaciones]);
+  }, [usuario, modoGlobal, ambito.cargando, ambito.idsCentros, ambito.asignaciones, ambitoMaestroGuia.cargando, ambitoMaestroGuia.asignaciones]);
 
   function especialidadNombre(id: string): string {
     return especialidades.find((e) => e.id === id)?.nombre || id;
