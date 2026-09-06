@@ -10,7 +10,7 @@ import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { PLANTILLAS_EVALUACION, plantillaEvaluacionPorId } from "@/lib/evaluaciones";
 import { estadoEnvioEvaluacion, diasParaCierre } from "@/lib/evaluaciones/envios";
 import ModalEnviarEvaluacion from "@/components/evaluaciones/ModalEnviarEvaluacion";
-import type { Evaluacion, Estudiante, EnvioEvaluacion } from "@/types";
+import type { Evaluacion, Estudiante, EnvioEvaluacion, Asignacion } from "@/types";
 import Select from "@/components/ui/Select";
 import TituloPagina from "@/components/TituloPagina";
 import { ClipboardCheck, Wand2, Eye, ChevronRight, Send, Clock, AlertTriangle } from "lucide-react";
@@ -29,7 +29,21 @@ export default function EvaluacionesPage() {
   const esProfesor = usuario?.rol === "profesor";
   const esCentroDual = usuario?.rol === "centro_dual";
   const esEstudiante = usuario?.rol === "estudiante";
+  const esAdmin = usuario?.rol === "administrador";
+  const puedeEnviar = esProfesor || esAdmin;
   const cargandoAmbito = (esProfesor && ambitoProfesor.cargando) || (esCentroDual && ambitoMaestroGuia.cargando);
+
+  // Un administrador no tiene "ámbito" acotado (ve el liceo completo), así
+  // que para poder elegir a quién enviar necesita sus propias asignaciones
+  // vigentes — igual criterio que el resto de la app usa para su liceo.
+  const [asignacionesAdmin, setAsignacionesAdmin] = useState<Asignacion[]>([]);
+  useEffect(() => {
+    if (!usuario || !esAdmin || tab !== "plantillas") return;
+    getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario.liceoId))).then((snap) => {
+      const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion));
+      setAsignacionesAdmin(todas.filter((a) => a.estado === "asignada" || a.estado === "activa"));
+    });
+  }, [usuario, esAdmin, tab]);
 
   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
@@ -230,7 +244,7 @@ export default function EvaluacionesPage() {
                     <Eye size={15} />
                   </Link>
                 </div>
-                {esProfesor && (
+                {puedeEnviar && (
                   <button
                     onClick={() => setPlantillaAEnviar({ id: p.id, nombre: p.nombre })}
                     style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
@@ -249,7 +263,7 @@ export default function EvaluacionesPage() {
         <ModalEnviarEvaluacion
           plantillaId={plantillaAEnviar.id}
           plantillaNombre={plantillaAEnviar.nombre}
-          asignaciones={ambitoProfesor.asignaciones}
+          asignaciones={esAdmin ? asignacionesAdmin : ambitoProfesor.asignaciones}
           liceoId={usuario.liceoId}
           profesorUid={usuario.uid}
           profesorNombre={usuario.nombre}
