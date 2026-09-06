@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import TituloPagina from "@/components/TituloPagina";
 import { formatearFecha } from "@/lib/fecha";
+import GestionPlanesComerciales from "./_components/GestionPlanesComerciales";
 import type { Liceo } from "@/types";
 import { Package, ExternalLink } from "lucide-react";
 
@@ -24,6 +25,66 @@ const ETIQUETA_ESTADO: Record<NonNullable<Liceo["planEstado"]>, string> = {
   cancelado: "Cancelado",
   vencido: "Vencido",
 };
+
+function MiPlan({ liceo, cargando }: { liceo: Liceo | null; cargando: boolean }) {
+  const planEstado = liceo?.planEstado ?? "sin_plan";
+  const tienePlanContratado = Boolean(liceo?.planContratadoId);
+
+  if (cargando) return <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>;
+
+  return (
+    <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6">
+      <dl className="grid grid-cols-2 gap-y-3 text-sm mb-6">
+        <dt style={{ color: "var(--text-muted)" }}>Plan actual</dt>
+        <dd style={{ color: "var(--text-primary)" }} className="font-semibold">
+          {tienePlanContratado ? liceo?.planContratadoNombre : ETIQUETA_PLAN[planEstado]}
+        </dd>
+        <dt style={{ color: "var(--text-muted)" }}>Estado</dt>
+        <dd style={{ color: "var(--text-primary)" }} className="font-semibold">{ETIQUETA_ESTADO[planEstado]}</dd>
+        {tienePlanContratado && liceo?.planFechaInicio && (
+          <>
+            <dt style={{ color: "var(--text-muted)" }}>Fecha de inicio</dt>
+            <dd style={{ color: "var(--text-primary)" }}>{formatearFecha(liceo.planFechaInicio)}</dd>
+          </>
+        )}
+        {tienePlanContratado && liceo?.planFechaTermino && (
+          <>
+            <dt style={{ color: "var(--text-muted)" }}>Fecha de término</dt>
+            <dd style={{ color: "var(--text-primary)" }}>{formatearFecha(liceo.planFechaTermino)}</dd>
+          </>
+        )}
+      </dl>
+
+      {!tienePlanContratado && planEstado !== "demo" && (
+        <Link
+          href="/planes"
+          target="_blank"
+          style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity mb-4"
+        >
+          <ExternalLink size={15} />
+          Ver planes disponibles
+        </Link>
+      )}
+
+      <div>
+        <button
+          disabled
+          title="La gestión de suscripciones en línea todavía no está disponible en SIGEDUAL."
+          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
+          className="px-5 py-2.5 rounded-xl text-sm font-medium cursor-not-allowed"
+        >
+          Cancelar plan
+        </button>
+      </div>
+      <p style={{ color: "var(--text-muted)" }} className="text-xs mt-3">
+        Pendiente de integración: la administración de planes, facturación y pagos en línea de
+        SIGEDUAL todavía no está disponible. Este panel queda preparado para conectarse a ese
+        sistema una vez exista.
+      </p>
+    </div>
+  );
+}
 
 export default function PlanSigedualPage() {
   const { usuario } = useAuth();
@@ -47,69 +108,19 @@ export default function PlanSigedualPage() {
     );
   }
 
-  const planEstado = liceo?.planEstado ?? "sin_plan";
-  const tienePlanContratado = Boolean(liceo?.planContratadoId);
-
   return (
-    <div className="p-4 md:p-8 max-w-2xl">
+    <div className={`p-4 md:p-8 ${usuario.rol === "administrador" ? "max-w-3xl" : "max-w-2xl"}`}>
       <TituloPagina icon={<Package size={28} />} className="mb-1">Plan SIGEDUAL</TituloPagina>
       <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-6">
-        Mi Plan — estado de la suscripción de tu institución en SIGEDUAL.
+        {usuario.rol === "administrador"
+          ? "Administra los planes, precios y características comerciales de SIGEDUAL."
+          : "Mi Plan — estado de la suscripción de tu institución en SIGEDUAL."}
       </p>
 
-      {cargando ? (
-        <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
+      {usuario.rol === "administrador" ? (
+        <GestionPlanesComerciales />
       ) : (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6">
-          <dl className="grid grid-cols-2 gap-y-3 text-sm mb-6">
-            <dt style={{ color: "var(--text-muted)" }}>Plan actual</dt>
-            <dd style={{ color: "var(--text-primary)" }} className="font-semibold">
-              {tienePlanContratado ? liceo?.planContratadoNombre : ETIQUETA_PLAN[planEstado]}
-            </dd>
-            <dt style={{ color: "var(--text-muted)" }}>Estado</dt>
-            <dd style={{ color: "var(--text-primary)" }} className="font-semibold">{ETIQUETA_ESTADO[planEstado]}</dd>
-            {tienePlanContratado && liceo?.planFechaInicio && (
-              <>
-                <dt style={{ color: "var(--text-muted)" }}>Fecha de inicio</dt>
-                <dd style={{ color: "var(--text-primary)" }}>{formatearFecha(liceo.planFechaInicio)}</dd>
-              </>
-            )}
-            {tienePlanContratado && liceo?.planFechaTermino && (
-              <>
-                <dt style={{ color: "var(--text-muted)" }}>Fecha de término</dt>
-                <dd style={{ color: "var(--text-primary)" }}>{formatearFecha(liceo.planFechaTermino)}</dd>
-              </>
-            )}
-          </dl>
-
-          {!tienePlanContratado && planEstado !== "demo" && (
-            <Link
-              href="/planes"
-              target="_blank"
-              style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity mb-4"
-            >
-              <ExternalLink size={15} />
-              Ver planes disponibles
-            </Link>
-          )}
-
-          <div>
-            <button
-              disabled
-              title="La gestión de suscripciones en línea todavía no está disponible en SIGEDUAL."
-              style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
-              className="px-5 py-2.5 rounded-xl text-sm font-medium cursor-not-allowed"
-            >
-              Cancelar plan
-            </button>
-          </div>
-          <p style={{ color: "var(--text-muted)" }} className="text-xs mt-3">
-            Pendiente de integración: la administración de planes, facturación y pagos en línea de
-            SIGEDUAL todavía no está disponible. Este panel queda preparado para conectarse a ese
-            sistema una vez exista.
-          </p>
-        </div>
+        <MiPlan liceo={liceo} cargando={cargando} />
       )}
     </div>
   );
