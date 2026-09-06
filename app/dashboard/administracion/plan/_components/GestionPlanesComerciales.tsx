@@ -223,7 +223,7 @@ function SeccionCaracteristicas({ adminUid, adminNombre }: { adminUid: string; a
   );
 }
 
-export default function PlanesComercialesSeccion() {
+export default function GestionPlanesComerciales() {
   const { usuario } = useAuth();
   const { planes, cargando, recargar } = usePlanesComerciales();
   const [formulario, setFormulario] = useState<{ modo: "crear" } | { modo: "editar"; plan: PlanComercial } | null>(null);
