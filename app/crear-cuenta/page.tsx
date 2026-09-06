@@ -17,12 +17,34 @@ const ROLES: { value: Rol; label: string }[] = [
   { value: "estudiante", label: "Estudiante" },
 ];
 
+// Profesor Supervisor y Coordinador son staff del liceo: su correo debe
+// pertenecer al dominio autorizado y usan el código que genera el
+// administrador/director (Configuración → Seguridad). Estudiante y Centro
+// Dual/Maestro Guía no tienen por qué usar el correo del liceo (una empresa
+// Centro Dual tiene su propio dominio) — usan un código distinto, que
+// genera el Profesor Supervisor (o cualquier staff del liceo) desde esa
+// misma pantalla, y que identifica por sí solo a qué institución pertenecen.
+const ROLES_STAFF: Rol[] = ["profesor", "coordinador"];
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface MaestroGuiaDisponible {
   id: string;
   nombre: string;
   centroDualNombre: string;
+}
+
+/** Busca a qué liceo pertenece un código "para Estudiantes y Centros
+ * Duales" — ese código es autosuficiente (no depende del dominio del
+ * correo), así una empresa Centro Dual con su propio dominio puede
+ * registrarse igual. */
+async function resolverLiceoPorCodigoExterno(codigo: string): Promise<string | null> {
+  const snap = await getDocs(
+    query(collection(db, "codigosAccesoExterno"), where("codigo", "==", codigo.toUpperCase()))
+  );
+  const ahora = Date.now();
+  const vigente = snap.docs.find((d) => new Date((d.data() as CodigoAcceso).expiraEn).getTime() >= ahora);
+  return vigente ? vigente.id : null;
 }
 
 export default function CrearCuentaPage() {
@@ -49,14 +71,16 @@ export default function CrearCuentaPage() {
   const [cargandoMaestros, setCargandoMaestros] = useState(false);
   const [errorMaestros, setErrorMaestros] = useState("");
 
+  const esStaff = rol === "profesor" || rol === "coordinador";
   const esCentroDual = rol === "centro_dual";
+  const esExterno = esCentroDual || rol === "estudiante";
 
   useEffect(() => {
     if (!esCentroDual) {
       setMaestrosDisponibles([]); setMaestroGuiaId(""); setErrorMaestros("");
       return;
     }
-    if (!EMAIL_REGEX.test(email.trim()) || codigo.trim().length < 4) {
+    if (codigo.trim().length < 4) {
       setMaestrosDisponibles([]); setErrorMaestros("");
       return;
     }
@@ -64,7 +88,7 @@ export default function CrearCuentaPage() {
       setCargandoMaestros(true);
       setErrorMaestros("");
       try {
-        const params = new URLSearchParams({ email: email.trim(), codigo: codigo.trim() });
+        const params = new URLSearchParams({ codigo: codigo.trim() });
         const res = await fetch(`/api/crear-cuenta/maestros-guia?${params}`);
         const data = await res.json();
         if (!res.ok) {
@@ -74,7 +98,7 @@ export default function CrearCuentaPage() {
         }
         setMaestrosDisponibles(data.maestros);
         if (data.maestros.length === 0) {
-          setErrorMaestros("No hay Maestros Guía disponibles para vincular. Contacta a tu director o administrador.");
+          setErrorMaestros("No hay Maestros Guía disponibles para vincular. Contacta a tu profesor supervisor.");
         }
       } catch {
         setErrorMaestros("No fue posible cargar los Maestros Guía de tu institución.");
@@ -83,7 +107,7 @@ export default function CrearCuentaPage() {
       }
     }, 500);
     return () => clearTimeout(idTimeout);
-  }, [esCentroDual, email, codigo]);
+  }, [esCentroDual, codigo]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -115,36 +139,52 @@ export default function CrearCuentaPage() {
       return;
     }
     if (!codigo.trim()) {
-      setError("Ingresa el código de verificación entregado por tu director o administrador.");
+      setError(
+        esStaff
+          ? "Ingresa el código de verificación entregado por tu director o administrador."
+          : "Ingresa el código entregado por tu profesor supervisor."
+      );
       return;
     }
 
     setLoading(true);
     try {
-      const dominio = email.trim().split("@")[1]?.toLowerCase();
+      let liceoId: string;
 
-      const liceoSnap = await getDocs(
-        query(collection(db, "liceos"), where("dominioCorreo", "==", dominio), limit(1))
-      );
-      if (liceoSnap.empty) {
-        setError("Este dominio de correo no está autorizado. Contacta a tu director o administrador.");
-        setLoading(false);
-        return;
-      }
-      const liceo = { id: liceoSnap.docs[0].id, ...liceoSnap.docs[0].data() } as Liceo;
+      if (esStaff) {
+        const dominio = email.trim().split("@")[1]?.toLowerCase();
+        const liceoSnap = await getDocs(
+          query(collection(db, "liceos"), where("dominioCorreo", "==", dominio), limit(1))
+        );
+        if (liceoSnap.empty) {
+          setError("Este dominio de correo no está autorizado. Contacta a tu director o administrador.");
+          setLoading(false);
+          return;
+        }
+        const liceo = { id: liceoSnap.docs[0].id, ...liceoSnap.docs[0].data() } as Liceo;
 
-      const codigoSnap = await getDoc(doc(db, "codigosAcceso", liceo.id));
-      if (!codigoSnap.exists()) {
-        setError("Aún no hay un código de verificación activo para tu institución.");
-        setLoading(false);
-        return;
-      }
-      const codigoData = codigoSnap.data() as CodigoAcceso;
-      const expirado = new Date(codigoData.expiraEn).getTime() < Date.now();
-      if (codigoData.codigo.toUpperCase() !== codigo.trim().toUpperCase() || expirado) {
-        setError("El código de verificación es incorrecto o ya venció. Solicita uno nuevo a tu director o administrador.");
-        setLoading(false);
-        return;
+        const codigoSnap = await getDoc(doc(db, "codigosAcceso", liceo.id));
+        if (!codigoSnap.exists()) {
+          setError("Aún no hay un código de verificación activo para tu institución.");
+          setLoading(false);
+          return;
+        }
+        const codigoData = codigoSnap.data() as CodigoAcceso;
+        const expirado = new Date(codigoData.expiraEn).getTime() < Date.now();
+        if (codigoData.codigo.toUpperCase() !== codigo.trim().toUpperCase() || expirado) {
+          setError("El código de verificación es incorrecto o ya venció. Solicita uno nuevo a tu director o administrador.");
+          setLoading(false);
+          return;
+        }
+        liceoId = liceo.id;
+      } else {
+        const liceoResuelto = await resolverLiceoPorCodigoExterno(codigo.trim());
+        if (!liceoResuelto) {
+          setError("El código es incorrecto o ya venció. Solicita uno nuevo a tu profesor supervisor.");
+          setLoading(false);
+          return;
+        }
+        liceoId = liceoResuelto;
       }
 
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
@@ -155,7 +195,7 @@ export default function CrearCuentaPage() {
           const res = await fetch("/api/crear-cuenta/completar-centro-dual", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-            body: JSON.stringify({ maestroGuiaId, liceoId: liceo.id, email: email.trim() }),
+            body: JSON.stringify({ maestroGuiaId, liceoId, email: email.trim() }),
           });
           const data = await res.json();
           if (!res.ok) {
@@ -176,7 +216,7 @@ export default function CrearCuentaPage() {
           email: email.trim(),
           nombre: nombre.trim(),
           rol,
-          liceoId: liceo.id,
+          liceoId,
           activo: true,
           creadoEn: new Date().toISOString(),
         });
@@ -219,8 +259,9 @@ export default function CrearCuentaPage() {
           Crear cuenta
         </h1>
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-6">
-          Tu correo debe pertenecer al dominio autorizado de tu institución, y necesitas el
-          código de verificación que entrega tu director o administrador.
+          {esExterno
+            ? "Necesitas el código entregado por tu profesor supervisor. Tu correo puede ser el que uses habitualmente."
+            : "Tu correo debe pertenecer al dominio autorizado de tu institución, y necesitas el código de verificación que entrega tu director o administrador."}
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -252,7 +293,7 @@ export default function CrearCuentaPage() {
               />
               <p style={{ color: "var(--text-muted)" }} className="flex items-start gap-1.5 text-xs mt-2">
                 <Info size={13} className="flex-shrink-0 mt-0.5" />
-                {errorMaestros || "Completa tu correo y el código de verificación para ver la lista. El nombre de tu cuenta se toma directamente de este registro, así la información de tu Centro Dual nunca se mezcla con la de otro."}
+                {errorMaestros || "Ingresa el código de tu profesor supervisor para ver la lista. El nombre de tu cuenta se toma directamente de este registro, así la información de tu Centro Dual nunca se mezcla con la de otro."}
               </p>
             </div>
           ) : (
@@ -274,13 +315,13 @@ export default function CrearCuentaPage() {
 
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
-              Correo institucional
+              {esExterno ? "Correo" : "Correo institucional"}
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="nombre@tuliceo.cl"
+              placeholder={esExterno ? "nombre@correo.cl" : "nombre@tuliceo.cl"}
               required
               style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
               className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
@@ -319,7 +360,7 @@ export default function CrearCuentaPage() {
 
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
-              Código de verificación
+              {esExterno ? "Código de tu profesor supervisor" : "Código de verificación"}
             </label>
             <input
               type="text"

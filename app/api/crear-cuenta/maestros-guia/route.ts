@@ -1,45 +1,36 @@
 import { NextResponse } from "next/server";
 import { listCollectionDocs } from "@/lib/firebase-admin";
-import type { CentroDual, CodigoAcceso, Liceo, MaestroGuia } from "@/types";
+import type { CentroDual, CodigoAcceso, MaestroGuia } from "@/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Lista los Maestros Guía activos del liceo del correo dado, que todavía no
- * tienen una cuenta de acceso vinculada — para poblar el selector "Centro
- * Dual / Maestro Guía" en /crear-cuenta. Sin sesión (todavía no existe
- * cuenta en este punto del registro), por eso exige el mismo código de
- * verificación que ya protege la creación de cuentas, en vez de exponer
- * la lista a cualquiera que solo conozca el dominio del correo.
+ * Lista los Maestros Guía activos del liceo identificado por el código
+ * "para Estudiantes y Centros Duales" (Configuración → Seguridad, distinto
+ * del código de Profesor Supervisor/Coordinador) — para poblar el selector
+ * "Centro Dual / Maestro Guía" en /crear-cuenta. Una empresa Centro Dual no
+ * usa el dominio de correo del liceo, así que el código es lo único que
+ * identifica a qué institución pertenece, sin sesión todavía.
  */
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const email = url.searchParams.get("email")?.trim().toLowerCase() ?? "";
     const codigo = url.searchParams.get("codigo")?.trim().toUpperCase() ?? "";
-    const dominio = email.split("@")[1];
-    if (!dominio || !codigo) {
-      return NextResponse.json({ error: "Faltan datos." }, { status: 400 });
+    if (!codigo) {
+      return NextResponse.json({ error: "Ingresa el código entregado por tu profesor supervisor." }, { status: 400 });
     }
 
-    const liceos = await listCollectionDocs("liceos");
-    const liceoDoc = liceos.find((l) => (l.data as unknown as Liceo).dominioCorreo?.toLowerCase() === dominio);
-    if (!liceoDoc) {
-      return NextResponse.json({ error: "Este dominio de correo no está autorizado." }, { status: 404 });
-    }
-    const liceoId = liceoDoc.id;
-
-    const codigos = await listCollectionDocs("codigosAcceso");
-    const codigoDoc = codigos.find((c) => c.id === liceoId);
+    const codigos = await listCollectionDocs("codigosAccesoExterno");
+    const ahora = Date.now();
+    const codigoDoc = codigos.find((c) => {
+      const data = c.data as unknown as CodigoAcceso;
+      return data.codigo?.toUpperCase() === codigo && new Date(data.expiraEn).getTime() >= ahora;
+    });
     if (!codigoDoc) {
-      return NextResponse.json({ error: "Aún no hay un código de verificación activo para tu institución." }, { status: 404 });
+      return NextResponse.json({ error: "El código es incorrecto o ya venció." }, { status: 401 });
     }
-    const codigoData = codigoDoc.data as unknown as CodigoAcceso;
-    const expirado = new Date(codigoData.expiraEn).getTime() < Date.now();
-    if (codigoData.codigo.toUpperCase() !== codigo || expirado) {
-      return NextResponse.json({ error: "El código de verificación es incorrecto o ya venció." }, { status: 401 });
-    }
+    const liceoId = codigoDoc.id;
 
     const [maestros, centros, usuarios] = await Promise.all([
       listCollectionDocs("maestros_guia"),
