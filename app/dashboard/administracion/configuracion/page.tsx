@@ -12,7 +12,8 @@ import IdiomaSeccion from "./_components/IdiomaSeccion";
 import NotificacionesSeccion from "./_components/NotificacionesSeccion";
 import PrivacidadSeccion from "./_components/PrivacidadSeccion";
 import AccesoDemostracionSeccion from "./_components/AccesoDemostracionSeccion";
-import { Search, SlidersHorizontal, Palette, MousePointerClick, Globe, Bell, ShieldCheck, RotateCcw, Clock } from "lucide-react";
+import PlanesComercialesSeccion from "./_components/PlanesComercialesSeccion";
+import { Search, SlidersHorizontal, Palette, MousePointerClick, Globe, Bell, ShieldCheck, RotateCcw, Clock, Tag } from "lucide-react";
 
 const CATEGORIAS_BASE: { id: CategoriaConfig; label: string; icon: React.ReactNode; Componente: React.ComponentType }[] = [
   { id: "apariencia", label: "Apariencia", icon: <Palette size={17} />, Componente: AparienciaSeccion },
@@ -25,13 +26,14 @@ const CATEGORIAS_BASE: { id: CategoriaConfig; label: string; icon: React.ReactNo
 // Solo administrador (rol cross-institución de SIGEDUAL) ve esta categoría —
 // se agrega condicionalmente en vez de estar siempre en CATEGORIAS_BASE.
 const CATEGORIA_DEMO = { id: "demo" as const, label: "Acceso de Demostración", icon: <Clock size={17} />, Componente: AccesoDemostracionSeccion };
+const CATEGORIA_PLANES = { id: "planes" as const, label: "Planes SIGEDUAL", icon: <Tag size={17} />, Componente: PlanesComercialesSeccion };
 
 export default function ConfiguracionPage() {
   const { usuario } = useAuth();
   const { restablecer } = usePreferencias();
   const avisar = useFeedback();
   const CATEGORIAS = useMemo(
-    () => (usuario?.rol === "administrador" ? [...CATEGORIAS_BASE, CATEGORIA_DEMO] : CATEGORIAS_BASE),
+    () => (usuario?.rol === "administrador" ? [...CATEGORIAS_BASE, CATEGORIA_DEMO, CATEGORIA_PLANES] : CATEGORIAS_BASE),
     [usuario?.rol]
   );
   const [categoriaActiva, setCategoriaActiva] = useState<CategoriaConfig>("apariencia");

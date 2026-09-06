@@ -103,6 +103,16 @@ export interface Liceo {
    * sistema de planes/suscripciones (ver lib/demo — sección "Plan SIGEDUAL").
    */
   planEstado?: "demo" | "sin_plan" | "activo" | "cancelado" | "vencido";
+  /**
+   * Datos de la contratación real, poblados recién cuando exista el sistema
+   * de pagos (ver PlanComercial). Preparados desde ya para que "Mi Plan"
+   * pueda mostrarlos sin rediseñar el modelo cuando se active la
+   * contratación — hoy ningún flujo los escribe todavía.
+   */
+  planContratadoId?: string;
+  planContratadoNombre?: string;
+  planFechaInicio?: string;
+  planFechaTermino?: string;
 }
 
 export interface CodigoAcceso {
@@ -146,6 +156,49 @@ export interface DemoInstancia {
   eliminacionSolicitadaPor?: string;
   eliminadoEn?: string;
   eliminadoPor?: string;
+}
+
+/**
+ * Planes SIGEDUAL (sección comercial). El sistema de pagos está desactivado
+ * a propósito — estos planes son hoy solo catálogo/precios configurables,
+ * nunca una transacción real (ver lib/planesComerciales).
+ */
+export type PeriodicidadPlan = "mensual" | "semestral" | "anual";
+
+/**
+ * "activo": disponible para mostrarse comercialmente (el botón de
+ * contratar sigue bloqueado mientras no exista pasarela de pago real).
+ * "proximamente": existe pero todavía no se ofrece.
+ * "inactivo": no se muestra en la sección comercial.
+ * "suspendido": existió pero temporalmente no puede contratarse.
+ */
+export type EstadoPlanComercial = "activo" | "proximamente" | "inactivo" | "suspendido";
+
+export interface PlanComercial {
+  id: string;
+  nombre: string;
+  periodicidad: PeriodicidadPlan;
+  precio: number;
+  moneda: "CLP";
+  descripcion: string;
+  estado: EstadoPlanComercial;
+  recomendado: boolean;
+  orden: number;
+  textoDestacado?: string;
+  informacionAdicional?: string;
+  actualizadoEn: string;
+  actualizadoPor: string;
+}
+
+/**
+ * Documento único (`configuracion_comercial/caracteristicas`) con la lista
+ * de "¿Qué incluye SIGEDUAL?" — compartida por los tres planes, porque son
+ * el mismo servicio y solo cambia el período (ver PlanComercial).
+ */
+export interface CaracteristicasComerciales {
+  items: string[];
+  actualizadoEn: string;
+  actualizadoPor: string;
 }
 
 export interface Especialidad {
