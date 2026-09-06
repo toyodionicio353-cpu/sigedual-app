@@ -22,6 +22,17 @@ const OPCIONES_ESTADO = [
   { value: "suspendido", label: "Suspendido" },
 ];
 
+/** Solo dígitos, para guardar el precio como número mientras se escribe con separador de miles. */
+function soloDigitos(texto: string): number {
+  const limpio = texto.replace(/\D/g, "");
+  return limpio ? Number(limpio) : 0;
+}
+
+/** "50000" → "50.000" (separador de miles en formato chileno, sin símbolo de moneda). */
+function formatearMillares(valor: number): string {
+  return new Intl.NumberFormat("es-CL").format(valor);
+}
+
 const FORM_VACIO: DatosPlanFormulario = {
   nombre: "", periodicidad: "mensual", precio: 0, descripcion: "",
   estado: "proximamente", recomendado: false, orden: 0, textoDestacado: "", informacionAdicional: "",
@@ -71,8 +82,9 @@ function FormularioPlan({ inicial, onCancelar, onGuardar, guardando }: {
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Precio (CLP)</label>
               <input
-                type="number" min={0} value={form.precio}
-                onChange={(e) => set("precio", Number(e.target.value))}
+                type="text" inputMode="numeric" value={form.precio ? formatearMillares(form.precio) : ""}
+                onChange={(e) => set("precio", soloDigitos(e.target.value))}
+                placeholder="0"
                 style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
                 className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)]"
               />
