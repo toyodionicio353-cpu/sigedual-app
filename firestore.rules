@@ -37,7 +37,7 @@ service cloud.firestore {
 
     function tieneReglaPropia(coleccion) {
       return coleccion in [
-        'usuarios', 'sesiones', 'auditoria', 'liceos', 'codigosAcceso', 'codigosAccesoExterno',
+        'usuarios', 'sesiones', 'auditoria', 'liceos', 'codigosAcceso',
         'solicitudesModificacion', 'soporte', 'contadores', 'tickets',
         'notificaciones', 'estudiantes', 'asignaciones', 'centros_duales',
         'maestros_guia', 'visitas', 'autorizaciones', 'conversaciones',
@@ -145,19 +145,6 @@ service cloud.firestore {
             || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.liceoId == liceoId);
     }
 
-    // Código para que Estudiantes y Centros Duales/Maestros Guía creen su
-    // cuenta en /crear-cuenta — distinto del de arriba porque estas
-    // personas no usan el correo del dominio del liceo (una empresa Centro
-    // Dual tiene su propio dominio). Lo puede generar cualquier staff del
-    // liceo (empezando por el Profesor Supervisor, que es quien trata
-    // directamente con ellos), no solo administrador/director.
-    match /codigosAccesoExterno/{liceoId} {
-      allow read: if true;
-      allow write: if request.auth != null
-        && datosUsuario().rol in ['administrador', 'director', 'coordinador', 'profesor']
-        && (datosUsuario().rol == 'administrador' || datosUsuario().liceoId == liceoId);
-    }
-
     match /solicitudesModificacion/{id} {
       // Solicitudes de cambio de un dato bloqueado del propio perfil (Mi
       // perfil > Solicitar modificación). Solo su autor o un administrador
@@ -248,6 +235,11 @@ service cloud.firestore {
         esAccesoCompletoLiceo(resource.data.liceoId)
         || resource.data.profesorSupervisorId == request.auth.uid
         || (datosUsuario().rol == 'centro_dual' && resource.data.maestroGuiaId == datosUsuario().maestroGuiaId)
+        // Cuenta Centro Dual "de empresa" (sin maestroGuiaId, creada con el
+        // correo del propio Centro Dual): ve todas las asignaciones de su
+        // empresa, no solo las de un Maestro Guía — a diferencia de la
+        // rama de arriba, que sigue acotada a un Maestro Guía puntual.
+        || (datosUsuario().rol == 'centro_dual' && !('maestroGuiaId' in datosUsuario()) && datosUsuario().centroDualId == resource.data.centroDualId)
       );
       // Crear una asignación requiere ver y elegir entre TODOS los
       // estudiantes/centros del liceo todavía sin asignar — visión que un
@@ -287,6 +279,10 @@ service cloud.firestore {
         esAccesoCompletoLiceo(resource.data.liceoId)
         || (datosUsuario().rol == 'profesor' && tieneAutorizacion('maestro', id))
         || (datosUsuario().rol == 'centro_dual' && datosUsuario().maestroGuiaId == id)
+        // Cuenta Centro Dual "de empresa": ve a todos los Maestros Guía de
+        // su propia empresa, no solo a uno.
+        || (datosUsuario().rol == 'centro_dual' && !('maestroGuiaId' in datosUsuario())
+            && datosUsuario().centroDualId == resource.data.centroDualId)
       );
       allow create: if request.auth != null && (
         datosUsuario().rol == 'administrador'
@@ -366,6 +362,10 @@ service cloud.firestore {
         && (
           get(/databases/$(database)/documents/asignaciones/$(request.resource.data.asignacionId)).data.profesorSupervisorId == request.resource.data.profesorUid
           || (datosUsuario().rol == 'centro_dual' && get(/databases/$(database)/documents/asignaciones/$(request.resource.data.asignacionId)).data.maestroGuiaId == datosUsuario().maestroGuiaId)
+          // Cuenta Centro Dual "de empresa" (ver asignaciones): mismo
+          // índice, pero para toda la empresa en vez de un Maestro Guía.
+          || (datosUsuario().rol == 'centro_dual' && !('maestroGuiaId' in datosUsuario())
+              && get(/databases/$(database)/documents/asignaciones/$(request.resource.data.asignacionId)).data.centroDualId == datosUsuario().centroDualId)
         );
       allow update: if request.auth != null
         && (request.resource.data.profesorUid == request.auth.uid || esAccesoCompletoLiceo(request.resource.data.liceoId));

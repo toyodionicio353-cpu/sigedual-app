@@ -5,46 +5,32 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { collection, query, where, getDocs, limit, doc, setDoc, getDoc } from "firebase/firestore";
-import { ArrowLeft, Info } from "lucide-react";
+import { collection, query, where, getDocs, limit, doc, setDoc, getDoc, orderBy } from "firebase/firestore";
+import { ArrowLeft, Info, CheckCircle2 } from "lucide-react";
 import Select from "@/components/ui/Select";
 import type { Rol, Liceo, CodigoAcceso } from "@/types";
 
 const ROLES: { value: Rol; label: string }[] = [
   { value: "profesor", label: "Profesor Supervisor" },
   { value: "coordinador", label: "Coordinador" },
-  { value: "centro_dual", label: "Centro Dual / Maestro Guía" },
+  { value: "centro_dual", label: "Centro Dual" },
   { value: "estudiante", label: "Estudiante" },
 ];
 
 // Profesor Supervisor y Coordinador son staff del liceo: su correo debe
-// pertenecer al dominio autorizado y usan el código que genera el
-// administrador/director (Configuración → Seguridad). Estudiante y Centro
-// Dual/Maestro Guía no tienen por qué usar el correo del liceo (una empresa
-// Centro Dual tiene su propio dominio) — usan un código distinto, que
-// genera el Profesor Supervisor (o cualquier staff del liceo) desde esa
-// misma pantalla, y que identifica por sí solo a qué institución pertenecen.
+// pertenecer al dominio autorizado y usan el código de verificación que
+// genera el administrador/director (Configuración → Seguridad). Estudiante y
+// Centro Dual no usan ningún código: eligen su institución y, con el correo
+// que ya tienen registrado en su propia ficha (Estudiante.email /
+// CentroDual.email), el servidor confirma que existen y deriva su nombre —
+// así ninguna cuenta puede "inventarse" sin tener una ficha real.
 const ROLES_STAFF: Rol[] = ["profesor", "coordinador"];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-interface MaestroGuiaDisponible {
+interface LiceoOpcion {
   id: string;
   nombre: string;
-  centroDualNombre: string;
-}
-
-/** Busca a qué liceo pertenece un código "para Estudiantes y Centros
- * Duales" — ese código es autosuficiente (no depende del dominio del
- * correo), así una empresa Centro Dual con su propio dominio puede
- * registrarse igual. */
-async function resolverLiceoPorCodigoExterno(codigo: string): Promise<string | null> {
-  const snap = await getDocs(
-    query(collection(db, "codigosAccesoExterno"), where("codigo", "==", codigo.toUpperCase()))
-  );
-  const ahora = Date.now();
-  const vigente = snap.docs.find((d) => new Date((d.data() as CodigoAcceso).expiraEn).getTime() >= ahora);
-  return vigente ? vigente.id : null;
 }
 
 export default function CrearCuentaPage() {
@@ -58,56 +44,65 @@ export default function CrearCuentaPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Solo para rol "centro_dual": una cuenta de este tipo representa a UN
-  // Maestro Guía real de un Centro Dual específico. Si se dejara escribir
-  // el nombre libremente (como el resto de los roles), la cuenta quedaría
-  // sin vínculo con ningún Centro Dual/Maestro Guía — y eso es justo el
-  // problema reportado: sin ese vínculo, las reglas de Firestore no pueden
-  // aislar la información de un centro dual de la de otro. Por eso acá se
-  // elige de una lista real (nunca texto libre) y el nombre se deriva en
-  // el servidor a partir de esa elección.
-  const [maestroGuiaId, setMaestroGuiaId] = useState("");
-  const [maestrosDisponibles, setMaestrosDisponibles] = useState<MaestroGuiaDisponible[]>([]);
-  const [cargandoMaestros, setCargandoMaestros] = useState(false);
-  const [errorMaestros, setErrorMaestros] = useState("");
-
   const esStaff = rol === "profesor" || rol === "coordinador";
   const esCentroDual = rol === "centro_dual";
-  const esExterno = esCentroDual || rol === "estudiante";
+  const esEstudiante = rol === "estudiante";
+  const esExterno = esCentroDual || esEstudiante;
+
+  // Institución (solo para Estudiante / Centro Dual).
+  const [liceos, setLiceos] = useState<LiceoOpcion[]>([]);
+  const [cargandoLiceos, setCargandoLiceos] = useState(false);
+  const [liceoId, setLiceoId] = useState("");
+
+  // Verificación de ficha real (Estudiante/CentroDual) por institución+correo:
+  // mientras no haya coincidencia, no se puede continuar, y el nombre nunca
+  // se escribe a mano — se muestra el que ya está registrado en la ficha.
+  const [verificando, setVerificando] = useState(false);
+  const [verificado, setVerificado] = useState<{ id: string; nombre: string } | null>(null);
+  const [errorVerificacion, setErrorVerificacion] = useState("");
 
   useEffect(() => {
-    if (!esCentroDual) {
-      setMaestrosDisponibles([]); setMaestroGuiaId(""); setErrorMaestros("");
+    if (!esExterno) {
+      setLiceos([]); setLiceoId("");
       return;
     }
-    if (codigo.trim().length < 4) {
-      setMaestrosDisponibles([]); setErrorMaestros("");
+    setCargandoLiceos(true);
+    getDocs(query(collection(db, "liceos"), orderBy("nombre")))
+      .then((snap) => {
+        setLiceos(snap.docs.map((d) => ({ id: d.id, nombre: (d.data() as Liceo).nombre })));
+      })
+      .catch(() => setLiceos([]))
+      .finally(() => setCargandoLiceos(false));
+  }, [esExterno]);
+
+  useEffect(() => {
+    setVerificado(null);
+    setErrorVerificacion("");
+    if (!esExterno || !liceoId || !EMAIL_REGEX.test(email.trim())) {
       return;
     }
     const idTimeout = setTimeout(async () => {
-      setCargandoMaestros(true);
-      setErrorMaestros("");
+      setVerificando(true);
+      setErrorVerificacion("");
       try {
-        const params = new URLSearchParams({ codigo: codigo.trim() });
-        const res = await fetch(`/api/crear-cuenta/maestros-guia?${params}`);
+        const params = new URLSearchParams({ liceoId, email: email.trim() });
+        const ruta = esEstudiante ? "verificar-estudiante" : "verificar-centro-dual";
+        const res = await fetch(`/api/crear-cuenta/${ruta}?${params}`);
         const data = await res.json();
         if (!res.ok) {
-          setErrorMaestros(data.error ?? "No fue posible cargar los Maestros Guía de tu institución.");
-          setMaestrosDisponibles([]);
+          setErrorVerificacion(data.error ?? "Correo inválido.");
+          setVerificado(null);
           return;
         }
-        setMaestrosDisponibles(data.maestros);
-        if (data.maestros.length === 0) {
-          setErrorMaestros("No hay Maestros Guía disponibles para vincular. Contacta a tu profesor supervisor.");
-        }
+        setVerificado({ id: esEstudiante ? data.estudianteId : data.centroDualId, nombre: data.nombre });
       } catch {
-        setErrorMaestros("No fue posible cargar los Maestros Guía de tu institución.");
+        setErrorVerificacion("No fue posible verificar el correo. Intenta nuevamente.");
       } finally {
-        setCargandoMaestros(false);
+        setVerificando(false);
       }
     }, 500);
     return () => clearTimeout(idTimeout);
-  }, [esCentroDual, codigo]);
+  }, [esExterno, esEstudiante, liceoId, email]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -121,9 +116,13 @@ export default function CrearCuentaPage() {
       setError("Ingresa un correo válido (ejemplo: nombre@dominio.cl).");
       return;
     }
-    if (esCentroDual) {
-      if (!maestroGuiaId) {
-        setError("Selecciona el Centro Dual / Maestro Guía al que representa esta cuenta.");
+    if (esExterno) {
+      if (!liceoId) {
+        setError("Selecciona tu institución.");
+        return;
+      }
+      if (!verificado) {
+        setError(errorVerificacion || "Ese correo no coincide con ninguna ficha registrada en tu institución.");
         return;
       }
     } else if (!nombre.trim()) {
@@ -138,18 +137,14 @@ export default function CrearCuentaPage() {
       setError("Las contraseñas no coinciden.");
       return;
     }
-    if (!codigo.trim()) {
-      setError(
-        esStaff
-          ? "Ingresa el código de verificación entregado por tu director o administrador."
-          : "Ingresa el código entregado por tu profesor supervisor."
-      );
+    if (esStaff && !codigo.trim()) {
+      setError("Ingresa el código de verificación entregado por tu director o administrador.");
       return;
     }
 
     setLoading(true);
     try {
-      let liceoId: string;
+      let liceoIdFinal: string;
 
       if (esStaff) {
         const dominio = email.trim().split("@")[1]?.toLowerCase();
@@ -176,26 +171,24 @@ export default function CrearCuentaPage() {
           setLoading(false);
           return;
         }
-        liceoId = liceo.id;
+        liceoIdFinal = liceo.id;
       } else {
-        const liceoResuelto = await resolverLiceoPorCodigoExterno(codigo.trim());
-        if (!liceoResuelto) {
-          setError("El código es incorrecto o ya venció. Solicita uno nuevo a tu profesor supervisor.");
-          setLoading(false);
-          return;
-        }
-        liceoId = liceoResuelto;
+        liceoIdFinal = liceoId;
       }
 
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
 
-      if (esCentroDual) {
+      if (esExterno && verificado) {
         try {
           const idToken = await cred.user.getIdToken();
-          const res = await fetch("/api/crear-cuenta/completar-centro-dual", {
+          const ruta = esEstudiante ? "completar-estudiante" : "completar-centro-dual";
+          const body = esEstudiante
+            ? { estudianteId: verificado.id, liceoId: liceoIdFinal, email: email.trim() }
+            : { centroDualId: verificado.id, liceoId: liceoIdFinal, email: email.trim() };
+          const res = await fetch(`/api/crear-cuenta/${ruta}`, {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-            body: JSON.stringify({ maestroGuiaId, liceoId, email: email.trim() }),
+            body: JSON.stringify(body),
           });
           const data = await res.json();
           if (!res.ok) {
@@ -216,7 +209,7 @@ export default function CrearCuentaPage() {
           email: email.trim(),
           nombre: nombre.trim(),
           rol,
-          liceoId,
+          liceoId: liceoIdFinal,
           activo: true,
           creadoEn: new Date().toISOString(),
         });
@@ -260,7 +253,7 @@ export default function CrearCuentaPage() {
         </h1>
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-6">
           {esExterno
-            ? "Necesitas el código entregado por tu profesor supervisor. Tu correo puede ser el que uses habitualmente."
+            ? "Selecciona tu institución e ingresa el correo con el que ya estás registrado — tu nombre se completará automáticamente."
             : "Tu correo debe pertenecer al dominio autorizado de tu institución, y necesitas el código de verificación que entrega tu director o administrador."}
         </p>
 
@@ -278,25 +271,23 @@ export default function CrearCuentaPage() {
             />
           </div>
 
-          {esCentroDual ? (
+          {esExterno && (
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
-                Centro Dual / Maestro Guía
+                Institución
               </label>
               <Select
-                value={maestroGuiaId}
-                onChange={setMaestroGuiaId}
-                ariaLabel="Centro Dual / Maestro Guía"
-                placeholder={cargandoMaestros ? "Cargando..." : "Selecciona a quién representa esta cuenta"}
-                disabled={cargandoMaestros || maestrosDisponibles.length === 0}
-                opciones={maestrosDisponibles.map((m) => ({ value: m.id, label: `${m.nombre} — ${m.centroDualNombre}` }))}
+                value={liceoId}
+                onChange={setLiceoId}
+                ariaLabel="Institución"
+                placeholder={cargandoLiceos ? "Cargando..." : "Selecciona tu institución"}
+                disabled={cargandoLiceos || liceos.length === 0}
+                opciones={liceos.map((l) => ({ value: l.id, label: l.nombre }))}
               />
-              <p style={{ color: "var(--text-muted)" }} className="flex items-start gap-1.5 text-xs mt-2">
-                <Info size={13} className="flex-shrink-0 mt-0.5" />
-                {errorMaestros || "Ingresa el código de tu profesor supervisor para ver la lista. El nombre de tu cuenta se toma directamente de este registro, así la información de tu Centro Dual nunca se mezcla con la de otro."}
-              </p>
             </div>
-          ) : (
+          )}
+
+          {!esExterno && (
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
                 Nombre completo
@@ -326,7 +317,45 @@ export default function CrearCuentaPage() {
               style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
               className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
             />
+            {esExterno && (
+              <p
+                style={{ color: verificado ? "var(--success)" : "var(--text-muted)" }}
+                className="flex items-start gap-1.5 text-xs mt-2"
+              >
+                {verificado ? (
+                  <>
+                    <CheckCircle2 size={13} className="flex-shrink-0 mt-0.5" />
+                    Encontramos tu ficha: {verificado.nombre}
+                  </>
+                ) : (
+                  <>
+                    <Info size={13} className="flex-shrink-0 mt-0.5" />
+                    {verificando
+                      ? "Verificando..."
+                      : errorVerificacion ||
+                        (esEstudiante
+                          ? "Usa el mismo correo que registraste en tu ficha de estudiante."
+                          : "Usa el correo registrado para tu Centro Dual (no el de un Maestro Guía).")}
+                  </>
+                )}
+              </p>
+            )}
           </div>
+
+          {esExterno && verificado && (
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
+                Nombre completo
+              </label>
+              <input
+                type="text"
+                value={verificado.nombre}
+                disabled
+                style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-muted)" }}
+                className="w-full px-4 py-3 rounded-xl text-sm outline-none cursor-not-allowed"
+              />
+            </div>
+          )}
 
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
@@ -358,20 +387,22 @@ export default function CrearCuentaPage() {
             />
           </div>
 
-          <div>
-            <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
-              {esExterno ? "Código de tu profesor supervisor" : "Código de verificación"}
-            </label>
-            <input
-              type="text"
-              value={codigo}
-              onChange={(e) => setCodigo(e.target.value)}
-              placeholder="Ej: 7K2QXT"
-              required
-              style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors uppercase"
-            />
-          </div>
+          {esStaff && (
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
+                Código de verificación
+              </label>
+              <input
+                type="text"
+                value={codigo}
+                onChange={(e) => setCodigo(e.target.value)}
+                placeholder="Ej: 7K2QXT"
+                required
+                style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+                className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors uppercase"
+              />
+            </div>
+          )}
 
           {error && (
             <p style={{ color: "var(--danger)" }} className="text-sm text-center">
