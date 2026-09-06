@@ -175,6 +175,29 @@ export async function deleteFirestoreUsuario(uid: string): Promise<void> {
   );
 }
 
+/**
+ * Habilita/deshabilita una cuenta en Firebase Authentication. Es la forma
+ * real de "desactivar" un usuario (ej. al terminar una Demo): a diferencia
+ * de solo cambiar `usuarios/{uid}.activo` (que un cliente podría ignorar),
+ * esto hace que el propio backend de Firebase Auth rechace el inicio de
+ * sesión y, en poco tiempo, cualquier token ya emitido — no depende de
+ * ninguna comprobación del navegador.
+ */
+export async function setAuthUserDisabled(uid: string, disabled: boolean): Promise<void> {
+  const token = await getAccessToken();
+  const res = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:update", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ localId: uid, disableUser: disabled }),
+  });
+  if (!res.ok) {
+    const texto = await res.text();
+    if (!texto.includes("USER_NOT_FOUND")) {
+      throw new Error(`No se pudo actualizar el estado de la cuenta en Firebase Auth: ${texto}`);
+    }
+  }
+}
+
 export async function deleteAuthUser(uid: string): Promise<void> {
   const token = await getAccessToken();
   const res = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:delete", {

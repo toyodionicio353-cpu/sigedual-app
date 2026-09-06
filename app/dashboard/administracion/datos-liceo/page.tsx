@@ -86,7 +86,7 @@ export default function DatosLiceoPage() {
                 <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">{label}</label>
                 <input
                   type="text"
-                  value={(liceo as Record<string, string>)[key]}
+                  value={(liceo as unknown as Record<string, string>)[key]}
                   onChange={(e) => setLiceo((l) => ({ ...l, [key]: e.target.value }))}
                   style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
                   className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
