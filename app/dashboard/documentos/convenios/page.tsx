@@ -21,16 +21,13 @@ export default function ConveniosPage() {
   const [vista, setVista] = useState<Vista>({ modo: "biblioteca" });
   const [tabBiblioteca, setTabBiblioteca] = useState<"plantillas" | "creados">("plantillas");
 
+  // Centro Dual/Estudiante nunca crean, editan ni eliminan un convenio —
+  // solo pueden VER el que esté a su nombre (ver useDocumentosCreados).
+  const puedeCrear = usuario?.rol !== "centro_dual" && usuario?.rol !== "estudiante";
+
   const plantillasDefinidas = plantillasParaModulo(TIPO_MODULO);
   const { contexto, cargando: cargandoContexto } = useContextoDocumentos();
   const { documentos, items: itemsCreados, cargando: cargandoCreados, recargar } = useDocumentosCreados(TIPO_MODULO);
-  // Centro Dual/Estudiante solo ven lo suyo (ver useDocumentosCreados); para
-  // no editar/eliminar por error un documento que otro creó sobre ellos,
-  // el menú de acciones de la biblioteca queda solo para el que lo creó.
-  function puedeGestionar(doc: DocumentoGenerado): boolean {
-    if (usuario?.rol !== "centro_dual" && usuario?.rol !== "estudiante") return true;
-    return doc.creadoPor === usuario?.uid;
-  }
 
   const plantillas: ItemBiblioteca[] = plantillasDefinidas.map((p) => ({
     id: p.id,
@@ -45,6 +42,7 @@ export default function ConveniosPage() {
   }
 
   function usarPlantilla(item: ItemBiblioteca) {
+    if (!puedeCrear) return;
     const plantilla = plantillasDefinidas.find((p) => p.id === item.id);
     if (!plantilla) return;
     setVista({ modo: "editor", plantilla });
@@ -57,12 +55,9 @@ export default function ConveniosPage() {
   }
 
   async function eliminarCreado(item: ItemBiblioteca) {
+    if (!puedeCrear) return;
     const doc = documentos.find((d) => d.id === item.id);
     if (!doc || !usuario) return;
-    if (!puedeGestionar(doc)) {
-      mostrarAviso("Solo puedes eliminar los convenios que tú creaste.");
-      return;
-    }
     if (!confirm(`¿Eliminar "${doc.nombre}"? Esta acción no se puede deshacer.`)) return;
     await eliminarDocumento({
       documentoId: doc.id, liceoId: usuario.liceoId, tipoModulo: TIPO_MODULO, nombre: doc.nombre,
@@ -72,6 +67,7 @@ export default function ConveniosPage() {
   }
 
   async function duplicarCreado(item: ItemBiblioteca) {
+    if (!puedeCrear) return;
     const doc = documentos.find((d) => d.id === item.id);
     if (!doc || !usuario) return;
     try {
@@ -100,6 +96,7 @@ export default function ConveniosPage() {
         contexto={contexto}
         plantilla={vista.plantilla}
         documentoExistente={vista.existente}
+        soloLectura={!puedeCrear}
         onGuardado={() => { recargar(); setVista({ modo: "biblioteca" }); }}
         onCancelar={() => setVista({ modo: "biblioteca" })}
       />
@@ -129,11 +126,12 @@ export default function ConveniosPage() {
         onAbrirCreado={abrirCreado}
         tabInicial={tabBiblioteca}
         onCambiarTab={setTabBiblioteca}
-        acciones={[
+        mostrarPlantillas={puedeCrear}
+        acciones={puedeCrear ? [
           { label: "Editar", onClick: abrirCreado },
           { label: "Duplicar", onClick: duplicarCreado },
           { label: "Eliminar", onClick: eliminarCreado },
-        ]}
+        ] : []}
       />
     </div>
   );

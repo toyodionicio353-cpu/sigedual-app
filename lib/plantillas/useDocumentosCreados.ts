@@ -48,32 +48,25 @@ export function useDocumentosCreados(tipoModulo: TipoModuloDocumento) {
   async function cargar() {
     if (!usuario) return;
     setCargando(true);
-    // Un estudiante o Centro Dual solo puede consultar por `estudianteId` o
-    // `creadoPor` (lo único que firestore.rules les permite leer en esta
-    // colección) — nunca por `liceoId`, que expondría documentos ajenos.
+    // Un estudiante o Centro Dual nunca crean/editan un documento — solo
+    // pueden VER el que esté a su nombre, así que la única consulta que
+    // firestore.rules les permite es por `estudianteId` (nunca por
+    // `liceoId`, que expondría documentos ajenos).
     if (usuario.rol === "estudiante") {
-      const porId = new Map<string, DocumentoGenerado>();
-      const [snapPropio, snapCreados] = await Promise.all([
-        usuario.estudianteId
-          ? getDocs(query(collection(db, "documentos_generados"), where("tipoModulo", "==", tipoModulo), where("estudianteId", "==", usuario.estudianteId)))
-          : Promise.resolve(null),
-        getDocs(query(collection(db, "documentos_generados"), where("tipoModulo", "==", tipoModulo), where("creadoPor", "==", usuario.uid))),
-      ]);
-      convertir(snapPropio ? snapPropio.docs : []).forEach((d) => porId.set(d.id, d));
-      convertir(snapCreados.docs).forEach((d) => porId.set(d.id, d));
-      setDocumentos(Array.from(porId.values()));
+      const snap = usuario.estudianteId
+        ? await getDocs(query(collection(db, "documentos_generados"), where("tipoModulo", "==", tipoModulo), where("estudianteId", "==", usuario.estudianteId)))
+        : null;
+      setDocumentos(snap ? convertir(snap.docs) : []);
       setCargando(false);
       return;
     }
     if (usuario.rol === "centro_dual") {
-      const porId = new Map<string, DocumentoGenerado>();
       const lotes = loteados(ambitoMaestroGuia.idsEstudiantes);
-      const [snapsPorEstudiante, snapCreados] = await Promise.all([
-        Promise.all(lotes.map((lote) => getDocs(query(collection(db, "documentos_generados"), where("tipoModulo", "==", tipoModulo), where("estudianteId", "in", lote))))),
-        getDocs(query(collection(db, "documentos_generados"), where("tipoModulo", "==", tipoModulo), where("creadoPor", "==", usuario.uid))),
-      ]);
-      snapsPorEstudiante.forEach((snap) => convertir(snap.docs).forEach((d) => porId.set(d.id, d)));
-      convertir(snapCreados.docs).forEach((d) => porId.set(d.id, d));
+      const snaps = await Promise.all(
+        lotes.map((lote) => getDocs(query(collection(db, "documentos_generados"), where("tipoModulo", "==", tipoModulo), where("estudianteId", "in", lote))))
+      );
+      const porId = new Map<string, DocumentoGenerado>();
+      snaps.forEach((snap) => convertir(snap.docs).forEach((d) => porId.set(d.id, d)));
       setDocumentos(Array.from(porId.values()));
       setCargando(false);
       return;
