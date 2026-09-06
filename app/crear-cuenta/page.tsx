@@ -69,7 +69,13 @@ export default function CrearCuentaPage() {
     setCargandoLiceos(true);
     getDocs(query(collection(db, "liceos"), orderBy("nombre")))
       .then((snap) => {
-        setLiceos(snap.docs.map((d) => ({ id: d.id, nombre: (d.data() as Liceo).nombre })));
+        // Un liceo desactivado por el administrador no debe aparecer como
+        // opción para nadie que aún no tenga sesión — solo el administrador
+        // lo ve, desde Liceos en el dashboard.
+        const activos = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() } as Liceo))
+          .filter((l) => (l.estado ?? "activo") !== "inactivo");
+        setLiceos(activos.map((l) => ({ id: l.id, nombre: l.nombre })));
       })
       .catch(() => setLiceos([]))
       .finally(() => setCargandoLiceos(false));
@@ -157,6 +163,11 @@ export default function CrearCuentaPage() {
           return;
         }
         const liceo = { id: liceoSnap.docs[0].id, ...liceoSnap.docs[0].data() } as Liceo;
+        if ((liceo.estado ?? "activo") === "inactivo") {
+          setError("Esta institución no está disponible. Contacta a tu director o administrador.");
+          setLoading(false);
+          return;
+        }
 
         const codigoSnap = await getDoc(doc(db, "codigosAcceso", liceo.id));
         if (!codigoSnap.exists()) {

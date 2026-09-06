@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireCallerUid, getDocument, listCollectionDocs, setDocument } from "@/lib/firebase-admin";
 import { registrarEventoServidor } from "@/lib/auditoria/registrarEvento";
-import type { CentroDual, Usuario } from "@/types";
+import type { CentroDual, Liceo, Usuario } from "@/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,6 +34,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Esta cuenta ya fue creada." }, { status: 409 });
     }
 
+    const liceoDoc = await getDocument(`liceos/${liceoId}`);
+    const liceo = liceoDoc?.data as unknown as Liceo | undefined;
+    if (!liceoDoc || (liceo?.estado ?? "activo") === "inactivo") {
+      return NextResponse.json({ error: "Esta institución no está disponible." }, { status: 404 });
+    }
+
     const centroDoc = await getDocument(`centros_duales/${centroDualId}`);
     if (!centroDoc) {
       return NextResponse.json({ error: "El Centro Dual seleccionado no existe." }, { status: 404 });
@@ -44,6 +50,9 @@ export async function POST(request: Request) {
     }
     if (centro.email?.trim().toLowerCase() !== email.trim().toLowerCase()) {
       return NextResponse.json({ error: "El correo no coincide con el registrado para este Centro Dual." }, { status: 400 });
+    }
+    if (centro.estado === "inactivo") {
+      return NextResponse.json({ error: "Este Centro Dual está inactivo. Contacta a tu liceo." }, { status: 403 });
     }
 
     const usuarios = await listCollectionDocs("usuarios");

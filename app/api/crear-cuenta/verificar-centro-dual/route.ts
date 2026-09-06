@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { listCollectionDocs } from "@/lib/firebase-admin";
-import type { CentroDual } from "@/types";
+import { getDocument, listCollectionDocs } from "@/lib/firebase-admin";
+import type { CentroDual, Liceo } from "@/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +21,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Faltan datos." }, { status: 400 });
     }
 
+    const liceoDoc = await getDocument(`liceos/${liceoId}`);
+    const liceo = liceoDoc?.data as unknown as Liceo | undefined;
+    if (!liceoDoc || (liceo?.estado ?? "activo") === "inactivo") {
+      return NextResponse.json({ error: "Esta institución no está disponible." }, { status: 404 });
+    }
+
     const centros = await listCollectionDocs("centros_duales");
     const encontrado = centros.find((c) => {
       const centro = c.data as unknown as CentroDual;
@@ -30,6 +36,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Este correo no corresponde a ningún Centro Dual registrado en esa institución." }, { status: 404 });
     }
     const centro = encontrado.data as unknown as CentroDual;
+    if (centro.estado === "inactivo") {
+      return NextResponse.json({ error: "Este Centro Dual está inactivo. Contacta a tu liceo." }, { status: 403 });
+    }
 
     return NextResponse.json({ ok: true, centroDualId: encontrado.id, nombre: centro.contactoNombre?.trim() || centro.nombre });
   } catch (err) {
