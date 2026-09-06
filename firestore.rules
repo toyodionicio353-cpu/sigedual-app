@@ -46,7 +46,7 @@ service cloud.firestore {
         'estudiantes_por_run', 'campanias_invitacion', 'campanias_invitacion_estudiante',
         'respuestas_campania', 'respuestas_campania_estudiante', 'demos',
         'planes_comerciales', 'configuracion_comercial', 'documentos_generados', 'especialidades',
-        'documentos_generados_indices'
+        'documentos_generados_indices', 'envios_evaluacion'
       ];
     }
 
@@ -398,6 +398,38 @@ service cloud.firestore {
       );
       allow update: if false;
       allow delete: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
+    }
+
+    // Envío de una plantilla de Evaluación de un Profesor Supervisor hacia
+    // el Centro Dual de una Asignacion, con un plazo (fechaInicio-fechaFin).
+    // El Centro Dual solo puede "reclamarlo" (poner evaluacionId) mientras
+    // esté vigente — el estado real (programado/disponible/vencido) se
+    // deriva en el cliente a partir de las fechas, nunca se guarda.
+    match /envios_evaluacion/{id} {
+      allow read: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || resource.data.profesorSupervisorId == request.auth.uid
+        || (datosUsuario().rol == 'centro_dual' && tieneAutorizacion('estudiante', resource.data.estudianteId))
+      );
+      // Solo puede enviar una evaluación el profesor que efectivamente
+      // supervisa esa asignación (o acceso completo de liceo) — igual
+      // ámbito que ya rige "Realizar" para un profesor.
+      allow create: if request.auth != null && (
+        esAccesoCompletoLiceo(request.resource.data.liceoId)
+        || (datosUsuario().rol == 'profesor' && request.resource.data.profesorSupervisorId == request.auth.uid
+            && get(/databases/$(database)/documents/asignaciones/$(request.resource.data.asignacionId)).data.profesorSupervisorId == request.auth.uid)
+      );
+      // El único cambio permitido es que el Centro Dual marque el envío
+      // como completado (evaluacionId) — nunca antes de tener uno, y nunca
+      // sobre uno ya completado.
+      allow update: if request.auth != null && !('evaluacionId' in resource.data) && (
+        datosUsuario().rol == 'centro_dual' && tieneAutorizacion('estudiante', resource.data.estudianteId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['evaluacionId'])
+      );
+      allow delete: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || resource.data.profesorSupervisorId == request.auth.uid
+      );
     }
 
     // Documento/Convenio generado desde una plantilla (Documentos →

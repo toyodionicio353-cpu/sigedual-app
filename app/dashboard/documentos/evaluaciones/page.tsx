@@ -8,12 +8,16 @@ import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { useAmbitoMaestroGuia } from "@/lib/permisos/useAmbitoMaestroGuia";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { PLANTILLAS_EVALUACION, plantillaEvaluacionPorId } from "@/lib/evaluaciones";
-import type { Evaluacion, Estudiante } from "@/types";
+import { estadoEnvioEvaluacion, diasParaCierre } from "@/lib/evaluaciones/envios";
+import ModalEnviarEvaluacion from "@/components/evaluaciones/ModalEnviarEvaluacion";
+import type { Evaluacion, Estudiante, EnvioEvaluacion } from "@/types";
 import Select from "@/components/ui/Select";
 import TituloPagina from "@/components/TituloPagina";
-import { ClipboardCheck, Wand2, Eye, ChevronRight } from "lucide-react";
+import { ClipboardCheck, Wand2, Eye, ChevronRight, Send, Clock, AlertTriangle } from "lucide-react";
 
 type Tab = "plantillas" | "realizadas";
+
+const DIAS_ALERTA_CIERRE = 3;
 
 export default function EvaluacionesPage() {
   const { usuario } = useAuth();
@@ -31,6 +35,35 @@ export default function EvaluacionesPage() {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [cargandoHistorial, setCargandoHistorial] = useState(true);
   const [filtroEstudianteId, setFiltroEstudianteId] = useState("");
+
+  // Envíos pendientes de un Centro Dual: solo estos, dentro de su plazo,
+  // cuentan como "Evaluaciones disponibles" — nunca la lista de plantillas
+  // libre que sí ve un profesor.
+  const [enviosPendientes, setEnviosPendientes] = useState<EnvioEvaluacion[]>([]);
+  const [cargandoEnvios, setCargandoEnvios] = useState(true);
+  const [plantillaAEnviar, setPlantillaAEnviar] = useState<{ id: string; nombre: string } | null>(null);
+  const [avisoEnvio, setAvisoEnvio] = useState("");
+
+  useEffect(() => {
+    if (!usuario || usuario.rol !== "centro_dual" || tab !== "plantillas" || ambitoMaestroGuia.cargando) return;
+    let cancelado = false;
+    (async () => {
+      setCargandoEnvios(true);
+      const idsEstudiantes = ambitoMaestroGuia.idsEstudiantes;
+      const lotes: string[][] = [];
+      for (let i = 0; i < idsEstudiantes.length; i += 30) lotes.push(idsEstudiantes.slice(i, i + 30));
+      const snaps = await Promise.all(
+        lotes.map((lote) => getDocs(query(collection(db, "envios_evaluacion"), where("estudianteId", "in", lote))))
+      );
+      if (cancelado) return;
+      const todos = snaps.flatMap((snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() } as EnvioEvaluacion)));
+      setEnviosPendientes(todos.filter((e) => estadoEnvioEvaluacion(e) === "disponible"));
+      setEstudiantes(await obtenerDocumentosPorId<Estudiante>("estudiantes", idsEstudiantes));
+      setCargandoEnvios(false);
+    })();
+    return () => { cancelado = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario, tab, ambitoMaestroGuia.cargando, ambitoMaestroGuia.idsEstudiantes]);
 
   useEffect(() => {
     if (!usuario || tab !== "realizadas" || cargandoAmbito) return;
@@ -114,7 +147,53 @@ export default function EvaluacionesPage() {
       )}
 
       {tab === "plantillas" && !esEstudiante && (
-        PLANTILLAS_EVALUACION.length === 0 ? (
+        esCentroDual ? (
+          <>
+            {avisoEnvio && (
+              <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-2.5 mb-4">
+                <p style={{ color: "var(--success)" }} className="text-sm font-medium">{avisoEnvio}</p>
+              </div>
+            )}
+            {cargandoEnvios || ambitoMaestroGuia.cargando ? (
+              <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
+            ) : enviosPendientes.length === 0 ? (
+              <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
+                <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No hay evaluaciones disponibles</p>
+                <p style={{ color: "var(--text-muted)" }} className="text-sm">Cuando tu Profesor Supervisor te envíe una, aparecerá aquí dentro de su plazo.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {enviosPendientes.map((envio) => {
+                  const plantilla = plantillaEvaluacionPorId(envio.plantillaId);
+                  const dias = diasParaCierre(envio);
+                  const porCerrar = dias <= DIAS_ALERTA_CIERRE;
+                  return (
+                    <div key={envio.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 flex flex-col gap-3">
+                      <div>
+                        <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">{plantilla?.nombre ?? "Evaluación"}</p>
+                        <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{nombreEstudiante(envio.estudianteId)}</p>
+                      </div>
+                      <p
+                        style={{ color: porCerrar ? "var(--danger)" : "var(--text-secondary)" }}
+                        className="flex items-center gap-1.5 text-xs font-medium"
+                      >
+                        {porCerrar ? <AlertTriangle size={13} /> : <Clock size={13} />}
+                        {dias <= 0 ? "Vence hoy" : `Vence en ${dias} día${dias === 1 ? "" : "s"}`} · {envio.fechaFin}
+                      </p>
+                      <Link
+                        href={`/dashboard/documentos/evaluaciones/realizar/${envio.plantillaId}?envioId=${envio.id}`}
+                        style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+                        className="px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 mt-1"
+                      >
+                        <Wand2 size={15} /> Realizar
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        ) : PLANTILLAS_EVALUACION.length === 0 ? (
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
             <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No hay evaluaciones disponibles</p>
           </div>
@@ -151,10 +230,36 @@ export default function EvaluacionesPage() {
                     <Eye size={15} />
                   </Link>
                 </div>
+                {esProfesor && (
+                  <button
+                    onClick={() => setPlantillaAEnviar({ id: p.id, nombre: p.nombre })}
+                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+                    className="px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5"
+                  >
+                    <Send size={15} /> Enviar a un Centro Dual
+                  </button>
+                )}
               </div>
             ))}
           </div>
         )
+      )}
+
+      {plantillaAEnviar && usuario && (
+        <ModalEnviarEvaluacion
+          plantillaId={plantillaAEnviar.id}
+          plantillaNombre={plantillaAEnviar.nombre}
+          asignaciones={ambitoProfesor.asignaciones}
+          liceoId={usuario.liceoId}
+          profesorUid={usuario.uid}
+          profesorNombre={usuario.nombre}
+          onCancelar={() => setPlantillaAEnviar(null)}
+          onEnviado={(cantidad) => {
+            setPlantillaAEnviar(null);
+            setAvisoEnvio(`Evaluación enviada a ${cantidad} centro${cantidad === 1 ? "" : "s"} dual${cantidad === 1 ? "" : "es"}.`);
+            setTimeout(() => setAvisoEnvio(""), 4000);
+          }}
+        />
       )}
 
       {tab === "realizadas" && (

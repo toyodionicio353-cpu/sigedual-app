@@ -15,15 +15,16 @@ import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { estadoEfectivo } from "@/lib/compatibilidad";
 import { formatearFecha } from "@/lib/fecha";
 import { estadoCanonico, fechaProgramadaDe, horaProgramadaDe } from "@/lib/visitas/normalizar";
+import { estadoEnvioEvaluacion, diasParaCierre } from "@/lib/evaluaciones/envios";
 import { useNotificaciones } from "@/lib/notificaciones/useNotificaciones";
 import { ESTADOS_TICKET_ABIERTOS, ESTADO_TICKET_LABEL, ESTADO_TICKET_COLOR, PRIORIDAD_TICKET_COLOR, numeroTicket } from "@/lib/tickets/constantes";
 import ListaNotificaciones from "@/components/notificaciones/ListaNotificaciones";
 import MapaDualCard from "./_inicio/MapaDualCard";
-import type { Asignacion, CentroDual, Estudiante, MaestroGuia, Rol, Ticket, Usuario, Visita } from "@/types";
+import type { Asignacion, CentroDual, EnvioEvaluacion, Estudiante, MaestroGuia, Rol, Ticket, Usuario, Visita } from "@/types";
 import {
   Users, Building2, BookOpen, UsersRound, CalendarCheck, MapPin, ArrowRight, Pin,
   UserPlus, Building, FileText, LifeBuoy, Bell, CalendarDays,
-  School, UserCheck,
+  School, UserCheck, ClipboardCheck, AlertTriangle,
 } from "lucide-react";
 
 interface Stat {
@@ -59,6 +60,7 @@ export default function DashboardPage() {
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [visitas, setVisitas] = useState<Visita[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [enviosEvaluacion, setEnviosEvaluacion] = useState<EnvioEvaluacion[]>([]);
   const [cargando, setCargando] = useState(true);
 
   const { notificaciones, cargando: cargandoNotif, marcarLeida, eliminarNotificacion } = useNotificaciones(6);
@@ -79,7 +81,13 @@ export default function DashboardPage() {
           usuario!.centroDualId ? obtenerDocumentosPorId<CentroDual>("centros_duales", [usuario!.centroDualId]) : Promise.resolve([]),
           usuario!.maestroGuiaId ? obtenerDocumentosPorId<MaestroGuia>("maestros_guia", [usuario!.maestroGuiaId]) : Promise.resolve([]),
         ]);
-        const snapVisitas = await getDocs(query(collection(db, "visitas"), where("centroDualId", "==", usuario!.centroDualId ?? "")));
+        const idsEstudiantesLotes: string[][] = [];
+        for (let i = 0; i < ambitoMaestroGuia.idsEstudiantes.length; i += 30) idsEstudiantesLotes.push(ambitoMaestroGuia.idsEstudiantes.slice(i, i + 30));
+        const [snapVisitas, ...snapsEnvios] = await Promise.all([
+          getDocs(query(collection(db, "visitas"), where("centroDualId", "==", usuario!.centroDualId ?? ""))),
+          ...idsEstudiantesLotes.map((lote) => getDocs(query(collection(db, "envios_evaluacion"), where("estudianteId", "in", lote)))),
+        ]);
+        const todosEnvios = snapsEnvios.flatMap((snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() } as EnvioEvaluacion)));
         setEstudiantes(estudiantesData);
         setCentros(centrosData);
         setProfesores([]);
@@ -87,6 +95,7 @@ export default function DashboardPage() {
         setAsignaciones(ambitoMaestroGuia.asignaciones);
         setVisitas(snapVisitas.docs.map((d) => ({ id: d.id, ...d.data() } as Visita)));
         setTickets([]);
+        setEnviosEvaluacion(todosEnvios.filter((e) => estadoEnvioEvaluacion(e) === "disponible"));
         setCargando(false);
         return;
       }
@@ -114,6 +123,7 @@ export default function DashboardPage() {
         setAsignaciones(ambitoEstudiante.asignaciones);
         setVisitas(Array.from(visitasPorId.values()));
         setTickets([]);
+        setEnviosEvaluacion([]);
         setCargando(false);
         return;
       }
@@ -146,6 +156,7 @@ export default function DashboardPage() {
         setAsignaciones(ambito.asignaciones);
         setVisitas(Array.from(visitasPorId.values()));
         setTickets([]);
+        setEnviosEvaluacion([]);
         setCargando(false);
         return;
       }
@@ -260,7 +271,7 @@ export default function DashboardPage() {
     function centroNombre(id: string) {
       return centros.find((c) => c.id === id)?.nombre || "Centro dual";
     }
-    const items: { id: string; fecha: string; titulo: string; subtitulo: string; icon: React.ReactNode }[] = [];
+    const items: { id: string; fecha: string; titulo: string; subtitulo: string; icon: React.ReactNode; urgente?: boolean }[] = [];
     visitasProximas.forEach((v) => {
       const fecha = fechaProgramadaDe(v);
       const hora = horaProgramadaDe(v);
@@ -278,8 +289,21 @@ export default function DashboardPage() {
         subtitulo: `${formatearFecha(a.fechaTermino as string)} · ${centroNombre(a.centroDualId)}`,
         icon: <UserCheck size={14} style={{ color: "var(--warning)" }} />,
       }));
+    enviosEvaluacion.forEach((envio) => {
+      const dias = diasParaCierre(envio);
+      const urgente = dias <= 3;
+      items.push({
+        id: `envio-${envio.id}`, fecha: envio.fechaFin,
+        titulo: `Realizar evaluación: ${estudianteNombre(envio.estudianteId)}`,
+        subtitulo: dias <= 0 ? "Vence hoy" : `Vence en ${dias} día${dias === 1 ? "" : "s"} · ${formatearFecha(envio.fechaFin)}`,
+        icon: urgente
+          ? <AlertTriangle size={14} style={{ color: "var(--danger)" }} />
+          : <ClipboardCheck size={14} style={{ color: "var(--accent-light)" }} />,
+        urgente,
+      });
+    });
     return items.sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0)).slice(0, 5);
-  }, [visitasProximas, asignaciones, estudiantes, centros, hoy]);
+  }, [visitasProximas, asignaciones, estudiantes, centros, hoy, enviosEvaluacion]);
 
   const contadoresTickets = useMemo(() => {
     const abiertos = tickets.filter((t) => ESTADOS_TICKET_ABIERTOS.includes(t.estado)).length;
@@ -354,11 +378,15 @@ export default function DashboardPage() {
             ) : (
               <div className="flex flex-col gap-2">
                 {proximasActividades.map((e) => (
-                  <div key={e.id} className="flex items-center gap-3">
-                    <div style={{ background: "var(--bg-surface)" }} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">{e.icon}</div>
+                  <div
+                    key={e.id}
+                    style={e.urgente ? { background: "var(--danger)11", borderRadius: 12, padding: "6px 8px", margin: "-6px -8px" } : undefined}
+                    className="flex items-center gap-3"
+                  >
+                    <div style={{ background: e.urgente ? "var(--danger)22" : "var(--bg-surface)" }} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">{e.icon}</div>
                     <div className="min-w-0">
-                      <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium truncate">{e.titulo}</p>
-                      <p style={{ color: "var(--text-muted)" }} className="text-xs truncate">{e.subtitulo}</p>
+                      <p style={{ color: e.urgente ? "var(--danger)" : "var(--text-primary)" }} className="text-sm font-medium truncate">{e.titulo}</p>
+                      <p style={{ color: e.urgente ? "var(--danger)" : "var(--text-muted)" }} className="text-xs truncate">{e.subtitulo}</p>
                     </div>
                   </div>
                 ))}
