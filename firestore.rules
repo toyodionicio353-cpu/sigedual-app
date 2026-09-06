@@ -45,7 +45,8 @@ service cloud.firestore {
         'evaluaciones', 'invitaciones_estudiante', 'respuestas_invitacion_estudiante',
         'estudiantes_por_run', 'campanias_invitacion', 'campanias_invitacion_estudiante',
         'respuestas_campania', 'respuestas_campania_estudiante', 'demos',
-        'planes_comerciales', 'configuracion_comercial', 'documentos_generados', 'especialidades'
+        'planes_comerciales', 'configuracion_comercial', 'documentos_generados', 'especialidades',
+        'documentos_generados_indices'
       ];
     }
 
@@ -421,7 +422,12 @@ service cloud.firestore {
             && request.resource.data.creadoPor == request.auth.uid
             && datosUsuario().liceoId == request.resource.data.liceoId)
       );
-      allow update: if request.auth != null && (
+      // Un documento/convenio "finalizado" (a diferencia de "borrador", que
+      // sigue siendo un trabajo en curso) es inmutable — igual criterio que
+      // una Evaluación o una Visita finalizada: nadie, ni siquiera acceso
+      // completo de liceo, puede editarlo después de guardarlo. Para
+      // corregir algo se crea uno nuevo (Duplicar), nunca se edita el original.
+      allow update: if request.auth != null && resource.data.estado != 'finalizado' && (
         esAccesoCompletoLiceo(resource.data.liceoId)
         || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId)
         || resource.data.creadoPor == request.auth.uid
@@ -430,6 +436,24 @@ service cloud.firestore {
         esAccesoCompletoLiceo(resource.data.liceoId)
         || resource.data.creadoPor == request.auth.uid
       );
+    }
+
+    // Índice de unicidad de nombre para documentos_generados (mismo criterio
+    // que centros_duales_por_rut/estudiantes_por_run): sin datos personales,
+    // solo referencia opaca (documentoId/liceoId/tipoModulo) — cualquiera de
+    // ese liceo puede leerlo/mantenerlo, ya que quien puede crear el
+    // documento real (ver regla de arriba) también debe poder reclamar su
+    // entrada en este índice.
+    match /documentos_generados_indices/{clave} {
+      allow read: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || datosUsuario().liceoId == resource.data.liceoId
+      );
+      allow create, update: if request.auth != null && (
+        esAccesoCompletoLiceo(request.resource.data.liceoId)
+        || datosUsuario().liceoId == request.resource.data.liceoId
+      );
+      allow delete: if request.auth != null;
     }
 
     // Índice de autorización: un documento por (profesor, tipo, recurso)
