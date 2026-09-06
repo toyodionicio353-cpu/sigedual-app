@@ -12,7 +12,17 @@ import { usePreferencias } from "@/lib/preferencias/context";
 import type { ClaveTraduccion } from "@/lib/preferencias/i18n";
 import { useNotificaciones } from "@/lib/notificaciones/useNotificaciones";
 import ListaNotificaciones from "@/components/notificaciones/ListaNotificaciones";
-import { Bell, Building2, LogOut, ArrowLeft } from "lucide-react";
+import { useDemoDeLiceo } from "@/lib/demo/useDemoDeLiceo";
+import { Bell, Building2, LogOut, ArrowLeft, Clock } from "lucide-react";
+
+// Rutas que se mantienen accesibles aunque la Demo de la institución ya
+// haya vencido/sido cancelada — para no dejar sin salida a alguien que
+// necesita contactar a SIGEDUAL o cerrar sesión. Todo lo demás redirige a
+// /demo-vencida (ver sección "Finalización de la demostración").
+const RUTAS_PERMITIDAS_DEMO_VENCIDA = [
+  "/dashboard/soporte", "/dashboard/soporte/tickets", "/dashboard/soporte/tickets/nuevo",
+  "/dashboard/administracion/usuario",
+];
 
 const TITULOS: Record<string, string> = {
   "/dashboard": "Inicio",
@@ -45,6 +55,8 @@ const TITULOS: Record<string, string> = {
   "/dashboard/administracion/privacidad": "Políticas",
   "/dashboard/administracion/aviso-legal": "Aviso legal",
   "/dashboard/administracion/tickets": "Tickets",
+  "/dashboard/administracion/demo": "Acceso de Demostración",
+  "/dashboard/administracion/plan": "Plan SIGEDUAL",
   "/dashboard/soporte": "Soporte",
   "/dashboard/soporte/tickets": "Mis tickets",
   "/dashboard/soporte/tickets/nuevo": "Crear ticket",
@@ -83,6 +95,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [panelNotifAbierto, setPanelNotifAbierto] = useState(false);
   const panelNotifRef = useRef<HTMLDivElement>(null);
   const { notificaciones, noLeidas, cargando: cargandoNotif, marcarLeida, eliminarNotificacion } = useNotificaciones();
+  const demoLiceo = useDemoDeLiceo();
+
+  useEffect(() => {
+    if (demoLiceo.cargando || !demoLiceo.esDemo) return;
+    if (demoLiceo.estado === "activa") return;
+    if (RUTAS_PERMITIDAS_DEMO_VENCIDA.includes(pathname)) return;
+    router.replace("/demo-vencida");
+  }, [demoLiceo.cargando, demoLiceo.esDemo, demoLiceo.estado, pathname, router]);
 
   useEffect(() => {
     if (!panelNotifAbierto) return;
@@ -212,6 +232,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
         </header>
+
+        {demoLiceo.esDemo && demoLiceo.estado === "activa" && (
+          <div
+            style={{ background: "var(--accent)22", borderBottom: "1px solid var(--accent)" }}
+            className="px-3 md:px-6 py-2 flex items-center gap-2 flex-shrink-0"
+          >
+            <Clock size={14} style={{ color: "var(--accent-light)" }} className="flex-shrink-0" />
+            <span style={{ color: "var(--accent-light)" }} className="text-xs font-semibold truncate">
+              Demo SIGEDUAL: tu acceso de demostración está activo. Tiempo restante: {demoLiceo.tiempoRestante}.
+            </span>
+          </div>
+        )}
 
         {liceoActivo && (
           <div

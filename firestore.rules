@@ -44,7 +44,7 @@ service cloud.firestore {
         'invitaciones', 'respuestas_invitacion', 'centros_duales_por_rut',
         'evaluaciones', 'invitaciones_estudiante', 'respuestas_invitacion_estudiante',
         'estudiantes_por_run', 'campanias_invitacion', 'campanias_invitacion_estudiante',
-        'respuestas_campania', 'respuestas_campania_estudiante'
+        'respuestas_campania', 'respuestas_campania_estudiante', 'demos'
       ];
     }
 
@@ -92,10 +92,29 @@ service cloud.firestore {
     match /liceos/{liceoId} {
       allow read: if true;
       // Solo el administrador, o el director de ESE liceo, puede modificarlo.
+      // Los campos de Demo (esDemo/demoId/demoVenceEn/demoEstado/planEstado)
+      // quedan fuera del alcance del director: son de solo lectura para él
+      // (los escribe el reclamo del enlace o el cron de vencimiento, ambos
+      // con privilegio de servidor) — si no, cualquier director de una demo
+      // podría "extender" su prueba escribiendo esos campos directamente
+      // desde la consola del navegador.
       allow write: if request.auth != null
-        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol in ['administrador', 'director']
-        && (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador'
-            || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.liceoId == liceoId);
+        && datosUsuario().rol in ['administrador', 'director']
+        && (datosUsuario().rol == 'administrador'
+            || (datosUsuario().liceoId == liceoId
+                && !request.resource.data.diff(resource.data).affectedKeys()
+                      .hasAny(['esDemo', 'demoId', 'demoVenceEn', 'demoEstado', 'planEstado'])));
+    }
+
+    // Acceso de Demostración (Configuración → Acceso de Demostración): solo
+    // el administrador (rol cross-liceo de la plataforma) genera, lee y
+    // cancela enlaces de demo desde el cliente. Todo lo que ocurre sin
+    // sesión (validar el token público, registrar la institución que
+    // reclama la demo, marcarla vencida/eliminada) pasa por rutas de API
+    // con privilegio de servidor (lib/firebase-admin.ts), igual que
+    // invitaciones/campanias — nunca directamente desde el cliente.
+    match /demos/{demoId} {
+      allow read, write: if request.auth != null && datosUsuario().rol == 'administrador';
     }
 
     match /codigosAcceso/{liceoId} {

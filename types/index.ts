@@ -84,6 +84,25 @@ export interface Liceo {
   creadoEn?: string;
   actualizadoEn?: string;
   actualizadoPor?: string;
+  /** Presente solo si este liceo se originó desde un enlace de Acceso de Demostración. */
+  esDemo?: boolean;
+  /** id del documento en `demos` que originó este liceo (solo si esDemo). */
+  demoId?: string;
+  /**
+   * Copia de `demos/{demoId}.venceEn` y `.estado`, mantenida al día por el
+   * cron de vencimiento. Existe porque `demos` es de lectura exclusiva del
+   * administrador (ver firestore.rules) y cualquier usuario de la propia
+   * institución necesita poder ver "cuánto tiempo queda" y que el sistema
+   * pueda bloquear su acceso sin depender de esa colección restringida.
+   */
+  demoVenceEn?: string;
+  demoEstado?: EstadoDemo;
+  /**
+   * Estado comercial del liceo frente a SIGEDUAL. "demo" mientras la prueba
+   * está en curso; el resto queda preparado para conectarse al futuro
+   * sistema de planes/suscripciones (ver lib/demo — sección "Plan SIGEDUAL").
+   */
+  planEstado?: "demo" | "sin_plan" | "activo" | "cancelado" | "vencido";
 }
 
 export interface CodigoAcceso {
@@ -92,6 +111,41 @@ export interface CodigoAcceso {
   generadoPor: string;
   expiraEn: string;
   actualizadoEn: string;
+}
+
+/**
+ * Estados de una Demo de SIGEDUAL (Configuración → Acceso de Demostración).
+ * "activa": dentro de las 168 horas desde la emisión (se compara siempre
+ * contra `venceEn`, nunca contra el reloj del dispositivo del usuario).
+ * "vencida": las 168 horas ya terminaron (lo confirma el cron y, además,
+ * cualquier ruta que valide el acceso, para no depender solo del cron).
+ * "cancelada": un administrador invalidó el enlace antes de vencer.
+ * "datos_eliminados": se ejecutó la eliminación de los datos de la prueba.
+ * Pensado para poder ampliarse con estados comerciales futuros sin rehacer
+ * el modelo (ver también Liceo.planEstado).
+ */
+export type EstadoDemo = "activa" | "vencida" | "cancelada" | "datos_eliminados";
+
+export interface DemoInstancia {
+  /** Igual al id del documento — el token del enlace público `/demo/[id]`. */
+  id: string;
+  estado: EstadoDemo;
+  /** ISO, hora de servidor: momento exacto de emisión del enlace. */
+  emitidoEn: string;
+  /** ISO, hora de servidor: emitidoEn + 168 horas exactas. */
+  venceEn: string;
+  generadoPor: string;
+  generadoPorNombre: string;
+  /** Poblado solo una vez que alguien usa el enlace para registrar su institución. */
+  liceoId?: string;
+  liceoNombre?: string;
+  reclamadoEn?: string;
+  canceladoEn?: string;
+  canceladoPor?: string;
+  eliminacionSolicitadaEn?: string;
+  eliminacionSolicitadaPor?: string;
+  eliminadoEn?: string;
+  eliminadoPor?: string;
 }
 
 export interface Especialidad {

@@ -30,8 +30,13 @@ export default function LoginPage() {
       const snap = await getDoc(doc(db, "usuarios", cred.user.uid));
       if (!snap.exists()) throw new Error("Usuario no encontrado en el sistema.");
       router.replace("/dashboard");
-    } catch {
-      setError("Correo o contraseña incorrectos.");
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code;
+      if (code === "auth/user-disabled") {
+        setError("Esta cuenta fue desactivada. Si venía de una demostración vencida, contacta a SIGEDUAL para contratar un plan.");
+      } else {
+        setError("Correo o contraseña incorrectos.");
+      }
     } finally {
       setLoading(false);
     }
