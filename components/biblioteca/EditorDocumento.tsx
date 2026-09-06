@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, Search, FileText } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Search, FileText, Eye, Printer, FileDown } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
-import type { DocumentoGenerado, Estudiante, SegmentoDocumento, TipoModuloDocumento } from "@/types";
+import type { DocumentoGenerado, EstadoDocumentoGenerado, Estudiante, SegmentoDocumento, TipoModuloDocumento } from "@/types";
 import type { ContextoResolucion, PlantillaDocumento } from "@/types/plantillas";
 import { resolverCamposEstudiante, resolverCamposDocumento, type ResultadoCampo } from "@/lib/plantillas/resolverCampos";
 import { crearDocumento, actualizarDocumento, NOMBRE_DUPLICADO } from "@/lib/documentos/guardarDocumento";
@@ -76,6 +76,7 @@ interface EditorDocumentoProps {
   tipoModulo: TipoModuloDocumento;
   liceoId: string;
   usuarioUid: string;
+  usuarioNombre?: string;
   contexto: ContextoResolucion;
   plantilla?: PlantillaDocumento;
   documentoExistente?: DocumentoGenerado;
@@ -84,7 +85,7 @@ interface EditorDocumentoProps {
 }
 
 export default function EditorDocumento({
-  tipoModulo, liceoId, usuarioUid, contexto, plantilla, documentoExistente, onGuardado, onCancelar,
+  tipoModulo, liceoId, usuarioUid, usuarioNombre, contexto, plantilla, documentoExistente, onGuardado, onCancelar,
 }: EditorDocumentoProps) {
   const esEdicion = Boolean(documentoExistente);
   const plantillaId = plantilla?.id ?? documentoExistente?.plantillaId ?? "";
@@ -98,6 +99,8 @@ export default function EditorDocumento({
   const [contenido, setContenido] = useState<SegmentoDocumento[][]>(
     documentoExistente?.contenido ?? plantilla?.parrafos ?? []
   );
+  const [estado, setEstado] = useState<EstadoDocumentoGenerado>(documentoExistente?.estado ?? "borrador");
+  const [vistaPrevia, setVistaPrevia] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [aviso, setAviso] = useState("");
@@ -159,7 +162,7 @@ export default function EditorDocumento({
     return undefined;
   }
 
-  async function guardar() {
+  async function guardar(estadoDestino: EstadoDocumentoGenerado) {
     if (guardando) return;
     setError("");
     const nombreLimpio = nombre.trim();
@@ -191,17 +194,20 @@ export default function EditorDocumento({
           nombreAnterior: documentoExistente.nombre,
           nombreNuevo: nombreLimpio,
           estudianteId: estudianteId || undefined,
-          campos, contenido, alcanceUnicidadNombre,
+          campos, contenido, estado: estadoDestino, alcanceUnicidadNombre,
         });
-        setAviso("Documento guardado correctamente.");
+        setEstado(estadoDestino);
+        setAviso(estadoDestino === "borrador" ? "Guardado como borrador." : "Documento guardado correctamente.");
         onGuardado(documentoExistente.id);
       } else {
         const id = await crearDocumento({
           liceoId, tipoModulo, plantillaId, nombre: nombreLimpio,
           estudianteId: estudianteId || undefined,
-          campos, contenido, creadoPor: usuarioUid, alcanceUnicidadNombre,
+          campos, contenido, creadoPor: usuarioUid, creadoPorNombre: usuarioNombre,
+          estado: estadoDestino, alcanceUnicidadNombre,
         });
-        setAviso("Documento guardado correctamente.");
+        setEstado(estadoDestino);
+        setAviso(estadoDestino === "borrador" ? "Guardado como borrador." : "Documento guardado correctamente.");
         onGuardado(id);
       }
     } catch (err) {
@@ -215,25 +221,76 @@ export default function EditorDocumento({
     }
   }
 
+  function imprimirOExportar() {
+    setVistaPrevia(true);
+    setTimeout(() => window.print(), 50);
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-3xl">
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #documento-imprimible, #documento-imprimible * { visibility: visible; }
+          #documento-imprimible { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+      `}</style>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <TituloPagina icon={<FileText size={28} />}>
-            {esEdicion ? "Editar documento" : "Nuevo documento"}
-          </TituloPagina>
+          <div className="flex items-center gap-2 flex-wrap">
+            <TituloPagina icon={<FileText size={28} />}>
+              {esEdicion ? "Editar documento" : "Nuevo documento"}
+            </TituloPagina>
+            <span
+              style={{
+                background: estado === "borrador" ? "var(--bg-surface)" : "var(--success)22",
+                border: `1px solid ${estado === "borrador" ? "var(--border)" : "var(--success)"}`,
+                color: estado === "borrador" ? "var(--text-secondary)" : "var(--success)",
+              }}
+              className="text-xs font-semibold px-2.5 py-1 rounded-full"
+            >
+              {estado === "borrador" ? "Borrador" : "Finalizado"}
+            </span>
+          </div>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             {plantilla?.nombre ?? documentoExistente?.plantillaId}
           </p>
         </div>
-        <button
-          onClick={onCancelar}
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
-        >
-          <ArrowLeft size={16} />
-          Volver
-        </button>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <button
+            onClick={() => setVistaPrevia((v) => !v)}
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
+          >
+            <Eye size={16} />
+            {vistaPrevia ? "Editar" : "Vista previa"}
+          </button>
+          <button
+            onClick={imprimirOExportar}
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
+          >
+            <Printer size={16} />
+            Imprimir
+          </button>
+          <button
+            onClick={imprimirOExportar}
+            title="Se abre el diálogo de impresión: elige 'Guardar como PDF' como destino."
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
+          >
+            <FileDown size={16} />
+            Exportar PDF
+          </button>
+          <button
+            onClick={onCancelar}
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
+          >
+            <ArrowLeft size={16} />
+            Volver
+          </button>
+        </div>
       </div>
 
       {aviso && (
@@ -305,7 +362,7 @@ export default function EditorDocumento({
       )}
 
       {/* Documento */}
-      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-8 mb-6">
+      <div id="documento-imprimible" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-8 mb-6">
         <div className="flex flex-col gap-5">
           {contenido.map((parrafo, pi) => (
             <p
@@ -315,6 +372,13 @@ export default function EditorDocumento({
             >
               {parrafo.map((s, si) => {
                 if (s.tipo === "campo") return <SegmentoCampoView key={si} resultado={resultadoCampos[s.clave ?? ""]} etiqueta={etiquetaCampo(s.clave)} />;
+                if (vistaPrevia) {
+                  return (
+                    <span key={si} style={{ fontWeight: s.tipo === "protegido" ? 700 : undefined }}>
+                      {s.texto}
+                    </span>
+                  );
+                }
                 return (
                   <SegmentoEditableView
                     key={si}
@@ -332,9 +396,17 @@ export default function EditorDocumento({
         </div>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-3">
         <button
-          onClick={guardar}
+          onClick={() => guardar("borrador")}
+          disabled={guardando}
+          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+          className="px-6 py-3 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {guardando ? "Guardando..." : "Guardar borrador"}
+        </button>
+        <button
+          onClick={() => guardar("finalizado")}
           disabled={guardando}
           style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
           className="px-6 py-3 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"

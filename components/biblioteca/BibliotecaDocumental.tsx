@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Search, MoreVertical, FileStack, Inbox } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
+import { formatearFecha } from "@/lib/fecha";
 
 export interface ItemBiblioteca {
   id: string;
@@ -308,7 +309,7 @@ export default function BibliotecaDocumental({
                       />
                     </div>
                     <p style={{ color: "var(--text-muted)" }} className="text-xs truncate">
-                      {[item.tipo, item.fecha, item.estado].filter(Boolean).join(" · ") || "Sin información adicional"}
+                      {[item.tipo, item.fecha ? formatearFecha(item.fecha) : undefined, item.estado].filter(Boolean).join(" · ") || "Sin información adicional"}
                     </p>
                     {item.autor && (
                       <p style={{ color: "var(--text-muted)" }} className="text-xs truncate">{item.autor}</p>

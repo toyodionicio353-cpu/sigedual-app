@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import type { DocumentoGenerado, TipoModuloDocumento } from "@/types";
 import type { ItemBiblioteca } from "@/components/biblioteca/BibliotecaDocumental";
 import { deserializarContenido } from "@/lib/documentos/guardarDocumento";
+import { plantillasParaModulo } from "@/lib/plantillas";
 
 function textoParaPreview(doc: DocumentoGenerado): string[] {
   const lineas: string[] = [];
@@ -39,10 +40,15 @@ export function useDocumentosCreados(tipoModulo: TipoModuloDocumento) {
     setCargando(false);
   }
 
+  const plantillasDefinidas = plantillasParaModulo(tipoModulo);
+
   const items: ItemBiblioteca[] = documentos.map((d) => ({
     id: d.id,
     nombre: d.nombre,
+    tipo: plantillasDefinidas.find((p) => p.id === d.plantillaId)?.nombre,
     fecha: d.creadoEn,
+    estado: d.estado === "borrador" ? "Borrador" : "Finalizado",
+    autor: d.creadoPorNombre,
     previewLineas: textoParaPreview(d),
   }));
 

@@ -1,6 +1,8 @@
 import { collection, deleteDoc, doc, runTransaction, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { SegmentoDocumento, TipoModuloDocumento } from "@/types";
+import type { DocumentoGenerado, EstadoDocumentoGenerado, SegmentoDocumento, TipoModuloDocumento } from "@/types";
+
+const NOMBRE_MAX = 40;
 
 export const NOMBRE_DUPLICADO = "NOMBRE_DUPLICADO";
 
@@ -46,6 +48,9 @@ interface CrearDocumentoParams {
   campos: Record<string, string>;
   contenido: SegmentoDocumento[][];
   creadoPor: string;
+  creadoPorNombre?: string;
+  /** Por defecto "finalizado", igual al comportamiento previo a los estados de borrador. */
+  estado?: EstadoDocumentoGenerado;
   alcanceUnicidadNombre?: "modulo" | "liceo";
 }
 
@@ -68,16 +73,46 @@ export async function crearDocumento(params: CrearDocumentoParams): Promise<stri
       nombre,
       campos: params.campos,
       contenido: serializarContenido(params.contenido),
+      estado: params.estado ?? "finalizado",
       creadoPor: params.creadoPor,
       creadoEn: new Date().toISOString(),
     };
     if (params.estudianteId) datos.estudianteId = params.estudianteId;
+    if (params.creadoPorNombre) datos.creadoPorNombre = params.creadoPorNombre;
 
     tx.set(refDocumento, datos);
     tx.set(refIndice, { liceoId: params.liceoId, tipoModulo: params.tipoModulo, documentoId: refDocumento.id });
   });
 
   return refDocumento.id;
+}
+
+/**
+ * Duplica un documento existente como borrador nuevo, con el mismo
+ * contenido/campos/estudiante. Reutiliza crearDocumento (mismo control de
+ * nombre único), en vez de un camino de guardado paralelo.
+ */
+export async function duplicarDocumento(params: {
+  origen: DocumentoGenerado;
+  liceoId: string;
+  tipoModulo: TipoModuloDocumento;
+  creadoPor: string;
+  creadoPorNombre?: string;
+}): Promise<string> {
+  const sufijo = " (copia)";
+  const nombre = `${params.origen.nombre.slice(0, NOMBRE_MAX - sufijo.length)}${sufijo}`;
+  return crearDocumento({
+    liceoId: params.liceoId,
+    tipoModulo: params.tipoModulo,
+    plantillaId: params.origen.plantillaId,
+    nombre,
+    estudianteId: params.origen.estudianteId,
+    campos: { ...params.origen.campos },
+    contenido: params.origen.contenido,
+    creadoPor: params.creadoPor,
+    creadoPorNombre: params.creadoPorNombre,
+    estado: "borrador",
+  });
 }
 
 interface ActualizarDocumentoParams {
@@ -89,6 +124,7 @@ interface ActualizarDocumentoParams {
   estudianteId?: string;
   campos: Record<string, string>;
   contenido: SegmentoDocumento[][];
+  estado?: EstadoDocumentoGenerado;
   alcanceUnicidadNombre?: "modulo" | "liceo";
 }
 
@@ -107,6 +143,7 @@ export async function actualizarDocumento(params: ActualizarDocumentoParams): Pr
     actualizadoEn: new Date().toISOString(),
   };
   if (params.estudianteId) cambios.estudianteId = params.estudianteId;
+  if (params.estado) cambios.estado = params.estado;
 
   if (claveVieja === claveNueva) {
     await updateDoc(refDocumento, cambios);
