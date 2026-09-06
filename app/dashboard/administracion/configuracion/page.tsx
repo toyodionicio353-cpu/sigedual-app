@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { usePreferencias } from "@/lib/preferencias/context";
 import { useFeedback } from "@/lib/preferencias/useFeedback";
+import { useAuth } from "@/lib/auth-context";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 import { INDICE_BUSQUEDA, type CategoriaConfig } from "./_data/indiceBusqueda";
@@ -10,9 +11,10 @@ import InteraccionSeccion from "./_components/InteraccionSeccion";
 import IdiomaSeccion from "./_components/IdiomaSeccion";
 import NotificacionesSeccion from "./_components/NotificacionesSeccion";
 import PrivacidadSeccion from "./_components/PrivacidadSeccion";
-import { Search, SlidersHorizontal, Palette, MousePointerClick, Globe, Bell, ShieldCheck, RotateCcw } from "lucide-react";
+import AccesoDemostracionSeccion from "./_components/AccesoDemostracionSeccion";
+import { Search, SlidersHorizontal, Palette, MousePointerClick, Globe, Bell, ShieldCheck, RotateCcw, Clock } from "lucide-react";
 
-const CATEGORIAS: { id: CategoriaConfig; label: string; icon: React.ReactNode; Componente: React.ComponentType }[] = [
+const CATEGORIAS_BASE: { id: CategoriaConfig; label: string; icon: React.ReactNode; Componente: React.ComponentType }[] = [
   { id: "apariencia", label: "Apariencia", icon: <Palette size={17} />, Componente: AparienciaSeccion },
   { id: "interaccion", label: "Interacción", icon: <MousePointerClick size={17} />, Componente: InteraccionSeccion },
   { id: "idioma", label: "Idioma y región", icon: <Globe size={17} />, Componente: IdiomaSeccion },
@@ -20,19 +22,30 @@ const CATEGORIAS: { id: CategoriaConfig; label: string; icon: React.ReactNode; C
   { id: "privacidad", label: "Privacidad y datos", icon: <ShieldCheck size={17} />, Componente: PrivacidadSeccion },
 ];
 
+// Solo administrador (rol cross-institución de SIGEDUAL) ve esta categoría —
+// se agrega condicionalmente en vez de estar siempre en CATEGORIAS_BASE.
+const CATEGORIA_DEMO = { id: "demo" as const, label: "Acceso de Demostración", icon: <Clock size={17} />, Componente: AccesoDemostracionSeccion };
+
 export default function ConfiguracionPage() {
+  const { usuario } = useAuth();
   const { restablecer } = usePreferencias();
   const avisar = useFeedback();
+  const CATEGORIAS = useMemo(
+    () => (usuario?.rol === "administrador" ? [...CATEGORIAS_BASE, CATEGORIA_DEMO] : CATEGORIAS_BASE),
+    [usuario?.rol]
+  );
   const [categoriaActiva, setCategoriaActiva] = useState<CategoriaConfig>("apariencia");
   const [busqueda, setBusqueda] = useState("");
   const [modalRestablecer, setModalRestablecer] = useState(false);
   const resultados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
     if (!q) return [];
+    const categoriasVisibles = new Set(CATEGORIAS.map((c) => c.id));
     return INDICE_BUSQUEDA.filter(
-      (e) => e.titulo.toLowerCase().includes(q) || e.descripcion.toLowerCase().includes(q) || e.keywords.some((k) => k.includes(q))
+      (e) => categoriasVisibles.has(e.categoria)
+        && (e.titulo.toLowerCase().includes(q) || e.descripcion.toLowerCase().includes(q) || e.keywords.some((k) => k.includes(q)))
     );
-  }, [busqueda]);
+  }, [busqueda, CATEGORIAS]);
 
   function irAResultado(id: string, categoria: CategoriaConfig) {
     setBusqueda("");
@@ -54,7 +67,7 @@ export default function ConfiguracionPage() {
     avisar("Preferencias restauradas.");
   }
 
-  const CategoriaActivaInfo = CATEGORIAS.find((c) => c.id === categoriaActiva)!;
+  const CategoriaActivaInfo = CATEGORIAS.find((c) => c.id === categoriaActiva) ?? CATEGORIAS[0];
   const ContenidoActivo = CategoriaActivaInfo.Componente;
 
   return (
