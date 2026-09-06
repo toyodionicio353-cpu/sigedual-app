@@ -55,7 +55,6 @@ const TITULOS: Record<string, string> = {
   "/dashboard/administracion/privacidad": "Políticas",
   "/dashboard/administracion/aviso-legal": "Aviso legal",
   "/dashboard/administracion/tickets": "Tickets",
-  "/dashboard/administracion/demo": "Acceso de Demostración",
   "/dashboard/administracion/plan": "Plan SIGEDUAL",
   "/dashboard/soporte": "Soporte",
   "/dashboard/soporte/tickets": "Mis tickets",

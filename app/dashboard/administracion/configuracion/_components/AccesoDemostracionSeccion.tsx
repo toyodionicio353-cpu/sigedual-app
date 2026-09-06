@@ -5,8 +5,7 @@ import { useDemos } from "@/lib/demo/useDemos";
 import { generarDemo, cancelarDemo } from "@/lib/demo/gestionarDemo";
 import { estadoEfectivo, formatearTiempoRestante, ETIQUETA_ESTADO_DEMO } from "@/lib/demo";
 import type { DemoInstancia, EstadoDemo } from "@/types";
-import TituloPagina from "@/components/TituloPagina";
-import { Clock, Plus, Copy, Check, ExternalLink, Ban } from "lucide-react";
+import { Plus, Copy, Check, ExternalLink, Ban } from "lucide-react";
 
 const COLOR_ESTADO: Record<EstadoDemo, string> = {
   activa: "var(--success)",
@@ -33,27 +32,27 @@ function TarjetaDemo({ demo, onCopiar, copiada, onCancelar, cancelando }: {
   const puedeCancelar = estado === "activa";
 
   return (
-    <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6">
+    <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="rounded-2xl p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h2 style={{ color: "var(--text-primary)" }} className="text-base font-semibold">
+        <h3 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">
           {demo.liceoNombre ?? "Demo sin reclamar"}
-        </h2>
+        </h3>
         <span
           style={{ background: `${COLOR_ESTADO[estado]}22`, color: COLOR_ESTADO[estado] }}
-          className="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide"
+          className="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide flex-shrink-0"
         >
           {ETIQUETA_ESTADO_DEMO[estado]}
         </span>
       </div>
 
-      <div style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)" }} className="rounded-xl p-3 flex items-center justify-between gap-3 mb-4">
+      <div style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)" }} className="rounded-xl p-3 flex items-center justify-between gap-3 mb-3">
         <span style={{ color: "var(--text-primary)" }} className="text-sm font-mono truncate">{enlace}</span>
         <button onClick={onCopiar} style={{ color: "var(--text-muted)" }} className="p-1.5 hover:[color:var(--text-primary)] transition-colors flex-shrink-0" title="Copiar enlace">
           {copiada ? <Check size={16} style={{ color: "var(--success)" }} /> : <Copy size={16} />}
         </button>
       </div>
 
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-4">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-3">
         <dt style={{ color: "var(--text-muted)" }}>Emitido</dt>
         <dd style={{ color: "var(--text-secondary)" }}>{formatearFechaHora(demo.emitidoEn)}</dd>
         <dt style={{ color: "var(--text-muted)" }}>Vence</dt>
@@ -71,7 +70,7 @@ function TarjetaDemo({ demo, onCopiar, copiada, onCancelar, cancelando }: {
       <div className="flex flex-wrap gap-2">
         <a
           href={enlace} target="_blank" rel="noopener noreferrer"
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium hover:[border-color:var(--accent)] transition-colors"
         >
           <ExternalLink size={13} />
@@ -93,7 +92,7 @@ function TarjetaDemo({ demo, onCopiar, copiada, onCancelar, cancelando }: {
   );
 }
 
-export default function AccesoDemostracionPage() {
+export default function AccesoDemostracionSeccion() {
   const { usuario } = useAuth();
   const { demos, cargando, recargar } = useDemos();
   const [generando, setGenerando] = useState(false);
@@ -101,10 +100,10 @@ export default function AccesoDemostracionPage() {
   const [cancelandoId, setCancelandoId] = useState<string | null>(null);
   const [confirmarCancelar, setConfirmarCancelar] = useState<string | null>(null);
 
-  if (!usuario) return null;
-  if (usuario.rol !== "administrador") {
+  if (!usuario || usuario.rol !== "administrador") {
     return (
-      <div className="p-4 md:p-8">
+      <div>
+        <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-1">Acceso de Demostración</h2>
         <p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p>
       </div>
     );
@@ -141,11 +140,11 @@ export default function AccesoDemostracionPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-3xl">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-1">
         <div>
-          <TituloPagina icon={<Clock size={28} />} className="mb-1">Acceso de Demostración</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm">
+          <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-1">Acceso de Demostración</h2>
+          <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-4">
             Genera un enlace único para que una institución use SIGEDUAL gratis durante 7 días
             (168 horas exactas) antes de contratar el servicio.
           </p>
@@ -154,22 +153,22 @@ export default function AccesoDemostracionPage() {
           onClick={generar}
           disabled={generando}
           style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex-shrink-0"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex-shrink-0"
         >
           <Plus size={16} />
-          {generando ? "Generando..." : "Generar enlace de demostración"}
+          {generando ? "Generando..." : "Generar enlace"}
         </button>
       </div>
 
       {cargando ? (
         <p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p>
       ) : demos.length === 0 ? (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
-          <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Todavía no hay demostraciones generadas.</p>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm">Usa el botón de arriba para crear el primer enlace.</p>
+        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="rounded-2xl p-8 text-center">
+          <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold mb-1">Todavía no hay demostraciones generadas.</p>
+          <p style={{ color: "var(--text-secondary)" }} className="text-xs">Usa el botón de arriba para crear el primer enlace.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {demos.map((demo) => (
             <TarjetaDemo
               key={demo.id}
