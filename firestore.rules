@@ -45,7 +45,7 @@ service cloud.firestore {
         'evaluaciones', 'invitaciones_estudiante', 'respuestas_invitacion_estudiante',
         'estudiantes_por_run', 'campanias_invitacion', 'campanias_invitacion_estudiante',
         'respuestas_campania', 'respuestas_campania_estudiante', 'demos',
-        'planes_comerciales', 'configuracion_comercial'
+        'planes_comerciales', 'configuracion_comercial', 'documentos_generados'
       ];
     }
 
@@ -217,6 +217,8 @@ service cloud.firestore {
       allow read: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
         || (datosUsuario().rol in ['profesor', 'centro_dual'] && tieneAutorizacion('estudiante', id))
+        // Un estudiante ve exclusivamente su propia ficha, nunca la de otro.
+        || (datosUsuario().rol == 'estudiante' && datosUsuario().estudianteId == id)
       );
       allow create: if request.auth != null && (
         datosUsuario().rol == 'administrador'
@@ -240,6 +242,8 @@ service cloud.firestore {
         // empresa, no solo las de un Maestro Guía — a diferencia de la
         // rama de arriba, que sigue acotada a un Maestro Guía puntual.
         || (datosUsuario().rol == 'centro_dual' && !('maestroGuiaId' in datosUsuario()) && datosUsuario().centroDualId == resource.data.centroDualId)
+        // Un estudiante ve exclusivamente sus propias asignaciones.
+        || (datosUsuario().rol == 'estudiante' && datosUsuario().estudianteId == resource.data.estudianteId)
       );
       // Crear una asignación requiere ver y elegir entre TODOS los
       // estudiantes/centros del liceo todavía sin asignar — visión que un
@@ -262,6 +266,8 @@ service cloud.firestore {
         esAccesoCompletoLiceo(resource.data.liceoId)
         || (datosUsuario().rol == 'profesor' && tieneAutorizacion('centro', id))
         || (datosUsuario().rol == 'centro_dual' && datosUsuario().centroDualId == id)
+        // Un estudiante ve solo el Centro Dual de su propia asignación.
+        || (datosUsuario().rol == 'estudiante' && tieneAutorizacion('centro', id))
       );
       allow create: if request.auth != null && (
         datosUsuario().rol == 'administrador'
@@ -283,6 +289,8 @@ service cloud.firestore {
         // su propia empresa, no solo a uno.
         || (datosUsuario().rol == 'centro_dual' && !('maestroGuiaId' in datosUsuario())
             && datosUsuario().centroDualId == resource.data.centroDualId)
+        // Un estudiante ve solo el Maestro Guía de su propia asignación.
+        || (datosUsuario().rol == 'estudiante' && tieneAutorizacion('maestro', id))
       );
       allow create: if request.auth != null && (
         datosUsuario().rol == 'administrador'
@@ -316,6 +324,13 @@ service cloud.firestore {
               && tieneAutorizacion('estudiante', resource.data.estudianteIds[0]))
         ))
         || (datosUsuario().rol == 'centro_dual' && datosUsuario().centroDualId == resource.data.centroDualId)
+        // Un estudiante ve solo las visitas donde él es uno de los
+        // estudiantes involucrados (modelo actual, plural) o, en una visita
+        // antigua de una sola persona (modelo legado), donde es el único.
+        || (datosUsuario().rol == 'estudiante' && (
+          (('estudianteIds' in resource.data) && datosUsuario().estudianteId in resource.data.estudianteIds)
+          || (('estudianteId' in resource.data) && resource.data.estudianteId == datosUsuario().estudianteId)
+        ))
       );
       allow create: if request.auth != null && (
         esAccesoCompletoLiceo(request.resource.data.liceoId)
@@ -337,6 +352,8 @@ service cloud.firestore {
       allow read: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
         || (datosUsuario().rol in ['profesor', 'centro_dual'] && tieneAutorizacion('estudiante', resource.data.estudianteId))
+        // Un estudiante ve solo sus propias evaluaciones, nunca las de otro.
+        || (datosUsuario().rol == 'estudiante' && datosUsuario().estudianteId == resource.data.estudianteId)
       );
       allow create: if request.auth != null && (
         esAccesoCompletoLiceo(request.resource.data.liceoId)
@@ -344,6 +361,39 @@ service cloud.firestore {
       );
       allow update: if false;
       allow delete: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
+    }
+
+    // Documento/Convenio generado desde una plantilla (Documentos →
+    // documentos/convenios). Antes caía en el catch-all de abajo: cualquier
+    // autenticado, de cualquier liceo, podía leer y escribir cualquiera —
+    // se corrige acá de paso. `centro_dual`/`estudiante` ven solo lo suyo
+    // (por `estudianteId`, cuando el documento lo tiene) o lo que ellos
+    // mismos crearon; profesor mantiene su alcance de liceo completo, igual
+    // que antes de este cambio.
+    match /documentos_generados/{id} {
+      allow read: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId)
+        || resource.data.creadoPor == request.auth.uid
+        || (datosUsuario().rol == 'centro_dual' && ('estudianteId' in resource.data) && tieneAutorizacion('estudiante', resource.data.estudianteId))
+        || (datosUsuario().rol == 'estudiante' && ('estudianteId' in resource.data) && resource.data.estudianteId == datosUsuario().estudianteId)
+      );
+      allow create: if request.auth != null && (
+        esAccesoCompletoLiceo(request.resource.data.liceoId)
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == request.resource.data.liceoId)
+        || (datosUsuario().rol in ['centro_dual', 'estudiante']
+            && request.resource.data.creadoPor == request.auth.uid
+            && datosUsuario().liceoId == request.resource.data.liceoId)
+      );
+      allow update: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId)
+        || resource.data.creadoPor == request.auth.uid
+      );
+      allow delete: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || resource.data.creadoPor == request.auth.uid
+      );
     }
 
     // Índice de autorización: un documento por (profesor, tipo, recurso)
@@ -366,6 +416,10 @@ service cloud.firestore {
           // índice, pero para toda la empresa en vez de un Maestro Guía.
           || (datosUsuario().rol == 'centro_dual' && !('maestroGuiaId' in datosUsuario())
               && get(/databases/$(database)/documents/asignaciones/$(request.resource.data.asignacionId)).data.centroDualId == datosUsuario().centroDualId)
+          // Un estudiante autoriza su propio acceso a su Centro Dual/Maestro
+          // Guía (índices 'centro'/'maestro') a partir de su propia Asignacion.
+          || (datosUsuario().rol == 'estudiante'
+              && get(/databases/$(database)/documents/asignaciones/$(request.resource.data.asignacionId)).data.estudianteId == datosUsuario().estudianteId)
         );
       allow update: if request.auth != null
         && (request.resource.data.profesorUid == request.auth.uid || esAccesoCompletoLiceo(request.resource.data.liceoId));

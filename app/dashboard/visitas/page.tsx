@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { useAmbitoMaestroGuia } from "@/lib/permisos/useAmbitoMaestroGuia";
+import { useAmbitoEstudiante } from "@/lib/permisos/useAmbitoEstudiante";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { formatearFecha } from "@/lib/fecha";
 import {
@@ -34,9 +35,11 @@ export default function VisitasPage() {
   const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
   const ambitoProfesor = useAmbitoProfesor();
   const ambitoMaestroGuia = useAmbitoMaestroGuia();
+  const ambitoEstudiante = useAmbitoEstudiante();
   const esProfesor = usuario?.rol === "profesor";
   const esCentroDual = usuario?.rol === "centro_dual";
-  const cargandoAmbito = (esProfesor && ambitoProfesor.cargando) || (esCentroDual && ambitoMaestroGuia.cargando);
+  const esEstudiante = usuario?.rol === "estudiante";
+  const cargandoAmbito = (esProfesor && ambitoProfesor.cargando) || (esCentroDual && ambitoMaestroGuia.cargando) || (esEstudiante && ambitoEstudiante.cargando);
 
   const [visitas, setVisitas] = useState<Visita[]>([]);
   const [centros, setCentros] = useState<CentroDual[]>([]);
@@ -107,6 +110,28 @@ export default function VisitasPage() {
         setLoading(false);
         return;
       }
+      if (esEstudiante) {
+        if (!usuario.estudianteId) {
+          setVisitas([]); setCentros([]); setEstudiantes([]); setMaestrosGuia([]);
+          setLoading(false);
+          return;
+        }
+        const [snapPorLista, snapLegado, centrosData, mgData] = await Promise.all([
+          getDocs(query(collection(db, "visitas"), where("estudianteIds", "array-contains", usuario.estudianteId))),
+          getDocs(query(collection(db, "visitas"), where("estudianteId", "==", usuario.estudianteId))),
+          obtenerDocumentosPorId<CentroDual>("centros_duales", ambitoEstudiante.idsCentros),
+          obtenerDocumentosPorId<MaestroGuia>("maestros_guia", ambitoEstudiante.idsMaestros),
+        ]);
+        const porId = new Map<string, Visita>();
+        snapPorLista.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita));
+        snapLegado.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita));
+        setVisitas(Array.from(porId.values()));
+        setCentros(centrosData);
+        setEstudiantes([]);
+        setMaestrosGuia(mgData);
+        setLoading(false);
+        return;
+      }
       const qVisitas = modoGlobal ? collection(db, "visitas") : query(collection(db, "visitas"), where("liceoId", "==", usuario.liceoId));
       const qCentros = modoGlobal ? collection(db, "centros_duales") : query(collection(db, "centros_duales"), where("liceoId", "==", usuario.liceoId));
       const qEstudiantes = modoGlobal ? collection(db, "estudiantes") : query(collection(db, "estudiantes"), where("liceoId", "==", usuario.liceoId));
@@ -137,7 +162,7 @@ export default function VisitasPage() {
     if (cargandoAmbito) return;
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario, modoGlobal, cargandoAmbito, ambitoProfesor.idsEstudiantes, ambitoProfesor.idsCentros, ambitoMaestroGuia.idsEstudiantes]);
+  }, [usuario, modoGlobal, cargandoAmbito, ambitoProfesor.idsEstudiantes, ambitoProfesor.idsCentros, ambitoMaestroGuia.idsEstudiantes, ambitoEstudiante.idsCentros, ambitoEstudiante.idsMaestros]);
 
   function centroNombre(id: string): string {
     return centros.find((c) => c.id === id)?.nombre || "Centro no encontrado";
@@ -220,6 +245,8 @@ export default function VisitasPage() {
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
             {esCentroDual
               ? "Visitas realizadas a tu Centro Dual."
+              : esEstudiante
+              ? "Visitas relacionadas con tu proceso en el Centro Dual."
               : modoGlobal
                 ? "Visitas de todos los liceos. Usa el filtro \"Liceo\" para acotar a uno en particular."
                 : "Agenda visitas a los centros duales y registra lo ocurrido durante ellas."}
@@ -304,12 +331,14 @@ export default function VisitasPage() {
             <Select value={filtroEstado} onChange={setFiltroEstado} ariaLabel="Estado"
               opciones={[{ value: "", label: "Todos" }, ...Object.entries(ESTADO_VISITA_LABEL).map(([value, label]) => ({ value, label }))]} />
           </div>
-          <div>
-            <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Estudiante</label>
-            <Select value={filtroEstudianteId} onChange={setFiltroEstudianteId} ariaLabel="Estudiante"
-              opciones={[{ value: "", label: "Todos" }, ...estudiantes.map((e) => ({ value: e.id, label: `${e.nombres} ${e.apellidos}` }))]} />
-          </div>
-          {!esCentroDual && (
+          {!esEstudiante && (
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Estudiante</label>
+              <Select value={filtroEstudianteId} onChange={setFiltroEstudianteId} ariaLabel="Estudiante"
+                opciones={[{ value: "", label: "Todos" }, ...estudiantes.map((e) => ({ value: e.id, label: `${e.nombres} ${e.apellidos}` }))]} />
+            </div>
+          )}
+          {!esCentroDual && !esEstudiante && (
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Centro Dual</label>
               <Select value={filtroCentroId} onChange={setFiltroCentroId} ariaLabel="Centro Dual"
@@ -321,7 +350,7 @@ export default function VisitasPage() {
             <Select value={filtroMaestroGuiaId} onChange={setFiltroMaestroGuiaId} ariaLabel="Maestro Guía"
               opciones={[{ value: "", label: "Todos" }, ...maestrosGuia.map((m) => ({ value: m.id, label: `${m.nombres} ${m.apellidoPaterno}` }))]} />
           </div>
-          {!esProfesor && !esCentroDual && (
+          {!esProfesor && !esCentroDual && !esEstudiante && (
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Profesor Supervisor</label>
               <Select value={filtroProfesorId} onChange={setFiltroProfesorId} ariaLabel="Profesor Supervisor"
@@ -385,7 +414,11 @@ export default function VisitasPage() {
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
           <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No hay visitas registradas</p>
           <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">
-            {esCentroDual ? "Todavía no se ha registrado ninguna visita a tu Centro Dual." : "Agenda una visita a un centro dual para comenzar a hacer seguimiento."}
+            {esCentroDual
+              ? "Todavía no se ha registrado ninguna visita a tu Centro Dual."
+              : esEstudiante
+              ? "Todavía no se te ha agendado ninguna visita."
+              : "Agenda una visita a un centro dual para comenzar a hacer seguimiento."}
           </p>
           {puedeAgregar && (
             <Link href="/dashboard/visitas/nueva" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">

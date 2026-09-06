@@ -17,12 +17,14 @@ type Tab = "plantillas" | "realizadas";
 
 export default function EvaluacionesPage() {
   const { usuario } = useAuth();
-  const [tab, setTab] = useState<Tab>("plantillas");
+  const esEstudianteInicial = usuario?.rol === "estudiante";
+  const [tab, setTab] = useState<Tab>(esEstudianteInicial ? "realizadas" : "plantillas");
 
   const ambitoProfesor = useAmbitoProfesor();
   const ambitoMaestroGuia = useAmbitoMaestroGuia();
   const esProfesor = usuario?.rol === "profesor";
   const esCentroDual = usuario?.rol === "centro_dual";
+  const esEstudiante = usuario?.rol === "estudiante";
   const cargandoAmbito = (esProfesor && ambitoProfesor.cargando) || (esCentroDual && ambitoMaestroGuia.cargando);
 
   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
@@ -43,6 +45,14 @@ export default function EvaluacionesPage() {
         );
         setEvaluaciones(snaps.flatMap((snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() } as Evaluacion))));
         setEstudiantes(await obtenerDocumentosPorId<Estudiante>("estudiantes", idsEstudiantes));
+      } else if (esEstudiante) {
+        if (!usuario!.estudianteId) {
+          setEvaluaciones([]); setEstudiantes([]);
+        } else {
+          const snapEval = await getDocs(query(collection(db, "evaluaciones"), where("estudianteId", "==", usuario!.estudianteId)));
+          setEvaluaciones(snapEval.docs.map((d) => ({ id: d.id, ...d.data() } as Evaluacion)));
+          setEstudiantes([]);
+        }
       } else {
         const [snapEval, snapEst] = await Promise.all([
           getDocs(query(collection(db, "evaluaciones"), where("liceoId", "==", usuario!.liceoId))),
@@ -80,28 +90,30 @@ export default function EvaluacionesPage() {
       <div className="mb-6">
         <TituloPagina icon={<ClipboardCheck size={28} />}>Evaluaciones</TituloPagina>
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-          Evalúa el desempeño de un estudiante en su Centro Dual.
+          {esEstudiante ? "Tus evaluaciones de desempeño en el Centro Dual." : "Evalúa el desempeño de un estudiante en su Centro Dual."}
         </p>
       </div>
 
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setTab("plantillas")}
-          style={{ background: tab === "plantillas" ? "var(--accent)" : "var(--bg-card)", color: tab === "plantillas" ? "var(--text-on-accent)" : "var(--text-secondary)", border: "1px solid var(--border)" }}
-          className="px-4 py-2 rounded-xl text-sm font-medium"
-        >
-          Evaluaciones disponibles
-        </button>
-        <button
-          onClick={() => setTab("realizadas")}
-          style={{ background: tab === "realizadas" ? "var(--accent)" : "var(--bg-card)", color: tab === "realizadas" ? "var(--text-on-accent)" : "var(--text-secondary)", border: "1px solid var(--border)" }}
-          className="px-4 py-2 rounded-xl text-sm font-medium"
-        >
-          Evaluaciones realizadas
-        </button>
-      </div>
+      {!esEstudiante && (
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setTab("plantillas")}
+            style={{ background: tab === "plantillas" ? "var(--accent)" : "var(--bg-card)", color: tab === "plantillas" ? "var(--text-on-accent)" : "var(--text-secondary)", border: "1px solid var(--border)" }}
+            className="px-4 py-2 rounded-xl text-sm font-medium"
+          >
+            Evaluaciones disponibles
+          </button>
+          <button
+            onClick={() => setTab("realizadas")}
+            style={{ background: tab === "realizadas" ? "var(--accent)" : "var(--bg-card)", color: tab === "realizadas" ? "var(--text-on-accent)" : "var(--text-secondary)", border: "1px solid var(--border)" }}
+            className="px-4 py-2 rounded-xl text-sm font-medium"
+          >
+            Evaluaciones realizadas
+          </button>
+        </div>
+      )}
 
-      {tab === "plantillas" && (
+      {tab === "plantillas" && !esEstudiante && (
         PLANTILLAS_EVALUACION.length === 0 ? (
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
             <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">No hay evaluaciones disponibles</p>

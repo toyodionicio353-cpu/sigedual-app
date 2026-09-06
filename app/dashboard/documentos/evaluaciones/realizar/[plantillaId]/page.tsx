@@ -77,6 +77,12 @@ export default function RealizarEvaluacionPage() {
 
   useEffect(() => {
     if (!usuario || cargandoAmbito) return;
+    // Realizar una evaluación es una acción de staff/Centro Dual sobre un
+    // estudiante — un estudiante nunca se autoevalúa, así que no carga nada.
+    if (usuario.rol === "estudiante") {
+      setAsignaciones([]); setEstudiantes([]); setCargandoDatos(false);
+      return;
+    }
     async function cargar() {
       setCargandoDatos(true);
       if (esProfesor) {
@@ -197,6 +203,14 @@ export default function RealizarEvaluacionPage() {
     return (
       <div className="p-4 md:p-8">
         <p style={{ color: "var(--danger)" }} className="text-sm">Evaluación no encontrada.</p>
+      </div>
+    );
+  }
+
+  if (usuario?.rol === "estudiante") {
+    return (
+      <div className="p-4 md:p-8">
+        <p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p>
       </div>
     );
   }
