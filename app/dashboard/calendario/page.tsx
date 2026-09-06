@@ -6,6 +6,8 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { useAmbitoMaestroGuia } from "@/lib/permisos/useAmbitoMaestroGuia";
+import { useAmbitoEstudiante } from "@/lib/permisos/useAmbitoEstudiante";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { formatearFecha } from "@/lib/fecha";
 import { estadoCanonico, estudianteIdsDe, fechaProgramadaDe, horaProgramadaDe } from "@/lib/visitas/normalizar";
@@ -35,6 +37,8 @@ export default function CalendarioPage() {
   const { liceos } = useCatalogoLiceos(modoGlobal);
   const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
   const ambito = useAmbitoProfesor();
+  const ambitoMaestroGuia = useAmbitoMaestroGuia();
+  const ambitoEstudiante = useAmbitoEstudiante();
 
   const [visitas, setVisitas] = useState<Visita[]>([]);
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
@@ -46,8 +50,48 @@ export default function CalendarioPage() {
   useEffect(() => {
     if (!usuario) return;
     if (usuario.rol === "profesor" && ambito.cargando) return;
+    if (usuario.rol === "centro_dual" && ambitoMaestroGuia.cargando) return;
+    if (usuario.rol === "estudiante" && ambitoEstudiante.cargando) return;
     async function cargar() {
       setLoading(true);
+      if (usuario!.rol === "centro_dual") {
+        // Igual criterio que Visitas: un Centro Dual nunca ve el calendario
+        // completo del liceo, solo lo relacionado con su propia empresa.
+        const [snapVisitas, centrosData] = await Promise.all([
+          getDocs(query(collection(db, "visitas"), where("centroDualId", "==", usuario!.centroDualId ?? ""))),
+          usuario!.centroDualId ? obtenerDocumentosPorId<CentroDual>("centros_duales", [usuario!.centroDualId]) : Promise.resolve([]),
+        ]);
+        const estudiantesData = await obtenerDocumentosPorId<Estudiante>("estudiantes", ambitoMaestroGuia.idsEstudiantes);
+        setVisitas(snapVisitas.docs.map((d) => ({ id: d.id, ...d.data() } as Visita)));
+        setAsignaciones(ambitoMaestroGuia.asignaciones);
+        setCentros(centrosData);
+        setEstudiantes(estudiantesData);
+        setLoading(false);
+        return;
+      }
+      if (usuario!.rol === "estudiante") {
+        // Igual criterio: un estudiante nunca ve el calendario completo del
+        // liceo, solo lo relacionado consigo mismo.
+        const [snapPorLista, snapLegado] = usuario!.estudianteId
+          ? await Promise.all([
+              getDocs(query(collection(db, "visitas"), where("estudianteIds", "array-contains", usuario!.estudianteId))),
+              getDocs(query(collection(db, "visitas"), where("estudianteId", "==", usuario!.estudianteId))),
+            ])
+          : [null, null];
+        const visitasPorId = new Map<string, Visita>();
+        snapPorLista?.docs.forEach((d) => visitasPorId.set(d.id, { id: d.id, ...d.data() } as Visita));
+        snapLegado?.docs.forEach((d) => visitasPorId.set(d.id, { id: d.id, ...d.data() } as Visita));
+        const [centrosData, estudiantesData] = await Promise.all([
+          obtenerDocumentosPorId<CentroDual>("centros_duales", ambitoEstudiante.idsCentros),
+          usuario!.estudianteId ? obtenerDocumentosPorId<Estudiante>("estudiantes", [usuario!.estudianteId]) : Promise.resolve([]),
+        ]);
+        setVisitas(Array.from(visitasPorId.values()));
+        setAsignaciones(ambitoEstudiante.asignaciones);
+        setCentros(centrosData);
+        setEstudiantes(estudiantesData);
+        setLoading(false);
+        return;
+      }
       if (usuario!.rol === "profesor") {
         const lotes: string[][] = [];
         for (let i = 0; i < ambito.idsEstudiantes.length; i += 30) lotes.push(ambito.idsEstudiantes.slice(i, i + 30));
@@ -85,7 +129,11 @@ export default function CalendarioPage() {
     }
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario, modoGlobal, ambito.cargando, ambito.idsEstudiantes, ambito.idsCentros, ambito.asignaciones]);
+  }, [
+    usuario, modoGlobal, ambito.cargando, ambito.idsEstudiantes, ambito.idsCentros, ambito.asignaciones,
+    ambitoMaestroGuia.cargando, ambitoMaestroGuia.idsEstudiantes, ambitoMaestroGuia.asignaciones,
+    ambitoEstudiante.cargando, ambitoEstudiante.idsCentros, ambitoEstudiante.asignaciones,
+  ]);
 
   function centroNombre(id: string): string {
     return centros.find((c) => c.id === id)?.nombre || "Centro dual";

@@ -9,6 +9,8 @@ import { ordenarModulosDashboard } from "@/lib/preferencias/dashboardModulos";
 import { ROL_LABEL } from "@/lib/roles";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { useAmbitoMaestroGuia } from "@/lib/permisos/useAmbitoMaestroGuia";
+import { useAmbitoEstudiante } from "@/lib/permisos/useAmbitoEstudiante";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { estadoEfectivo } from "@/lib/compatibilidad";
 import { formatearFecha } from "@/lib/fecha";
@@ -47,6 +49,8 @@ export default function DashboardPage() {
   const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
   const esAdmin = usuario?.rol === "administrador";
   const ambito = useAmbitoProfesor();
+  const ambitoMaestroGuia = useAmbitoMaestroGuia();
+  const ambitoEstudiante = useAmbitoEstudiante();
 
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [centros, setCentros] = useState<CentroDual[]>([]);
@@ -62,8 +66,57 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!usuario) return;
     if (usuario.rol === "profesor" && ambito.cargando) return;
+    if (usuario.rol === "centro_dual" && ambitoMaestroGuia.cargando) return;
+    if (usuario.rol === "estudiante" && ambitoEstudiante.cargando) return;
     async function cargar() {
       const liceoId = usuario!.liceoId;
+
+      if (usuario!.rol === "centro_dual") {
+        // Igual criterio que Visitas: un Centro Dual nunca ve estadísticas
+        // globales del liceo, solo lo relacionado con su propia empresa.
+        const [estudiantesData, centrosData, maestrosData] = await Promise.all([
+          obtenerDocumentosPorId<Estudiante>("estudiantes", ambitoMaestroGuia.idsEstudiantes),
+          usuario!.centroDualId ? obtenerDocumentosPorId<CentroDual>("centros_duales", [usuario!.centroDualId]) : Promise.resolve([]),
+          usuario!.maestroGuiaId ? obtenerDocumentosPorId<MaestroGuia>("maestros_guia", [usuario!.maestroGuiaId]) : Promise.resolve([]),
+        ]);
+        const snapVisitas = await getDocs(query(collection(db, "visitas"), where("centroDualId", "==", usuario!.centroDualId ?? "")));
+        setEstudiantes(estudiantesData);
+        setCentros(centrosData);
+        setProfesores([]);
+        setMaestros(maestrosData);
+        setAsignaciones(ambitoMaestroGuia.asignaciones);
+        setVisitas(snapVisitas.docs.map((d) => ({ id: d.id, ...d.data() } as Visita)));
+        setTickets([]);
+        setCargando(false);
+        return;
+      }
+
+      if (usuario!.rol === "estudiante") {
+        // Igual criterio: un estudiante nunca ve estadísticas globales del
+        // liceo, solo lo relacionado consigo mismo.
+        const [estudiantesData, centrosData] = await Promise.all([
+          usuario!.estudianteId ? obtenerDocumentosPorId<Estudiante>("estudiantes", [usuario!.estudianteId]) : Promise.resolve([]),
+          obtenerDocumentosPorId<CentroDual>("centros_duales", ambitoEstudiante.idsCentros),
+        ]);
+        const [snapPorLista, snapLegado] = usuario!.estudianteId
+          ? await Promise.all([
+              getDocs(query(collection(db, "visitas"), where("estudianteIds", "array-contains", usuario!.estudianteId))),
+              getDocs(query(collection(db, "visitas"), where("estudianteId", "==", usuario!.estudianteId))),
+            ])
+          : [null, null];
+        const visitasPorId = new Map<string, Visita>();
+        snapPorLista?.docs.forEach((d) => visitasPorId.set(d.id, { id: d.id, ...d.data() } as Visita));
+        snapLegado?.docs.forEach((d) => visitasPorId.set(d.id, { id: d.id, ...d.data() } as Visita));
+        setEstudiantes(estudiantesData);
+        setCentros(centrosData);
+        setProfesores([]);
+        setMaestros([]);
+        setAsignaciones(ambitoEstudiante.asignaciones);
+        setVisitas(Array.from(visitasPorId.values()));
+        setTickets([]);
+        setCargando(false);
+        return;
+      }
 
       if (usuario!.rol === "profesor") {
         // El Dashboard de un profesor no debe mostrar estadísticas
@@ -128,7 +181,11 @@ export default function DashboardPage() {
     }
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario, modoGlobal, ambito.cargando, ambito.idsEstudiantes, ambito.idsCentros, ambito.idsMaestros, ambito.asignaciones]);
+  }, [
+    usuario, modoGlobal, ambito.cargando, ambito.idsEstudiantes, ambito.idsCentros, ambito.idsMaestros, ambito.asignaciones,
+    ambitoMaestroGuia.cargando, ambitoMaestroGuia.idsEstudiantes, ambitoMaestroGuia.asignaciones,
+    ambitoEstudiante.cargando, ambitoEstudiante.idsCentros, ambitoEstudiante.asignaciones,
+  ]);
 
   const hoy = hoyISO();
 
@@ -248,6 +305,8 @@ export default function DashboardPage() {
           {ROL_LABEL[usuario.rol]} · {fechaHoy}
           {modoGlobal && " · Mostrando la información de todos los liceos"}
           {usuario.rol === "profesor" && " · Mostrando solo tu ámbito asignado"}
+          {usuario.rol === "centro_dual" && " · Mostrando solo lo relacionado con tu Centro Dual"}
+          {usuario.rol === "estudiante" && " · Mostrando solo lo relacionado contigo"}
         </p>
       </div>
 
