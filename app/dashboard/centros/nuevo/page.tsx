@@ -58,9 +58,10 @@ export default function AgregarCentroDualPage() {
     setGuardando(true);
     setErrorSistema("");
     try {
-      const nuevo = {
+      const rut = form.rut.trim() ? normalizarRut(form.rut) : "";
+      const nuevo: Record<string, unknown> = {
         nombre: form.nombre.trim(),
-        rut: form.rut.trim() ? normalizarRut(form.rut) : "",
+        rut,
         tipo: form.tipo,
         razonSocial: form.razonSocial.trim(),
         nombreComercial: form.nombreComercial.trim(),
@@ -80,15 +81,18 @@ export default function AgregarCentroDualPage() {
         areasDesempeno: areas,
         caracteristicas,
         habilidadesValoradas: habilidades,
-        capacidad: form.capacidad.trim() ? Number(form.capacidad) : undefined,
         estado: form.estado,
         activo: form.estado === "activo",
         creadoEn: new Date().toISOString(),
         creadoPor: usuario.uid,
       };
+      // Firestore rechaza `undefined` como valor de campo — si no se
+      // ingresó capacidad, el campo simplemente no se escribe (capacidad
+      // "sin límite"), en vez de intentar guardar `undefined`.
+      if (form.capacidad.trim()) nuevo.capacidad = Number(form.capacidad);
       const ref = await addDoc(collection(db, "centros_duales"), nuevo);
-      if (nuevo.rut) {
-        await sincronizarIndiceRutCentro(ref.id, usuario.liceoId, nuevo.rut);
+      if (rut) {
+        await sincronizarIndiceRutCentro(ref.id, usuario.liceoId, rut);
       }
       setCreado({ id: ref.id, ...nuevo } as CentroDual);
     } catch (err) {
