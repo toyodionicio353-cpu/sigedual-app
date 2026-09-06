@@ -38,13 +38,21 @@ const FORM_VACIO: DatosPlanFormulario = {
   estado: "proximamente", recomendado: false, orden: 0, textoDestacado: "", informacionAdicional: "",
 };
 
-function FormularioPlan({ inicial, onCancelar, onGuardar, guardando }: {
+function FormularioPlan({ inicial, totalPlanes, onCancelar, onGuardar, guardando }: {
   inicial: DatosPlanFormulario;
+  /** Cantidad de posiciones disponibles para elegir en "Orden de aparición"
+   * (cuántos planes existen hoy, +1 si se está creando uno nuevo). */
+  totalPlanes: number;
   onCancelar: () => void;
   onGuardar: (datos: DatosPlanFormulario) => void;
   guardando: boolean;
 }) {
   const [form, setForm] = useState<DatosPlanFormulario>(inicial);
+  const opcionesOrden = Array.from({ length: totalPlanes }, (_, i) => {
+    const posicion = i + 1;
+    const etiqueta = posicion === 1 ? "1 (primero)" : posicion === totalPlanes ? `${posicion} (último)` : String(posicion);
+    return { value: String(posicion), label: etiqueta };
+  });
 
   function set<K extends keyof DatosPlanFormulario>(campo: K, valor: DatosPlanFormulario[K]) {
     setForm((f) => ({ ...f, [campo]: valor }));
@@ -128,10 +136,11 @@ function FormularioPlan({ inicial, onCancelar, onGuardar, guardando }: {
             </div>
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Orden de aparición</label>
-              <input
-                type="number" value={form.orden} onChange={(e) => set("orden", Number(e.target.value))}
-                style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)]"
+              <Select
+                value={String(Math.min(Math.max(form.orden, 1), totalPlanes))}
+                onChange={(v) => set("orden", Number(v))}
+                ariaLabel="Orden de aparición"
+                opciones={opcionesOrden}
               />
             </div>
           </div>
@@ -331,7 +340,8 @@ export default function GestionPlanesComerciales() {
             nombre: formulario.plan.nombre, periodicidad: formulario.plan.periodicidad, precio: formulario.plan.precio,
             descripcion: formulario.plan.descripcion, estado: formulario.plan.estado, recomendado: formulario.plan.recomendado,
             orden: formulario.plan.orden, textoDestacado: formulario.plan.textoDestacado ?? "", informacionAdicional: formulario.plan.informacionAdicional ?? "",
-          } : FORM_VACIO}
+          } : { ...FORM_VACIO, orden: planes.length + 1 }}
+          totalPlanes={formulario.modo === "editar" ? planes.length : planes.length + 1}
           onCancelar={() => setFormulario(null)}
           onGuardar={guardar}
           guardando={guardando}
