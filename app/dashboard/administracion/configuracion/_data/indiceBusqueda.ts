@@ -1,4 +1,4 @@
-export type CategoriaConfig = "apariencia" | "interaccion" | "idioma" | "notificaciones" | "privacidad" | "demo";
+export type CategoriaConfig = "apariencia" | "interaccion" | "idioma" | "notificaciones" | "privacidad" | "demo" | "planes";
 
 export interface EntradaBusqueda {
   id: string; // debe coincidir con el id= del SettingRow correspondiente
@@ -33,4 +33,5 @@ export const INDICE_BUSQUEDA: EntradaBusqueda[] = [
   { id: "set-borradores", categoria: "privacidad", titulo: "Guardar borradores automáticamente", descripcion: "Evita perder información en formularios.", keywords: ["borrador", "borradores", "autoguardado"] },
   { id: "set-limpiar-cache", categoria: "privacidad", titulo: "Limpiar datos locales", descripcion: "Borra preferencias y borradores guardados en este dispositivo.", keywords: ["caché", "cache", "limpiar", "datos locales"] },
   { id: "set-demo-generar", categoria: "demo", titulo: "Acceso de Demostración", descripcion: "Genera y administra enlaces de prueba gratuita de 7 días para instituciones.", keywords: ["demo", "demostración", "prueba", "gratis", "7 días", "enlace", "trial"] },
+  { id: "set-planes-comerciales", categoria: "planes", titulo: "Planes SIGEDUAL", descripcion: "Precios, períodos y características de la sección comercial.", keywords: ["planes", "precios", "mensual", "semestral", "anual", "comercial", "contratar"] },
 ];

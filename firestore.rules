@@ -44,7 +44,8 @@ service cloud.firestore {
         'invitaciones', 'respuestas_invitacion', 'centros_duales_por_rut',
         'evaluaciones', 'invitaciones_estudiante', 'respuestas_invitacion_estudiante',
         'estudiantes_por_run', 'campanias_invitacion', 'campanias_invitacion_estudiante',
-        'respuestas_campania', 'respuestas_campania_estudiante', 'demos'
+        'respuestas_campania', 'respuestas_campania_estudiante', 'demos',
+        'planes_comerciales', 'configuracion_comercial'
       ];
     }
 
@@ -115,6 +116,20 @@ service cloud.firestore {
     // invitaciones/campanias — nunca directamente desde el cliente.
     match /demos/{demoId} {
       allow read, write: if request.auth != null && datosUsuario().rol == 'administrador';
+    }
+
+    // Sección comercial "Planes SIGEDUAL": catálogo de precios/estados,
+    // público para que la página comercial (y la propia institución al
+    // decidir contratar) lo vea sin sesión — pero solo administrador puede
+    // modificar precios, estados o características (información comercial
+    // sensible de SIGEDUAL).
+    match /planes_comerciales/{planId} {
+      allow read: if true;
+      allow write: if request.auth != null && datosUsuario().rol == 'administrador';
+    }
+    match /configuracion_comercial/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null && datosUsuario().rol == 'administrador';
     }
 
     match /codigosAcceso/{liceoId} {

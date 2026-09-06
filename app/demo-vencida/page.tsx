@@ -83,7 +83,8 @@ export default function DemoVencidaPage() {
 
             <div className="flex flex-col sm:flex-row gap-3 mb-2">
               <Link
-                href="/dashboard/soporte/tickets/nuevo"
+                href="/planes"
+                target="_blank"
                 style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
                 className="flex-1 text-center py-3 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
               >
@@ -101,8 +102,8 @@ export default function DemoVencidaPage() {
               )}
             </div>
             <p style={{ color: "var(--text-muted)" }} className="text-xs">
-              La contratación en línea todavía no está disponible: "Contratar SIGEDUAL" te lleva a soporte
-              para coordinarla directamente.
+              "Contratar SIGEDUAL" te muestra los planes disponibles — la contratación en línea
+              todavía no está activa.
             </p>
           </>
         )}
