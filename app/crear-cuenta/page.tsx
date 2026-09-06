@@ -1,12 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { collection, query, where, getDocs, limit, doc, setDoc, getDoc } from "firebase/firestore";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
 import Select from "@/components/ui/Select";
 import type { Rol, Liceo, CodigoAcceso } from "@/types";
 
@@ -19,6 +19,12 @@ const ROLES: { value: Rol; label: string }[] = [
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+interface MaestroGuiaDisponible {
+  id: string;
+  nombre: string;
+  centroDualNombre: string;
+}
+
 export default function CrearCuentaPage() {
   const router = useRouter();
   const [nombre, setNombre] = useState("");
@@ -30,16 +36,74 @@ export default function CrearCuentaPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Solo para rol "centro_dual": una cuenta de este tipo representa a UN
+  // Maestro Guía real de un Centro Dual específico. Si se dejara escribir
+  // el nombre libremente (como el resto de los roles), la cuenta quedaría
+  // sin vínculo con ningún Centro Dual/Maestro Guía — y eso es justo el
+  // problema reportado: sin ese vínculo, las reglas de Firestore no pueden
+  // aislar la información de un centro dual de la de otro. Por eso acá se
+  // elige de una lista real (nunca texto libre) y el nombre se deriva en
+  // el servidor a partir de esa elección.
+  const [maestroGuiaId, setMaestroGuiaId] = useState("");
+  const [maestrosDisponibles, setMaestrosDisponibles] = useState<MaestroGuiaDisponible[]>([]);
+  const [cargandoMaestros, setCargandoMaestros] = useState(false);
+  const [errorMaestros, setErrorMaestros] = useState("");
+
+  const esCentroDual = rol === "centro_dual";
+
+  useEffect(() => {
+    if (!esCentroDual) {
+      setMaestrosDisponibles([]); setMaestroGuiaId(""); setErrorMaestros("");
+      return;
+    }
+    if (!EMAIL_REGEX.test(email.trim()) || codigo.trim().length < 4) {
+      setMaestrosDisponibles([]); setErrorMaestros("");
+      return;
+    }
+    const idTimeout = setTimeout(async () => {
+      setCargandoMaestros(true);
+      setErrorMaestros("");
+      try {
+        const params = new URLSearchParams({ email: email.trim(), codigo: codigo.trim() });
+        const res = await fetch(`/api/crear-cuenta/maestros-guia?${params}`);
+        const data = await res.json();
+        if (!res.ok) {
+          setErrorMaestros(data.error ?? "No fue posible cargar los Maestros Guía de tu institución.");
+          setMaestrosDisponibles([]);
+          return;
+        }
+        setMaestrosDisponibles(data.maestros);
+        if (data.maestros.length === 0) {
+          setErrorMaestros("No hay Maestros Guía disponibles para vincular. Contacta a tu director o administrador.");
+        }
+      } catch {
+        setErrorMaestros("No fue posible cargar los Maestros Guía de tu institución.");
+      } finally {
+        setCargandoMaestros(false);
+      }
+    }, 500);
+    return () => clearTimeout(idTimeout);
+  }, [esCentroDual, email, codigo]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
+    if (!rol) {
+      setError("Selecciona tu rol.");
+      return;
+    }
     if (!EMAIL_REGEX.test(email.trim())) {
       setError("Ingresa un correo válido (ejemplo: nombre@dominio.cl).");
       return;
     }
-    if (!rol) {
-      setError("Selecciona tu rol.");
+    if (esCentroDual) {
+      if (!maestroGuiaId) {
+        setError("Selecciona el Centro Dual / Maestro Guía al que representa esta cuenta.");
+        return;
+      }
+    } else if (!nombre.trim()) {
+      setError("Ingresa tu nombre completo.");
       return;
     }
     if (password.length < 6) {
@@ -84,15 +148,39 @@ export default function CrearCuentaPage() {
       }
 
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      await setDoc(doc(db, "usuarios", cred.user.uid), {
-        uid: cred.user.uid,
-        email: email.trim(),
-        nombre: nombre.trim(),
-        rol,
-        liceoId: liceo.id,
-        activo: true,
-        creadoEn: new Date().toISOString(),
-      });
+
+      if (esCentroDual) {
+        try {
+          const idToken = await cred.user.getIdToken();
+          const res = await fetch("/api/crear-cuenta/completar-centro-dual", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+            body: JSON.stringify({ maestroGuiaId, liceoId: liceo.id, email: email.trim() }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            await cred.user.delete().catch(() => {});
+            setError(data.error ?? "No fue posible completar tu cuenta. Intenta nuevamente.");
+            setLoading(false);
+            return;
+          }
+        } catch {
+          await cred.user.delete().catch(() => {});
+          setError("No fue posible completar tu cuenta. Intenta nuevamente.");
+          setLoading(false);
+          return;
+        }
+      } else {
+        await setDoc(doc(db, "usuarios", cred.user.uid), {
+          uid: cred.user.uid,
+          email: email.trim(),
+          nombre: nombre.trim(),
+          rol,
+          liceoId: liceo.id,
+          activo: true,
+          creadoEn: new Date().toISOString(),
+        });
+      }
 
       router.replace("/dashboard");
     } catch (err: unknown) {
@@ -138,18 +226,51 @@ export default function CrearCuentaPage() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
-              Nombre completo
+              Rol
             </label>
-            <input
-              type="text"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="María González"
-              required
-              style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-              className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
+            <Select
+              value={rol}
+              onChange={(v) => setRol(v as Rol)}
+              ariaLabel="Rol"
+              placeholder="Selecciona tu rol"
+              opciones={ROLES}
             />
           </div>
+
+          {esCentroDual ? (
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
+                Centro Dual / Maestro Guía
+              </label>
+              <Select
+                value={maestroGuiaId}
+                onChange={setMaestroGuiaId}
+                ariaLabel="Centro Dual / Maestro Guía"
+                placeholder={cargandoMaestros ? "Cargando..." : "Selecciona a quién representa esta cuenta"}
+                disabled={cargandoMaestros || maestrosDisponibles.length === 0}
+                opciones={maestrosDisponibles.map((m) => ({ value: m.id, label: `${m.nombre} — ${m.centroDualNombre}` }))}
+              />
+              <p style={{ color: "var(--text-muted)" }} className="flex items-start gap-1.5 text-xs mt-2">
+                <Info size={13} className="flex-shrink-0 mt-0.5" />
+                {errorMaestros || "Completa tu correo y el código de verificación para ver la lista. El nombre de tu cuenta se toma directamente de este registro, así la información de tu Centro Dual nunca se mezcla con la de otro."}
+              </p>
+            </div>
+          ) : (
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
+                Nombre completo
+              </label>
+              <input
+                type="text"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="María González"
+                required
+                style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+                className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
+              />
+            </div>
+          )}
 
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
@@ -163,19 +284,6 @@ export default function CrearCuentaPage() {
               required
               style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
               className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
-            />
-          </div>
-
-          <div>
-            <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
-              Rol
-            </label>
-            <Select
-              value={rol}
-              onChange={(v) => setRol(v as Rol)}
-              ariaLabel="Rol"
-              placeholder="Selecciona tu rol"
-              opciones={ROLES}
             />
           </div>
 
