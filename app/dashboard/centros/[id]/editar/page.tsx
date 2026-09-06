@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteField, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
@@ -111,7 +111,9 @@ export default function EditarCentroDualPage() {
         areasDesempeno: nuevasAreas,
         caracteristicas: nuevasCaracteristicas,
         habilidadesValoradas: nuevasHabilidades,
-        capacidad: form.capacidad.trim() ? Number(form.capacidad) : undefined,
+        // Firestore rechaza `undefined` como valor de campo — para borrar
+        // la capacidad (volverla "sin límite") hay que eliminar el campo.
+        capacidad: form.capacidad.trim() ? Number(form.capacidad) : deleteField(),
         estado: form.estado,
         activo: form.estado === "activo",
         actualizadoEn: new Date().toISOString(),
