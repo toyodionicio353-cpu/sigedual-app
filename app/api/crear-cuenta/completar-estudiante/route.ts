@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireCallerUid, getDocument, listCollectionDocs, setDocument } from "@/lib/firebase-admin";
 import { registrarEventoServidor } from "@/lib/auditoria/registrarEvento";
-import type { Estudiante, Usuario } from "@/types";
+import type { Estudiante, Liceo, Usuario } from "@/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,6 +32,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Esta cuenta ya fue creada." }, { status: 409 });
     }
 
+    const liceoDoc = await getDocument(`liceos/${liceoId}`);
+    const liceo = liceoDoc?.data as unknown as Liceo | undefined;
+    if (!liceoDoc || (liceo?.estado ?? "activo") === "inactivo") {
+      return NextResponse.json({ error: "Esta institución no está disponible." }, { status: 404 });
+    }
+
     const estudianteDoc = await getDocument(`estudiantes/${estudianteId}`);
     if (!estudianteDoc) {
       return NextResponse.json({ error: "El estudiante seleccionado no existe." }, { status: 404 });
@@ -42,6 +48,9 @@ export async function POST(request: Request) {
     }
     if (estudiante.email?.trim().toLowerCase() !== email.trim().toLowerCase()) {
       return NextResponse.json({ error: "El correo no coincide con el registrado para este estudiante." }, { status: 400 });
+    }
+    if (estudiante.estado !== "activo") {
+      return NextResponse.json({ error: "Este estudiante no está activo en el sistema. Contacta a tu liceo." }, { status: 403 });
     }
 
     const usuarios = await listCollectionDocs("usuarios");

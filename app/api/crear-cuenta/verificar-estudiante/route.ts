@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { listCollectionDocs } from "@/lib/firebase-admin";
-import type { Estudiante } from "@/types";
+import { getDocument, listCollectionDocs } from "@/lib/firebase-admin";
+import type { Estudiante, Liceo } from "@/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +20,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Faltan datos." }, { status: 400 });
     }
 
+    const liceoDoc = await getDocument(`liceos/${liceoId}`);
+    const liceo = liceoDoc?.data as unknown as Liceo | undefined;
+    if (!liceoDoc || (liceo?.estado ?? "activo") === "inactivo") {
+      return NextResponse.json({ error: "Esta institución no está disponible." }, { status: 404 });
+    }
+
     const estudiantes = await listCollectionDocs("estudiantes");
     const encontrado = estudiantes.find((e) => {
       const est = e.data as unknown as Estudiante;
@@ -29,6 +35,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Este correo no corresponde a ningún estudiante registrado en esa institución." }, { status: 404 });
     }
     const est = encontrado.data as unknown as Estudiante;
+    if (est.estado !== "activo") {
+      return NextResponse.json({ error: "Este estudiante no está activo en el sistema. Contacta a tu liceo." }, { status: 403 });
+    }
 
     return NextResponse.json({ ok: true, estudianteId: encontrado.id, nombre: `${est.nombres} ${est.apellidos}`.trim() });
   } catch (err) {
