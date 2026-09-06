@@ -11,12 +11,20 @@ export interface Usuario {
   activo: boolean;
   creadoEn: string;
   // Solo poblados cuando rol === "centro_dual": vinculan esta cuenta de
-  // acceso al Maestro Guía/Centro Dual que representa (ver "Crear acceso"
-  // en la ficha de Maestro Guía). centroDualId se denormaliza desde
-  // MaestroGuia.centroDualId para que las reglas de Firestore no necesiten
-  // un get() adicional.
+  // acceso al Maestro Guía/Centro Dual que representa. Hay dos variantes:
+  // (a) cuenta de UN Maestro Guía puntual (ambas poblados — "Crear acceso"
+  // en su ficha, o /crear-cuenta eligiendo un Maestro Guía), con ámbito
+  // acotado a sus propias asignaciones; (b) cuenta a nivel de EMPRESA
+  // (solo centroDualId, sin maestroGuiaId — /crear-cuenta con el correo
+  // del propio Centro Dual), que ve todo lo de su empresa. centroDualId se
+  // denormaliza desde MaestroGuia.centroDualId cuando aplica, para que las
+  // reglas de Firestore no necesiten un get() adicional.
   maestroGuiaId?: string;
   centroDualId?: string;
+  // Solo poblado cuando rol === "estudiante" y la cuenta se creó vinculada
+  // a una ficha de Estudiante ya existente (vía /crear-cuenta, correo
+  // coincidente con Estudiante.email).
+  estudianteId?: string;
   // Datos personales de "Mi perfil" — el propio usuario los administra.
   avatarUrl?: string;
   fechaNacimiento?: string;
