@@ -403,24 +403,20 @@ service cloud.firestore {
     // Documento/Convenio generado desde una plantilla (Documentos →
     // documentos/convenios). Antes caía en el catch-all de abajo: cualquier
     // autenticado, de cualquier liceo, podía leer y escribir cualquiera —
-    // se corrige acá de paso. `centro_dual`/`estudiante` ven solo lo suyo
-    // (por `estudianteId`, cuando el documento lo tiene) o lo que ellos
-    // mismos crearon; profesor mantiene su alcance de liceo completo, igual
-    // que antes de este cambio.
+    // se corrige acá de paso. `centro_dual`/`estudiante` NUNCA crean, editan
+    // ni eliminan un documento — solo pueden VER el que esté a su nombre
+    // (por `estudianteId`); crear/editar/eliminar es exclusivo del staff
+    // del liceo (profesor mantiene su alcance de liceo completo).
     match /documentos_generados/{id} {
       allow read: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
         || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId)
-        || resource.data.creadoPor == request.auth.uid
         || (datosUsuario().rol == 'centro_dual' && ('estudianteId' in resource.data) && tieneAutorizacion('estudiante', resource.data.estudianteId))
         || (datosUsuario().rol == 'estudiante' && ('estudianteId' in resource.data) && resource.data.estudianteId == datosUsuario().estudianteId)
       );
       allow create: if request.auth != null && (
         esAccesoCompletoLiceo(request.resource.data.liceoId)
         || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == request.resource.data.liceoId)
-        || (datosUsuario().rol in ['centro_dual', 'estudiante']
-            && request.resource.data.creadoPor == request.auth.uid
-            && datosUsuario().liceoId == request.resource.data.liceoId)
       );
       // Un documento/convenio "finalizado" (a diferencia de "borrador", que
       // sigue siendo un trabajo en curso) es inmutable — igual criterio que
@@ -430,7 +426,6 @@ service cloud.firestore {
       allow update: if request.auth != null && resource.data.estado != 'finalizado' && (
         esAccesoCompletoLiceo(resource.data.liceoId)
         || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId)
-        || resource.data.creadoPor == request.auth.uid
       );
       allow delete: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
@@ -440,20 +435,22 @@ service cloud.firestore {
 
     // Índice de unicidad de nombre para documentos_generados (mismo criterio
     // que centros_duales_por_rut/estudiantes_por_run): sin datos personales,
-    // solo referencia opaca (documentoId/liceoId/tipoModulo) — cualquiera de
-    // ese liceo puede leerlo/mantenerlo, ya que quien puede crear el
-    // documento real (ver regla de arriba) también debe poder reclamar su
-    // entrada en este índice.
+    // solo referencia opaca (documentoId/liceoId/tipoModulo). Solo quien
+    // puede crear/editar el documento real (ver regla de arriba — nunca
+    // centro_dual/estudiante) mantiene su entrada en este índice.
     match /documentos_generados_indices/{clave} {
       allow read: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
-        || datosUsuario().liceoId == resource.data.liceoId
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId)
       );
       allow create, update: if request.auth != null && (
         esAccesoCompletoLiceo(request.resource.data.liceoId)
-        || datosUsuario().liceoId == request.resource.data.liceoId
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == request.resource.data.liceoId)
       );
-      allow delete: if request.auth != null;
+      allow delete: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId)
+      );
     }
 
     // Índice de autorización: un documento por (profesor, tipo, recurso)

@@ -80,12 +80,16 @@ interface EditorDocumentoProps {
   contexto: ContextoResolucion;
   plantilla?: PlantillaDocumento;
   documentoExistente?: DocumentoGenerado;
+  /** true para un rol que solo puede ver lo suyo, nunca crear/editar
+   * (Centro Dual/Estudiante): fuerza modo de solo lectura sin importar el
+   * estado del documento. */
+  soloLectura?: boolean;
   onGuardado: (id: string) => void;
   onCancelar: () => void;
 }
 
 export default function EditorDocumento({
-  tipoModulo, liceoId, usuarioUid, usuarioNombre, contexto, plantilla, documentoExistente, onGuardado, onCancelar,
+  tipoModulo, liceoId, usuarioUid, usuarioNombre, contexto, plantilla, documentoExistente, soloLectura, onGuardado, onCancelar,
 }: EditorDocumentoProps) {
   const esEdicion = Boolean(documentoExistente);
   const plantillaId = plantilla?.id ?? documentoExistente?.plantillaId ?? "";
@@ -101,9 +105,10 @@ export default function EditorDocumento({
   );
   const [estado, setEstado] = useState<EstadoDocumentoGenerado>(documentoExistente?.estado ?? "borrador");
   // Un documento finalizado es inmutable para siempre (igual que una
-  // Evaluación): se abre en solo lectura, sin importar el rol. Para
-  // corregir algo hay que "Duplicar" desde la lista, nunca editar este.
-  const bloqueado = documentoExistente?.estado === "finalizado";
+  // Evaluación), y un Centro Dual/Estudiante nunca crea ni edita uno,
+  // sin importar su estado — en ambos casos se abre en solo lectura.
+  // Para corregir algo hay que "Duplicar" desde la lista, nunca editar este.
+  const bloqueado = Boolean(soloLectura) || documentoExistente?.estado === "finalizado";
   const [vistaPrevia, setVistaPrevia] = useState(bloqueado);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
@@ -408,7 +413,9 @@ export default function EditorDocumento({
       {bloqueado ? (
         <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="rounded-xl px-4 py-3 text-sm" >
           <p style={{ color: "var(--text-secondary)" }}>
-            Este documento ya fue finalizado y no se puede editar. Usa &quot;Duplicar&quot; desde la lista si necesitas una copia editable.
+            {soloLectura
+              ? "Solo puedes ver este documento."
+              : "Este documento ya fue finalizado y no se puede editar. Usa “Duplicar” desde la lista si necesitas una copia editable."}
           </p>
         </div>
       ) : (

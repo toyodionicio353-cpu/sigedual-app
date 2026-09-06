@@ -37,6 +37,9 @@ interface BibliotecaDocumentalProps {
   onAbrirCreado?: (item: ItemBiblioteca) => void;
   tabInicial?: "plantillas" | "creados";
   onCambiarTab?: (tab: "plantillas" | "creados") => void;
+  /** false para un rol que solo puede ver lo suyo, nunca crear (Centro
+   * Dual/Estudiante): oculta la pestaña "Plantillas" por completo. */
+  mostrarPlantillas?: boolean;
 }
 
 type Orden = "recientes" | "antiguos" | "az" | "za";
@@ -118,9 +121,9 @@ function MenuTarjeta({ item, acciones, abierto, onToggle }: { item: ItemBibliote
 export default function BibliotecaDocumental({
   titulo, icono, descripcion, placeholderBusqueda, labelTabCreados, labelPlural,
   plantillas, creados, cargando = false, accionPrincipal, acciones = [],
-  onUsarPlantilla, onAbrirCreado, tabInicial, onCambiarTab,
+  onUsarPlantilla, onAbrirCreado, tabInicial, onCambiarTab, mostrarPlantillas = true,
 }: BibliotecaDocumentalProps) {
-  const [tab, setTabInterno] = useState<"plantillas" | "creados">(tabInicial ?? "plantillas");
+  const [tab, setTabInterno] = useState<"plantillas" | "creados">(mostrarPlantillas ? (tabInicial ?? "plantillas") : "creados");
   function setTab(t: "plantillas" | "creados") {
     setTabInterno(t);
     onCambiarTab?.(t);
@@ -179,32 +182,34 @@ export default function BibliotecaDocumental({
       </div>
 
       {/* Selector de contenido */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setTab("plantillas")}
-          style={{
-            background: tab === "plantillas" ? "var(--accent)" : "var(--bg-card)",
-            color: tab === "plantillas" ? "var(--text-on-accent)" : "var(--text-secondary)",
-            border: `1px solid ${tab === "plantillas" ? "var(--accent)" : "var(--border)"}`,
-          }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-        >
-          <FileStack size={16} />
-          Plantillas
-        </button>
-        <button
-          onClick={() => setTab("creados")}
-          style={{
-            background: tab === "creados" ? "var(--accent)" : "var(--bg-card)",
-            color: tab === "creados" ? "var(--text-on-accent)" : "var(--text-secondary)",
-            border: `1px solid ${tab === "creados" ? "var(--accent)" : "var(--border)"}`,
-          }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-        >
-          <Inbox size={16} />
-          {labelTabCreados}
-        </button>
-      </div>
+      {mostrarPlantillas && (
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setTab("plantillas")}
+            style={{
+              background: tab === "plantillas" ? "var(--accent)" : "var(--bg-card)",
+              color: tab === "plantillas" ? "var(--text-on-accent)" : "var(--text-secondary)",
+              border: `1px solid ${tab === "plantillas" ? "var(--accent)" : "var(--border)"}`,
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+          >
+            <FileStack size={16} />
+            Plantillas
+          </button>
+          <button
+            onClick={() => setTab("creados")}
+            style={{
+              background: tab === "creados" ? "var(--accent)" : "var(--bg-card)",
+              color: tab === "creados" ? "var(--text-on-accent)" : "var(--text-secondary)",
+              border: `1px solid ${tab === "creados" ? "var(--accent)" : "var(--border)"}`,
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+          >
+            <Inbox size={16} />
+            {labelTabCreados}
+          </button>
+        </div>
+      )}
 
       {/* Buscador y orden */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
