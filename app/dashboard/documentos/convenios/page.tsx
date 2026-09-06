@@ -6,7 +6,7 @@ import EditorDocumento from "@/components/biblioteca/EditorDocumento";
 import { plantillasParaModulo } from "@/lib/plantillas";
 import { useContextoDocumentos } from "@/lib/plantillas/useContextoDocumentos";
 import { useDocumentosCreados } from "@/lib/plantillas/useDocumentosCreados";
-import { eliminarDocumento } from "@/lib/documentos/guardarDocumento";
+import { eliminarDocumento, duplicarDocumento, NOMBRE_DUPLICADO } from "@/lib/documentos/guardarDocumento";
 import type { DocumentoGenerado } from "@/types";
 import type { PlantillaDocumento } from "@/types/plantillas";
 import { Handshake } from "lucide-react";
@@ -60,12 +60,32 @@ export default function ConveniosPage() {
     recargar();
   }
 
+  async function duplicarCreado(item: ItemBiblioteca) {
+    const doc = documentos.find((d) => d.id === item.id);
+    if (!doc || !usuario) return;
+    try {
+      await duplicarDocumento({
+        origen: doc, liceoId: usuario.liceoId, tipoModulo: TIPO_MODULO,
+        creadoPor: usuario.uid, creadoPorNombre: usuario.nombre,
+      });
+      mostrarAviso("Convenio duplicado como borrador.");
+      recargar();
+    } catch (err) {
+      mostrarAviso(
+        err instanceof Error && err.message === NOMBRE_DUPLICADO
+          ? "Ya existe una copia con ese nombre. Cambia el nombre del original antes de duplicar de nuevo."
+          : "No fue posible duplicar el convenio."
+      );
+    }
+  }
+
   if (vista.modo === "editor" && usuario) {
     return (
       <EditorDocumento
         tipoModulo={TIPO_MODULO}
         liceoId={usuario.liceoId}
         usuarioUid={usuario.uid}
+        usuarioNombre={usuario.nombre}
         contexto={contexto}
         plantilla={vista.plantilla}
         documentoExistente={vista.existente}
@@ -100,6 +120,7 @@ export default function ConveniosPage() {
         onCambiarTab={setTabBiblioteca}
         acciones={[
           { label: "Editar", onClick: abrirCreado },
+          { label: "Duplicar", onClick: duplicarCreado },
           { label: "Eliminar", onClick: eliminarCreado },
         ]}
       />

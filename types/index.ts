@@ -298,6 +298,7 @@ export interface MaestroGuia {
 
 export type TipoModuloDocumento = "convenio" | "documento";
 export type TipoSegmentoPlantilla = "protegido" | "editable" | "campo";
+export type EstadoDocumentoGenerado = "borrador" | "finalizado";
 
 export interface SegmentoDocumento {
   tipo: TipoSegmentoPlantilla;
@@ -314,7 +315,11 @@ export interface DocumentoGenerado {
   estudianteId?: string;
   campos: Record<string, string>;
   contenido: SegmentoDocumento[][];
+  /** Ausente en documentos creados antes de agregar este campo: se trata como "finalizado". */
+  estado?: EstadoDocumentoGenerado;
   creadoPor: string;
+  /** Nombre visible de quien creó el documento, capturado al momento de guardar. */
+  creadoPorNombre?: string;
   creadoEn: string;
   actualizadoEn?: string;
 }
