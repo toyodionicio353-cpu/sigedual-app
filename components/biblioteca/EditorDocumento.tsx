@@ -100,7 +100,11 @@ export default function EditorDocumento({
     documentoExistente?.contenido ?? plantilla?.parrafos ?? []
   );
   const [estado, setEstado] = useState<EstadoDocumentoGenerado>(documentoExistente?.estado ?? "borrador");
-  const [vistaPrevia, setVistaPrevia] = useState(false);
+  // Un documento finalizado es inmutable para siempre (igual que una
+  // Evaluación): se abre en solo lectura, sin importar el rol. Para
+  // corregir algo hay que "Duplicar" desde la lista, nunca editar este.
+  const bloqueado = documentoExistente?.estado === "finalizado";
+  const [vistaPrevia, setVistaPrevia] = useState(bloqueado);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [aviso, setAviso] = useState("");
@@ -239,7 +243,7 @@ export default function EditorDocumento({
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <TituloPagina icon={<FileText size={28} />}>
-              {esEdicion ? "Editar documento" : "Nuevo documento"}
+              {bloqueado ? "Ver documento" : esEdicion ? "Editar documento" : "Nuevo documento"}
             </TituloPagina>
             <span
               style={{
@@ -257,14 +261,16 @@ export default function EditorDocumento({
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <button
-            onClick={() => setVistaPrevia((v) => !v)}
-            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
-          >
-            <Eye size={16} />
-            {vistaPrevia ? "Editar" : "Vista previa"}
-          </button>
+          {!bloqueado && (
+            <button
+              onClick={() => setVistaPrevia((v) => !v)}
+              style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
+            >
+              <Eye size={16} />
+              {vistaPrevia ? "Editar" : "Vista previa"}
+            </button>
+          )}
           <button
             onClick={imprimirOExportar}
             style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
@@ -312,8 +318,9 @@ export default function EditorDocumento({
           value={nombre}
           onChange={(e) => setNombre(e.target.value.slice(0, NOMBRE_MAX))}
           placeholder="Ej: Convenio Dionisio Toyo"
+          disabled={bloqueado}
           style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-          className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
+          className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors disabled:opacity-60"
         />
         <p style={{ color: "var(--text-muted)" }} className="text-xs mt-1 text-right">{nombre.length}/{NOMBRE_MAX}</p>
       </div>
@@ -325,9 +332,11 @@ export default function EditorDocumento({
           {estudianteSeleccionado ? (
             <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl">
               <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium">{estudianteSeleccionado.nombres} {estudianteSeleccionado.apellidos}</p>
-              <button onClick={() => setEstudianteId("")} style={{ color: "var(--accent-light)" }} className="text-xs font-semibold hover:underline flex-shrink-0">
-                Cambiar
-              </button>
+              {!bloqueado && (
+                <button onClick={() => setEstudianteId("")} style={{ color: "var(--accent-light)" }} className="text-xs font-semibold hover:underline flex-shrink-0">
+                  Cambiar
+                </button>
+              )}
             </div>
           ) : (
             <>
@@ -372,7 +381,7 @@ export default function EditorDocumento({
             >
               {parrafo.map((s, si) => {
                 if (s.tipo === "campo") return <SegmentoCampoView key={si} resultado={resultadoCampos[s.clave ?? ""]} etiqueta={etiquetaCampo(s.clave)} />;
-                if (vistaPrevia) {
+                if (vistaPrevia || bloqueado) {
                   return (
                     <span key={si} style={{ fontWeight: s.tipo === "protegido" ? 700 : undefined }}>
                       {s.texto}
@@ -396,24 +405,32 @@ export default function EditorDocumento({
         </div>
       </div>
 
-      <div className="flex justify-end gap-3">
-        <button
-          onClick={() => guardar("borrador")}
-          disabled={guardando}
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-          className="px-6 py-3 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          {guardando ? "Guardando..." : "Guardar borrador"}
-        </button>
-        <button
-          onClick={() => guardar("finalizado")}
-          disabled={guardando}
-          style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
-          className="px-6 py-3 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          {guardando ? "Guardando..." : "Guardar"}
-        </button>
-      </div>
+      {bloqueado ? (
+        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="rounded-xl px-4 py-3 text-sm" >
+          <p style={{ color: "var(--text-secondary)" }}>
+            Este documento ya fue finalizado y no se puede editar. Usa &quot;Duplicar&quot; desde la lista si necesitas una copia editable.
+          </p>
+        </div>
+      ) : (
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => guardar("borrador")}
+            disabled={guardando}
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+            className="px-6 py-3 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {guardando ? "Guardando..." : "Guardar borrador"}
+          </button>
+          <button
+            onClick={() => guardar("finalizado")}
+            disabled={guardando}
+            style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+            className="px-6 py-3 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {guardando ? "Guardando..." : "Guardar"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
