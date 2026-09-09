@@ -275,7 +275,11 @@ service cloud.firestore {
         esAccesoCompletoLiceo(resource.data.liceoId)
         || resource.data.profesorSupervisorId == request.auth.uid
       );
-      allow delete: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
+      // Eliminar una asignación es irreversible (a diferencia de cancelarla
+      // con un cambio de estado) — a pedido explícito, queda reservado a
+      // una única cuenta marcada con este permiso puntual, ni siquiera el
+      // resto de administrador/director/coordinador puede hacerlo.
+      allow delete: if request.auth != null && datosUsuario().puedeEliminarAsignaciones == true;
     }
 
     // Catálogo de especialidades del liceo: dato de referencia (nombres),
