@@ -234,7 +234,7 @@ export default function FichaAsignacionPage() {
             {estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : "Estudiante no encontrado"} — {centro?.nombre ?? "Centro no encontrado"}
           </p>
         </div>
-        {usuario?.puedeEliminarAsignaciones && (
+        {usuario?.rol === "administrador" && (
           <button
             onClick={eliminarAsignacion}
             disabled={eliminando}
