@@ -40,12 +40,6 @@ export interface Usuario {
   descripcion?: string;
   actualizadoEn?: string;
   terminosAceptados?: AceptacionTerminos;
-  // Permiso puntual, ajeno a `rol`: quien lo tenga en `true` puede eliminar
-  // una Asignacion (acción irreversible) — a pedido explícito, reservado a
-  // una única cuenta, ni siquiera el resto de administrador/director/
-  // coordinador. Se activa a mano en el documento del usuario, no hay UI
-  // para asignarlo (evita que cualquier admin se lo otorgue a otro).
-  puedeEliminarAsignaciones?: boolean;
 }
 
 /** Registro de aceptación de los Términos, Condiciones y Política de
