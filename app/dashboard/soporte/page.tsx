@@ -19,7 +19,7 @@ export default function SoportePage() {
   const [editando, setEditando] = useState(false);
   const [guardando, setGuardando] = useState(false);
 
-  const puedeEditar = usuario?.rol === "administrador";
+  const puedeEditar = usuario?.rol === "desarrollador";
 
   useEffect(() => {
     if (usuario) cargar();

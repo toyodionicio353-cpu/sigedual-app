@@ -71,7 +71,7 @@ export async function GET(request: Request) {
     const estudiantes = estudiantesDocs.map((d) => ({ id: d.id, ...d.data } as Estudiante));
     const usuarios = usuariosDocs.map((d) => d.data as unknown as Usuario);
 
-    const administradores = usuarios.filter((u) => u.rol === "administrador");
+    const administradores = usuarios.filter((u) => u.rol === "desarrollador");
     const centroExisteMap = new Set(centros.map((c) => c.id));
 
     const limiteCooldown = new Date();

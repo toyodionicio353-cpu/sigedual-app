@@ -15,7 +15,7 @@ const ROLES: { value: Rol; label: string }[] = [
   { value: "centro_dual", label: "Centro Dual / Maestro Guía" },
   { value: "coordinador", label: "Coordinador" },
   { value: "director", label: "Director" },
-  { value: "administrador", label: "Administrador" },
+  { value: "desarrollador", label: "Desarrollador" },
 ];
 
 export default function RecuperarPasswordPage() {

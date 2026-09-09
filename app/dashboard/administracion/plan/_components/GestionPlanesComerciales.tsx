@@ -250,7 +250,7 @@ export default function GestionPlanesComerciales() {
   const [formulario, setFormulario] = useState<{ modo: "crear" } | { modo: "editar"; plan: PlanComercial } | null>(null);
   const [guardando, setGuardando] = useState(false);
 
-  if (!usuario || usuario.rol !== "administrador") {
+  if (!usuario || usuario.rol !== "desarrollador") {
     return (
       <div>
         <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-1">Planes SIGEDUAL</h2>

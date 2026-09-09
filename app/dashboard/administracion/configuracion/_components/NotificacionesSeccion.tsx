@@ -10,14 +10,14 @@ import type { NotificacionesCategorias } from "@/types/preferencias";
 import type { Rol } from "@/types";
 
 const CATEGORIAS: { key: keyof NotificacionesCategorias; label: string; roles: Rol[] }[] = [
-  { key: "mensajes", label: "Mensajes", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-  { key: "comentarios", label: "Comentarios", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-  { key: "evaluaciones", label: "Evaluaciones", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-  { key: "visitas", label: "Visitas", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"] },
-  { key: "bitacoras", label: "Bitácoras", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-  { key: "documentos", label: "Documentos", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-  { key: "asignaciones", label: "Asignaciones", roles: ["administrador", "coordinador", "director", "profesor"] },
-  { key: "alertasAdministrativas", label: "Alertas administrativas", roles: ["administrador", "coordinador", "director"] },
+  { key: "mensajes", label: "Mensajes", roles: ["desarrollador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+  { key: "comentarios", label: "Comentarios", roles: ["desarrollador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+  { key: "evaluaciones", label: "Evaluaciones", roles: ["desarrollador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+  { key: "visitas", label: "Visitas", roles: ["desarrollador", "coordinador", "director", "profesor", "centro_dual"] },
+  { key: "bitacoras", label: "Bitácoras", roles: ["desarrollador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+  { key: "documentos", label: "Documentos", roles: ["desarrollador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+  { key: "asignaciones", label: "Asignaciones", roles: ["desarrollador", "coordinador", "director", "profesor"] },
+  { key: "alertasAdministrativas", label: "Alertas administrativas", roles: ["desarrollador", "coordinador", "director"] },
 ];
 
 type EstadoPermiso = "no-soportado" | "pendiente" | "bloqueado" | "activado";

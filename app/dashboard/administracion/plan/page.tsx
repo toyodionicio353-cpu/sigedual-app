@@ -100,7 +100,7 @@ export default function PlanSigedualPage() {
   }, [usuario]);
 
   if (!usuario) return null;
-  if (!["administrador", "director"].includes(usuario.rol)) {
+  if (!["desarrollador", "director"].includes(usuario.rol)) {
     return (
       <div className="p-4 md:p-8">
         <p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p>
@@ -109,15 +109,15 @@ export default function PlanSigedualPage() {
   }
 
   return (
-    <div className={`p-4 md:p-8 ${usuario.rol === "administrador" ? "max-w-3xl" : "max-w-2xl"}`}>
+    <div className={`p-4 md:p-8 ${usuario.rol === "desarrollador" ? "max-w-3xl" : "max-w-2xl"}`}>
       <TituloPagina icon={<Package size={28} />} className="mb-1">Plan SIGEDUAL</TituloPagina>
       <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-6">
-        {usuario.rol === "administrador"
+        {usuario.rol === "desarrollador"
           ? "Administra los planes, precios y características comerciales de SIGEDUAL."
           : "Mi Plan — estado de la suscripción de tu institución en SIGEDUAL."}
       </p>
 
-      {usuario.rol === "administrador" ? (
+      {usuario.rol === "desarrollador" ? (
         <GestionPlanesComerciales />
       ) : (
         <MiPlan liceo={liceo} cargando={cargando} />

@@ -20,7 +20,7 @@ service cloud.firestore {
     // completo. Ver lib/permisos/ambito.ts (misma matriz, lado cliente).
     function esAccesoCompletoLiceo(liceoId) {
       return request.auth != null && (
-        datosUsuario().rol == 'administrador'
+        datosUsuario().rol == 'desarrollador'
         || ((datosUsuario().rol == 'director' || datosUsuario().rol == 'coordinador') && datosUsuario().liceoId == liceoId)
       );
     }
@@ -66,7 +66,7 @@ service cloud.firestore {
         || esAccesoCompletoLiceo(resource.data.liceoId)
         || (datosUsuario().liceoId == resource.data.liceoId && datosUsuario().rol == 'profesor')
         || resource.data.rol == 'profesor'
-        || resource.data.rol == 'administrador'
+        || resource.data.rol == 'desarrollador'
       );
       // Creación: el propio usuario (alta de cuenta, incluida la firma
       // de Firebase Auth que queda momentáneamente autenticada como el
@@ -74,14 +74,14 @@ service cloud.firestore {
       // ficha. Sin restricción de campos: el documento no existe todavía.
       allow create: if request.auth != null
         && (request.auth.uid == docId
-            || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador');
+            || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'desarrollador');
       // Edición: un administrador puede modificar cualquier cuenta (rol,
       // estado, especialidad, etc. — eso es Administración). El propio
       // usuario solo puede editar su perfil personal (Mi perfil) y NUNCA
       // su rol, estado de cuenta, liceo, correo, nombre o especialidad —
       // el frontend los bloquea, pero la regla es la que realmente protege.
       allow update: if request.auth != null && (
-        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador'
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'desarrollador'
         || (request.auth.uid == docId
             && !request.resource.data.diff(resource.data).affectedKeys()
                   .hasAny(['rol', 'activo', 'liceoId', 'email', 'nombre', 'especialidad', 'uid']))
@@ -103,7 +103,7 @@ service cloud.firestore {
     // leerlo. Nadie puede editar ni borrar un registro ya escrito.
     match /auditoria/{docId} {
       allow create: if request.auth != null;
-      allow read: if request.auth != null && datosUsuario().rol == 'administrador';
+      allow read: if request.auth != null && datosUsuario().rol == 'desarrollador';
       allow update, delete: if false;
     }
 
@@ -117,8 +117,8 @@ service cloud.firestore {
       // podría "extender" su prueba escribiendo esos campos directamente
       // desde la consola del navegador.
       allow write: if request.auth != null
-        && datosUsuario().rol in ['administrador', 'director']
-        && (datosUsuario().rol == 'administrador'
+        && datosUsuario().rol in ['desarrollador', 'director']
+        && (datosUsuario().rol == 'desarrollador'
             || (datosUsuario().liceoId == liceoId
                 && !request.resource.data.diff(resource.data).affectedKeys()
                       .hasAny(['esDemo', 'demoId', 'demoVenceEn', 'demoEstado', 'planEstado'])));
@@ -132,7 +132,7 @@ service cloud.firestore {
     // con privilegio de servidor (lib/firebase-admin.ts), igual que
     // invitaciones/campanias — nunca directamente desde el cliente.
     match /demos/{demoId} {
-      allow read, write: if request.auth != null && datosUsuario().rol == 'administrador';
+      allow read, write: if request.auth != null && datosUsuario().rol == 'desarrollador';
     }
 
     // Sección comercial "Planes SIGEDUAL": catálogo de precios/estados,
@@ -142,11 +142,11 @@ service cloud.firestore {
     // sensible de SIGEDUAL).
     match /planes_comerciales/{planId} {
       allow read: if true;
-      allow write: if request.auth != null && datosUsuario().rol == 'administrador';
+      allow write: if request.auth != null && datosUsuario().rol == 'desarrollador';
     }
     match /configuracion_comercial/{docId} {
       allow read: if true;
-      allow write: if request.auth != null && datosUsuario().rol == 'administrador';
+      allow write: if request.auth != null && datosUsuario().rol == 'desarrollador';
     }
 
     match /codigosAcceso/{liceoId} {
@@ -157,8 +157,8 @@ service cloud.firestore {
       // o renovar el código. Este código es para Profesor Supervisor y
       // Coordinador (staff con correo del dominio autorizado del liceo).
       allow write: if request.auth != null
-        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol in ['administrador', 'director']
-        && (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador'
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol in ['desarrollador', 'director']
+        && (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'desarrollador'
             || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.liceoId == liceoId);
     }
 
@@ -169,10 +169,10 @@ service cloud.firestore {
       allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
       allow read: if request.auth != null && (
         resource.data.uid == request.auth.uid
-        || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador'
+        || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'desarrollador'
       );
       allow update, delete: if request.auth != null
-        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador';
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'desarrollador';
     }
 
     match /soporte/{liceoId} {
@@ -180,7 +180,7 @@ service cloud.firestore {
       // Solo el administrador (dueño de la plataforma) puede editar el
       // contacto de soporte, ni siquiera el director.
       allow write: if request.auth != null
-        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador';
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'desarrollador';
     }
 
     match /contadores/{contadorId} {
@@ -191,19 +191,19 @@ service cloud.firestore {
       // Lectura: quien lo creó, o el administrador (nunca otros usuarios).
       allow read: if request.auth != null && (
         resource.data.creadoPor == request.auth.uid
-        || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador'
+        || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'desarrollador'
       );
       allow create: if request.auth != null && request.resource.data.creadoPor == request.auth.uid;
       // Cambios de estado/prioridad/asignación: solo el administrador.
       allow update, delete: if request.auth != null
-        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador';
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'desarrollador';
     }
 
     // Hilo público del ticket: visible/editable por su creador o el administrador.
     match /tickets/{ticketId}/mensajes/{msgId} {
       allow read, create: if request.auth != null && (
         get(/databases/$(database)/documents/tickets/$(ticketId)).data.creadoPor == request.auth.uid
-        || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador'
+        || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'desarrollador'
       );
       allow update, delete: if false;
     }
@@ -211,7 +211,7 @@ service cloud.firestore {
     // Notas internas: exclusivas del administrador, el creador del ticket nunca las ve.
     match /tickets/{ticketId}/notasInternas/{notaId} {
       allow read, write: if request.auth != null
-        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador';
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'desarrollador';
     }
 
     match /notificaciones/{notifId} {
@@ -238,7 +238,7 @@ service cloud.firestore {
         || (datosUsuario().rol == 'estudiante' && datosUsuario().estudianteId == id)
       );
       allow create: if request.auth != null && (
-        datosUsuario().rol == 'administrador'
+        datosUsuario().rol == 'desarrollador'
         || (datosUsuario().liceoId == request.resource.data.liceoId && datosUsuario().rol in ['director', 'coordinador', 'profesor'])
       );
       allow update: if request.auth != null && (
@@ -277,7 +277,7 @@ service cloud.firestore {
       );
       // Eliminar una asignación es irreversible (a diferencia de cancelarla
       // con un cambio de estado) — queda reservado al administrador.
-      allow delete: if request.auth != null && datosUsuario().rol == 'administrador';
+      allow delete: if request.auth != null && datosUsuario().rol == 'desarrollador';
     }
 
     // Catálogo de especialidades del liceo: dato de referencia (nombres),
@@ -291,11 +291,11 @@ service cloud.firestore {
         || datosUsuario().liceoId == resource.data.liceoId
       );
       allow create: if request.auth != null && (
-        datosUsuario().rol == 'administrador'
+        datosUsuario().rol == 'desarrollador'
         || (datosUsuario().liceoId == request.resource.data.liceoId && datosUsuario().rol in ['director', 'coordinador'])
       );
       allow update, delete: if request.auth != null && (
-        datosUsuario().rol == 'administrador'
+        datosUsuario().rol == 'desarrollador'
         || (datosUsuario().liceoId == resource.data.liceoId && datosUsuario().rol in ['director', 'coordinador'])
       );
     }
@@ -309,7 +309,7 @@ service cloud.firestore {
         || (datosUsuario().rol == 'estudiante' && tieneAutorizacion('centro', id))
       );
       allow create: if request.auth != null && (
-        datosUsuario().rol == 'administrador'
+        datosUsuario().rol == 'desarrollador'
         || (datosUsuario().liceoId == request.resource.data.liceoId && datosUsuario().rol in ['director', 'coordinador', 'profesor'])
       );
       allow update: if request.auth != null && (
@@ -332,7 +332,7 @@ service cloud.firestore {
         || (datosUsuario().rol == 'estudiante' && tieneAutorizacion('maestro', id))
       );
       allow create: if request.auth != null && (
-        datosUsuario().rol == 'administrador'
+        datosUsuario().rol == 'desarrollador'
         || (datosUsuario().liceoId == request.resource.data.liceoId && datosUsuario().rol in ['director', 'coordinador', 'profesor'])
       );
       allow update: if request.auth != null && (
@@ -559,7 +559,7 @@ service cloud.firestore {
       // Mismo criterio que la creación/edición de un centro dual: quien
       // puede escribir el centro puede mantener su entrada en el índice.
       allow write: if request.auth != null && (
-        datosUsuario().rol == 'administrador'
+        datosUsuario().rol == 'desarrollador'
         || (datosUsuario().liceoId == request.resource.data.liceoId && datosUsuario().rol in ['director', 'coordinador', 'profesor'])
       );
     }
@@ -593,7 +593,7 @@ service cloud.firestore {
     match /estudiantes_por_run/{runNormalizado} {
       allow read: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
       allow write: if request.auth != null && (
-        datosUsuario().rol == 'administrador'
+        datosUsuario().rol == 'desarrollador'
         || (datosUsuario().liceoId == request.resource.data.liceoId && datosUsuario().rol in ['director', 'coordinador', 'profesor'])
       );
     }

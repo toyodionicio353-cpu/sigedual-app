@@ -39,8 +39,8 @@ export default function EditarEstudiantePage() {
   const [cambiandoLiceo, setCambiandoLiceo] = useState(false);
   const [mensajeLiceo, setMensajeLiceo] = useState("");
 
-  const puedeEditar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
-  const esAdministrador = usuario?.rol === "administrador";
+  const puedeEditar = usuario?.rol === "desarrollador" || usuario?.rol === "profesor";
+  const esAdministrador = usuario?.rol === "desarrollador";
   const ambito = useAmbitoProfesor();
 
   useEffect(() => {

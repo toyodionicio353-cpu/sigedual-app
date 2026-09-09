@@ -31,7 +31,7 @@ export default function EditarCentroDualPage() {
   const [errorSistema, setErrorSistema] = useState("");
   const [mensaje, setMensaje] = useState("");
 
-  const puedeEditar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
+  const puedeEditar = usuario?.rol === "desarrollador" || usuario?.rol === "profesor";
 
   useEffect(() => {
     if (!usuario || !id || !puedeEditar) return;

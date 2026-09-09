@@ -47,8 +47,8 @@ export default function FichaProfesorPage() {
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [actualizando, setActualizando] = useState(false);
 
-  const tieneAccesoGlobal = usuario?.rol === "administrador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
-  const puedeGestionar = usuario?.rol === "administrador";
+  const tieneAccesoGlobal = usuario?.rol === "desarrollador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
+  const puedeGestionar = usuario?.rol === "desarrollador";
 
   useEffect(() => {
     if (!usuario || !uid) return;

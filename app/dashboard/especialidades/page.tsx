@@ -60,7 +60,7 @@ export default function EspecialidadesPage() {
   const [orden, setOrden] = useState("recomendado");
   const [vista, setVista] = useVistaListado("especialidades");
 
-  const puedeEditar = usuario?.rol === "administrador" && !modoGlobal;
+  const puedeEditar = usuario?.rol === "desarrollador" && !modoGlobal;
 
   async function cargar() {
     if (!usuario) return;
@@ -174,7 +174,7 @@ export default function EspecialidadesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [especialidades, estudiantes, centros]);
 
-  if (!["administrador", "coordinador", "director"].includes(usuario?.rol ?? "")) {
+  if (!["desarrollador", "coordinador", "director"].includes(usuario?.rol ?? "")) {
     return <div className="p-4 md:p-8"><p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p></div>;
   }
 

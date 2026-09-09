@@ -22,7 +22,7 @@ export default function AgregarEspecialidadPage() {
   const [errorSistema, setErrorSistema] = useState("");
   const [creada, setCreada] = useState<Especialidad | null>(null);
 
-  const puedeCrear = usuario?.rol === "administrador";
+  const puedeCrear = usuario?.rol === "desarrollador";
 
   async function guardar() {
     if (!usuario || guardando || !nombre.trim()) return;

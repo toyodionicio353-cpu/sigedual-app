@@ -136,7 +136,7 @@ export default function DetalleVisitaPage() {
 
   const puedeGestionar = Boolean(
     usuario && visita && (
-      usuario.rol === "administrador" || usuario.rol === "coordinador" || usuario.rol === "director"
+      usuario.rol === "desarrollador" || usuario.rol === "coordinador" || usuario.rol === "director"
       || usuario.uid === (visita.profesorSupervisorId ?? visita.profesorId)
     )
   );

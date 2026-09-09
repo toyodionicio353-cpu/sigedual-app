@@ -18,7 +18,7 @@ export default function DatosLiceoPage() {
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState("");
 
-  const puedeAcceder = usuario?.rol === "administrador" || usuario?.rol === "director";
+  const puedeAcceder = usuario?.rol === "desarrollador" || usuario?.rol === "director";
 
   useEffect(() => {
     if (!usuario || !puedeAcceder) return;

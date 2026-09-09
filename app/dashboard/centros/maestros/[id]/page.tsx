@@ -60,8 +60,8 @@ export default function FichaMaestroGuiaPage() {
   const [creandoAcceso, setCreandoAcceso] = useState(false);
   const [errorAcceso, setErrorAcceso] = useState("");
 
-  const puedeEditar = Boolean(usuario && (usuario.rol === "administrador" || usuario.rol === "profesor"));
-  const puedeEliminar = usuario?.rol === "administrador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
+  const puedeEditar = Boolean(usuario && (usuario.rol === "desarrollador" || usuario.rol === "profesor"));
+  const puedeEliminar = usuario?.rol === "desarrollador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
   const ambito = useAmbitoProfesor();
 
   useEffect(() => {

@@ -43,7 +43,7 @@ export default function AgregarProfesorPage() {
     });
   }, [usuario]);
 
-  if (usuario && usuario.rol !== "administrador") {
+  if (usuario && usuario.rol !== "desarrollador") {
     return (
       <div className="p-4 md:p-8">
         <p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p>

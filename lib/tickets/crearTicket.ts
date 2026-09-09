@@ -41,7 +41,7 @@ export async function crearTicket(datos: DatosTicket): Promise<{ id: string; num
     return siguiente;
   });
 
-  const snapAdmins = await getDocs(query(collection(db, "usuarios"), where("rol", "==", "administrador")));
+  const snapAdmins = await getDocs(query(collection(db, "usuarios"), where("rol", "==", "desarrollador")));
   await Promise.all(
     snapAdmins.docs.map((d) =>
       crearNotificacion({

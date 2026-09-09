@@ -31,7 +31,7 @@ export default function PromocionCursoPage() {
   const [confirmados, setConfirmados] = useState<Set<string>>(new Set());
   const [errorSistema, setErrorSistema] = useState("");
 
-  const puedeGestionar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
+  const puedeGestionar = usuario?.rol === "desarrollador" || usuario?.rol === "profesor";
   const ambito = useAmbitoProfesor();
 
   useEffect(() => {

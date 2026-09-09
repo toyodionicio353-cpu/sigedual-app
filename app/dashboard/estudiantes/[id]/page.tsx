@@ -183,7 +183,7 @@ export default function FichaEstudiantePage() {
   return (
     <div className="p-4 md:p-8 max-w-5xl">
       <div className="flex items-center justify-end gap-3 mb-6">
-        {(usuario?.rol === "administrador" || usuario?.rol === "profesor") && (
+        {(usuario?.rol === "desarrollador" || usuario?.rol === "profesor") && (
           <div className="flex gap-3">
             <button
               onClick={eliminar}
