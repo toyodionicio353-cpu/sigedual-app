@@ -139,7 +139,6 @@ const MENUS: NavGroup[] = [
     sub: [
       { href: "/dashboard/soporte", label: "Contacto", icon: <LifeBuoy size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
       { href: "/dashboard/soporte/tickets", label: "Mis tickets", icon: <ClipboardList size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
-      { href: "/dashboard/soporte/tickets/nuevo", label: "Crear ticket", icon: <UserPlus size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
       { href: "/dashboard/administracion/tickets", label: "Tickets", icon: <LifeBuoy size={16} strokeWidth={2.25} />, roles: ["administrador"] },
       { href: "/dashboard/administracion/privacidad", label: "Políticas", icon: <ScrollText size={16} strokeWidth={2.25} />, roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
     ],
