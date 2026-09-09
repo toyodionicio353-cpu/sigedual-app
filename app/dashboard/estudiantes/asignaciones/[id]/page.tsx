@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteField } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, deleteField } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearFecha } from "@/lib/fecha";
@@ -12,7 +12,7 @@ import { sincronizarAutorizacionesDeProfesor } from "@/lib/permisos/sincronizarA
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 import type { Asignacion, CentroDual, EstadoAsignacion, Especialidad, Estudiante, MaestroGuia, Usuario } from "@/types";
-import { ArrowLeft, CalendarCheck, ShieldAlert } from "lucide-react";
+import { ArrowLeft, CalendarCheck, ShieldAlert, Trash2 } from "lucide-react";
 
 const ESTADOS: EstadoAsignacion[] = ["pendiente", "en_proceso", "asignada", "activa", "finalizada", "cancelada"];
 
@@ -42,6 +42,7 @@ function Dato({ label, valor }: { label: string; valor: React.ReactNode }) {
 export default function FichaAsignacionPage() {
   const { id } = useParams<{ id: string }>();
   const { usuario } = useAuth();
+  const router = useRouter();
 
   const [asignacion, setAsignacion] = useState<Asignacion | null>(null);
   const [estudiante, setEstudiante] = useState<Estudiante | null>(null);
@@ -55,6 +56,7 @@ export default function FichaAsignacionPage() {
   const [denegada, setDenegada] = useState(false);
   const [actualizandoEstado, setActualizandoEstado] = useState(false);
   const [cambiandoProfesor, setCambiandoProfesor] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
 
   useEffect(() => {
     if (!usuario || !id) return;
@@ -167,6 +169,24 @@ export default function FichaAsignacionPage() {
     }
   }
 
+  async function eliminarAsignacion() {
+    if (!asignacion || eliminando) return;
+    if (!confirm("¿Eliminar esta asignación? Esta acción no se puede deshacer.")) return;
+    setEliminando(true);
+    try {
+      await deleteDoc(doc(db, "asignaciones", asignacion.id));
+      if (usuario) {
+        registrarEvento({
+          uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+          accion: "eliminar_asignacion", recurso: "asignaciones", recursoId: asignacion.id, resultado: "permitido",
+        });
+      }
+      router.push("/dashboard/estudiantes/asignaciones");
+    } finally {
+      setEliminando(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-4 md:p-8">
@@ -207,11 +227,24 @@ export default function FichaAsignacionPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-3xl">
-      <div className="mb-6">
-        <TituloPagina icon={<CalendarCheck size={28} />}>Ficha de asignación</TituloPagina>
-        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-          {estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : "Estudiante no encontrado"} — {centro?.nombre ?? "Centro no encontrado"}
-        </p>
+      <div className="flex items-start justify-between gap-3 mb-6">
+        <div>
+          <TituloPagina icon={<CalendarCheck size={28} />}>Ficha de asignación</TituloPagina>
+          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+            {estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : "Estudiante no encontrado"} — {centro?.nombre ?? "Centro no encontrado"}
+          </p>
+        </div>
+        {usuario?.puedeEliminarAsignaciones && (
+          <button
+            onClick={eliminarAsignacion}
+            disabled={eliminando}
+            style={{ background: "var(--danger)22", border: "1px solid var(--danger)", color: "var(--danger)" }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex-shrink-0"
+          >
+            <Trash2 size={16} />
+            {eliminando ? "Eliminando..." : "Eliminar asignación"}
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-3 mb-6">
