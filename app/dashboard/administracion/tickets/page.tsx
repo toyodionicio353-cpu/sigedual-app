@@ -25,7 +25,7 @@ export default function TicketsAdminPage() {
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroPrioridad, setFiltroPrioridad] = useState("");
 
-  const esAdmin = usuario?.rol === "administrador";
+  const esAdmin = usuario?.rol === "desarrollador";
 
   useEffect(() => {
     if (!usuario || !esAdmin) return;

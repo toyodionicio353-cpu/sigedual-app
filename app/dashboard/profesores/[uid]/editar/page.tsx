@@ -28,7 +28,7 @@ export default function EditarProfesorPage() {
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
 
-  const puedeEditar = usuario?.rol === "administrador";
+  const puedeEditar = usuario?.rol === "desarrollador";
 
   useEffect(() => {
     if (!usuario || !uid || !puedeEditar) return;

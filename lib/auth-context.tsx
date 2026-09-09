@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const snap = await getDoc(doc(db, "usuarios", firebaseUser.uid));
         const datosUsuario = snap.exists() ? (snap.data() as Usuario) : null;
         setUsuarioReal(datosUsuario);
-        if (datosUsuario?.rol === "administrador") {
+        if (datosUsuario?.rol === "desarrollador") {
           const guardado = sessionStorage.getItem(CLAVE_LICEO_ACTIVO);
           if (guardado) {
             try {
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const usuario: Usuario | null =
-    usuarioReal?.rol === "administrador" && liceoActivo
+    usuarioReal?.rol === "desarrollador" && liceoActivo
       ? { ...usuarioReal, liceoId: liceoActivo.id }
       : usuarioReal;
 

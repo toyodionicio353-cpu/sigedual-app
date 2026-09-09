@@ -53,7 +53,7 @@ export default function AsignacionesPage() {
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroLiceoId, setFiltroLiceoId] = useState("");
 
-  const puedeAgregar = usuario?.rol === "administrador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
+  const puedeAgregar = usuario?.rol === "desarrollador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
 
   useEffect(() => {
     if (!usuario) return;

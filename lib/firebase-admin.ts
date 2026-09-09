@@ -74,7 +74,7 @@ async function getAccessToken(): Promise<string> {
 
 /**
  * Verifica que la petición traiga un token de Firebase válido y que el
- * usuario correspondiente tenga rol "administrador". Lanza un Error con
+ * usuario correspondiente tenga rol "desarrollador". Lanza un Error con
  * el mensaje adecuado si no se cumple. Devuelve el uid del solicitante.
  */
 export async function requireAdmin(request: Request): Promise<string> {
@@ -99,7 +99,7 @@ export async function requireAdmin(request: Request): Promise<string> {
   );
   if (!docRes.ok) throw new Error("No autorizado: no se encontró tu ficha de usuario.");
   const doc = (await docRes.json()) as { fields?: { rol?: { stringValue?: string } } };
-  if (doc.fields?.rol?.stringValue !== "administrador") {
+  if (doc.fields?.rol?.stringValue !== "desarrollador") {
     throw new Error("No autorizado: se requiere rol de administrador.");
   }
   return uid;

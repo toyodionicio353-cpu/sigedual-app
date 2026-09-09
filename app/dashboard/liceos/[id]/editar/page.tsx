@@ -26,7 +26,7 @@ export default function EditarLiceoPage() {
   const [mensaje, setMensaje] = useState("");
   const [errorSistema, setErrorSistema] = useState("");
 
-  const puedeGestionar = usuario?.rol === "administrador";
+  const puedeGestionar = usuario?.rol === "desarrollador";
 
   async function cargar() {
     if (!id) return;

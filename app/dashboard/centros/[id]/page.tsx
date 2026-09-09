@@ -62,8 +62,8 @@ export default function FichaCentroDualPage() {
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [denegado, setDenegado] = useState(false);
 
-  const puedeEditar = Boolean(usuario && (usuario.rol === "administrador" || usuario.rol === "profesor"));
-  const puedeEliminar = usuario?.rol === "administrador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
+  const puedeEditar = Boolean(usuario && (usuario.rol === "desarrollador" || usuario.rol === "profesor"));
+  const puedeEliminar = usuario?.rol === "desarrollador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
   const ambito = useAmbitoProfesor();
 
   useEffect(() => {

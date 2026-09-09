@@ -68,7 +68,7 @@ export default function InvitacionEmpresaSeccion() {
   const [generandoCampania, setGenerandoCampania] = useState(false);
   const [enlaceCampaniaGenerado, setEnlaceCampaniaGenerado] = useState<string | null>(null);
 
-  const puedeGenerar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
+  const puedeGenerar = usuario?.rol === "desarrollador" || usuario?.rol === "profesor";
 
   async function cargar() {
     if (!usuario) return;

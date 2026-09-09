@@ -45,7 +45,7 @@ export default function AgendarVisitaPage() {
   const [agendada, setAgendada] = useState<Visita | null>(null);
 
   const esProfesor = usuario?.rol === "profesor";
-  const puedeAgregar = ["administrador", "coordinador", "director", "profesor"].includes(usuario?.rol ?? "");
+  const puedeAgregar = ["desarrollador", "coordinador", "director", "profesor"].includes(usuario?.rol ?? "");
   const ambito = useAmbitoProfesor();
 
   useEffect(() => {

@@ -100,7 +100,7 @@ export default function AccesoDemostracionSeccion() {
   const [cancelandoId, setCancelandoId] = useState<string | null>(null);
   const [confirmarCancelar, setConfirmarCancelar] = useState<string | null>(null);
 
-  if (!usuario || usuario.rol !== "administrador") {
+  if (!usuario || usuario.rol !== "desarrollador") {
     return (
       <div>
         <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-1">Acceso de Demostración</h2>

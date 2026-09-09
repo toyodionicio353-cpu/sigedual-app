@@ -69,7 +69,7 @@ export default function FichaLiceoPage() {
     cargar();
   }, [usuario, id]);
 
-  const puedeGestionar = usuario?.rol === "administrador";
+  const puedeGestionar = usuario?.rol === "desarrollador";
 
   if (!puedeGestionar && usuario) {
     return (

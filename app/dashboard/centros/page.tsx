@@ -66,7 +66,7 @@ export default function CentrosPage() {
   const [vista, setVista] = useVistaListado("centros");
   const [pagina, setPagina] = useState(1);
 
-  const puedeGestionar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
+  const puedeGestionar = usuario?.rol === "desarrollador" || usuario?.rol === "profesor";
 
   async function cargar() {
     if (!usuario) return;

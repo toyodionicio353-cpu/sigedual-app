@@ -26,7 +26,7 @@ export async function crearPlan(datos: DatosPlanFormulario, adminUid: string, ad
   };
   await setDoc(ref, plan);
   await registrarEvento({
-    uid: adminUid, nombre: adminNombre, rol: "administrador", liceoId: "plataforma",
+    uid: adminUid, nombre: adminNombre, rol: "desarrollador", liceoId: "plataforma",
     accion: "plan_comercial.crear", recurso: "planes_comerciales", recursoId: ref.id, resultado: "permitido",
     detalle: `Plan "${datos.nombre}" (${datos.periodicidad}) creado con precio ${datos.precio} y estado ${datos.estado}.`,
   });
@@ -44,7 +44,7 @@ export async function actualizarPlan(
   await updateDoc(ref, { ...datos, actualizadoEn: new Date().toISOString(), actualizadoPor: adminUid });
 
   await registrarEvento({
-    uid: adminUid, nombre: adminNombre, rol: "administrador", liceoId: "plataforma",
+    uid: adminUid, nombre: adminNombre, rol: "desarrollador", liceoId: "plataforma",
     accion: "plan_comercial.actualizar", recurso: "planes_comerciales", recursoId: planId, resultado: "permitido",
     detalle: anterior
       ? `Precio: ${anterior.precio} → ${datos.precio}. Estado: ${anterior.estado} → ${datos.estado}.`
@@ -58,7 +58,7 @@ export async function actualizarCaracteristicas(items: string[], adminUid: strin
     items, actualizadoEn: new Date().toISOString(), actualizadoPor: adminUid,
   });
   await registrarEvento({
-    uid: adminUid, nombre: adminNombre, rol: "administrador", liceoId: "plataforma",
+    uid: adminUid, nombre: adminNombre, rol: "desarrollador", liceoId: "plataforma",
     accion: "plan_comercial.actualizar_caracteristicas", recurso: "configuracion_comercial", recursoId: CARACTERISTICAS_DOC_ID,
     resultado: "permitido", detalle: `${items.length} características configuradas.`,
   });

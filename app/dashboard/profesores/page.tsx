@@ -67,8 +67,8 @@ export default function ProfesoresPage() {
   const [menuAbierto, setMenuAbierto] = useState<string | null>(null);
   const [actualizandoUid, setActualizandoUid] = useState<string | null>(null);
 
-  const tieneAccesoGlobal = usuario?.rol === "administrador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
-  const puedeGestionar = usuario?.rol === "administrador";
+  const tieneAccesoGlobal = usuario?.rol === "desarrollador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
+  const puedeGestionar = usuario?.rol === "desarrollador";
 
   async function cargar() {
     if (!usuario) return;

@@ -26,7 +26,7 @@ import type { Rol } from "@/types";
  * administrador) — no necesitan calcular un ámbito, ven todo lo que la
  * página ya filtra por liceoId (o sin filtro, en modo global admin). */
 export function esRolConAccesoCompletoLiceo(rol: Rol): boolean {
-  return rol === "administrador" || rol === "coordinador" || rol === "director";
+  return rol === "desarrollador" || rol === "coordinador" || rol === "director";
 }
 
 /** true solo para el rol cuyo acceso debe calcularse a partir de su ámbito

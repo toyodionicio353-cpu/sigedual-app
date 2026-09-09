@@ -392,7 +392,7 @@ export default function NuevaAsignacionPage() {
     }
   }
 
-  const puedeCrear = usuario?.rol === "administrador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
+  const puedeCrear = usuario?.rol === "desarrollador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
   if (usuario && !puedeCrear) {
     return (
       <div className="p-4 md:p-8">

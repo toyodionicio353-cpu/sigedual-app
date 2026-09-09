@@ -21,7 +21,7 @@ import { ArrowLeft, LifeBuoy, Lock, Send, ShieldAlert } from "lucide-react";
 export default function DetalleTicketPage() {
   const { id } = useParams<{ id: string }>();
   const { usuario } = useAuth();
-  const esAdmin = usuario?.rol === "administrador";
+  const esAdmin = usuario?.rol === "desarrollador";
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -69,7 +69,7 @@ export default function DetalleTicketPage() {
 
   useEffect(() => {
     if (!esAdmin) return;
-    getDocs(query(collection(db, "usuarios"), where("rol", "==", "administrador"))).then((snap) => {
+    getDocs(query(collection(db, "usuarios"), where("rol", "==", "desarrollador"))).then((snap) => {
       setAdministradores(snap.docs.map((d) => d.data() as Usuario));
     });
   }, [esAdmin]);

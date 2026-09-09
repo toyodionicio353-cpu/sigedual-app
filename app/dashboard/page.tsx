@@ -48,7 +48,7 @@ export default function DashboardPage() {
   const modoGlobal = useModoGlobalAdmin();
   const { liceos } = useCatalogoLiceos(modoGlobal);
   const liceoNombrePorId = useMemo(() => Object.fromEntries(liceos.map((l) => [l.id, l.nombre])), [liceos]);
-  const esAdmin = usuario?.rol === "administrador";
+  const esAdmin = usuario?.rol === "desarrollador";
   const ambito = useAmbitoProfesor();
   const ambitoMaestroGuia = useAmbitoMaestroGuia();
   const ambitoEstudiante = useAmbitoEstudiante();
@@ -182,7 +182,7 @@ export default function DashboardPage() {
       setAsignaciones(snapAsig.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion)));
       setVisitas(snapVisitas.docs.map((d) => ({ id: d.id, ...d.data() } as Visita)));
 
-      if (usuario!.rol === "administrador") {
+      if (usuario!.rol === "desarrollador") {
         const snapTickets = await getDocs(collection(db, "tickets"));
         setTickets(snapTickets.docs.map((d) => ({ id: d.id, ...d.data() } as Ticket)));
       } else {
@@ -218,32 +218,32 @@ export default function DashboardPage() {
     {
       id: "estudiantes", label: "Estudiantes", principal: estudiantes.length,
       secundaria: `${estudiantesActivos.length} activos`, icon: <Users size={20} />,
-      href: "/dashboard/estudiantes", roles: ["administrador", "coordinador", "director", "profesor"],
+      href: "/dashboard/estudiantes", roles: ["desarrollador", "coordinador", "director", "profesor"],
     },
     {
       id: "centros", label: "Empresas Duales", principal: centros.length,
       secundaria: `${centrosActivos.length} activas`, icon: <Building2 size={20} />,
-      href: "/dashboard/centros", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"],
+      href: "/dashboard/centros", roles: ["desarrollador", "coordinador", "director", "profesor", "centro_dual"],
     },
     {
       id: "profesores", label: "Profesores Supervisores", principal: profesores.length,
       secundaria: `${profesores.filter((p) => p.activo).length} activos`, icon: <BookOpen size={20} />,
-      href: "/dashboard/profesores", roles: ["administrador", "coordinador", "director"],
+      href: "/dashboard/profesores", roles: ["desarrollador", "coordinador", "director"],
     },
     {
       id: "maestros", label: "Maestros Guía", principal: maestros.length,
       secundaria: `${maestros.filter((m) => m.estado === "activo").length} activos`, icon: <UsersRound size={20} />,
-      href: "/dashboard/centros/maestros", roles: ["administrador", "coordinador", "director", "profesor"],
+      href: "/dashboard/centros/maestros", roles: ["desarrollador", "coordinador", "director", "profesor"],
     },
     {
       id: "asignaciones", label: "Asignaciones Duales", principal: asignacionesActivas.length,
       secundaria: `${estudiantesSinAsignacion.length} sin asignar`, icon: <CalendarCheck size={20} />,
-      href: "/dashboard/estudiantes/asignaciones", roles: ["administrador", "coordinador", "director", "profesor"],
+      href: "/dashboard/estudiantes/asignaciones", roles: ["desarrollador", "coordinador", "director", "profesor"],
     },
     {
       id: "visitas", label: "Visitas", principal: visitasProximas.length,
       secundaria: `${visitasAtrasadas.length} pendientes`, icon: <MapPin size={20} />,
-      href: "/dashboard/visitas", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual"],
+      href: "/dashboard/visitas", roles: ["desarrollador", "coordinador", "director", "profesor", "centro_dual"],
     },
   ];
 
@@ -253,13 +253,13 @@ export default function DashboardPage() {
   );
 
   const acciones = [
-    { label: "Agregar estudiante", icon: <UserPlus size={15} />, href: "/dashboard/estudiantes/nuevo", roles: ["administrador", "profesor"] as Rol[] },
-    { label: "Agregar empresa dual", icon: <Building size={15} />, href: "/dashboard/centros/nuevo", roles: ["administrador", "profesor"] as Rol[] },
-    { label: "Agregar profesor", icon: <BookOpen size={15} />, href: "/dashboard/profesores/nuevo", roles: ["administrador"] as Rol[] },
-    { label: "Agregar maestro guía", icon: <UsersRound size={15} />, href: "/dashboard/centros/maestros/nuevo", roles: ["administrador", "profesor"] as Rol[] },
-    { label: "Crear asignación", icon: <CalendarCheck size={15} />, href: "/dashboard/estudiantes/asignaciones/nueva", roles: ["administrador", "coordinador", "director", "profesor"] as Rol[] },
-    { label: "Registrar visita", icon: <MapPin size={15} />, href: "/dashboard/visitas/nueva", roles: ["administrador", "coordinador", "director", "profesor"] as Rol[] },
-    { label: "Crear documento", icon: <FileText size={15} />, href: "/dashboard/documentos/documentos", roles: ["administrador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] as Rol[] },
+    { label: "Agregar estudiante", icon: <UserPlus size={15} />, href: "/dashboard/estudiantes/nuevo", roles: ["desarrollador", "profesor"] as Rol[] },
+    { label: "Agregar empresa dual", icon: <Building size={15} />, href: "/dashboard/centros/nuevo", roles: ["desarrollador", "profesor"] as Rol[] },
+    { label: "Agregar profesor", icon: <BookOpen size={15} />, href: "/dashboard/profesores/nuevo", roles: ["desarrollador"] as Rol[] },
+    { label: "Agregar maestro guía", icon: <UsersRound size={15} />, href: "/dashboard/centros/maestros/nuevo", roles: ["desarrollador", "profesor"] as Rol[] },
+    { label: "Crear asignación", icon: <CalendarCheck size={15} />, href: "/dashboard/estudiantes/asignaciones/nueva", roles: ["desarrollador", "coordinador", "director", "profesor"] as Rol[] },
+    { label: "Registrar visita", icon: <MapPin size={15} />, href: "/dashboard/visitas/nueva", roles: ["desarrollador", "coordinador", "director", "profesor"] as Rol[] },
+    { label: "Crear documento", icon: <FileText size={15} />, href: "/dashboard/documentos/documentos", roles: ["desarrollador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] as Rol[] },
   ];
   const accionesVisibles = acciones.filter((a) => usuario && a.roles.includes(usuario.rol));
 

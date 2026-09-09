@@ -89,7 +89,7 @@ export default function EstudiantesPage() {
   const [orden, setOrden] = useState("nombre-asc");
   const [pagina, setPagina] = useState(1);
 
-  const puedeAgregar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
+  const puedeAgregar = usuario?.rol === "desarrollador" || usuario?.rol === "profesor";
 
   useEffect(() => {
     if (!usuario) return;

@@ -27,7 +27,7 @@ export default function SeguridadPage() {
   const [copiado, setCopiado] = useState(false);
   const [mensaje, setMensaje] = useState("");
 
-  const puedeAcceder = usuario?.rol === "administrador" || usuario?.rol === "director";
+  const puedeAcceder = usuario?.rol === "desarrollador" || usuario?.rol === "director";
 
   useEffect(() => {
     if (usuario && puedeAcceder) cargar();

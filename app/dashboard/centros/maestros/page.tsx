@@ -75,7 +75,7 @@ export default function ListaMaestrosGuiaPage() {
   const [orden, setOrden] = useState("recomendado");
   const [vista, setVista] = useVistaListado("maestros-guia");
 
-  const puedeAgregar = usuario?.rol === "administrador" || usuario?.rol === "profesor";
+  const puedeAgregar = usuario?.rol === "desarrollador" || usuario?.rol === "profesor";
 
   async function cargar() {
     if (!usuario) return;

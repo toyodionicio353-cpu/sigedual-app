@@ -13,7 +13,7 @@ import type { Usuario, Conversacion, MensajeConversacion } from "@/types";
 
 export default function MensajesPage() {
   const { usuario } = useAuth();
-  const puedeUsar = usuario?.rol === "administrador";
+  const puedeUsar = usuario?.rol === "desarrollador";
   const { preferencias } = usePreferencias();
   const [conversaciones, setConversaciones] = useState<Conversacion[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);

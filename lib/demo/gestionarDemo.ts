@@ -23,7 +23,7 @@ export async function generarDemo(params: { administradorUid: string; administra
   };
   await setDoc(doc(db, "demos", token), demo);
   await registrarEvento({
-    uid: params.administradorUid, nombre: params.administradorNombre, rol: "administrador",
+    uid: params.administradorUid, nombre: params.administradorNombre, rol: "desarrollador",
     liceoId: "plataforma", accion: "demo.generar", recurso: "demos", recursoId: token, resultado: "permitido",
   });
   return demo;
@@ -38,7 +38,7 @@ export async function cancelarDemo(params: {
     estado: "cancelada", canceladoEn: ahora, canceladoPor: params.administradorUid,
   });
   await registrarEvento({
-    uid: params.administradorUid, nombre: params.administradorNombre, rol: "administrador",
+    uid: params.administradorUid, nombre: params.administradorNombre, rol: "desarrollador",
     liceoId: "plataforma", accion: "demo.cancelar", recurso: "demos", recursoId: params.demoId, resultado: "permitido",
   });
 }

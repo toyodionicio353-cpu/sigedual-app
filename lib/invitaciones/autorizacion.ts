@@ -17,7 +17,7 @@ export async function verificarAccesoInvitacion(
   const usuarioDoc = await getDocument(`usuarios/${uid}`);
   const rol = usuarioDoc?.data.rol as Rol | undefined;
   const liceoIdUsuario = usuarioDoc?.data.liceoId as string | undefined;
-  if (rol === "administrador") return true;
+  if (rol === "desarrollador") return true;
   if ((rol === "director" || rol === "coordinador") && liceoIdUsuario === invitacion.liceoId) return true;
   return false;
 }

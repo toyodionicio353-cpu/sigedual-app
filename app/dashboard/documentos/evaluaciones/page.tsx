@@ -29,7 +29,7 @@ export default function EvaluacionesPage() {
   const esProfesor = usuario?.rol === "profesor";
   const esCentroDual = usuario?.rol === "centro_dual";
   const esEstudiante = usuario?.rol === "estudiante";
-  const esAdmin = usuario?.rol === "administrador";
+  const esAdmin = usuario?.rol === "desarrollador";
   const puedeEnviar = esProfesor || esAdmin;
   const cargandoAmbito = (esProfesor && ambitoProfesor.cargando) || (esCentroDual && ambitoMaestroGuia.cargando);
 

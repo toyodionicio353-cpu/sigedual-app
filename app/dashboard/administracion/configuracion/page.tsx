@@ -31,7 +31,7 @@ export default function ConfiguracionPage() {
   const { restablecer } = usePreferencias();
   const avisar = useFeedback();
   const CATEGORIAS = useMemo(
-    () => (usuario?.rol === "administrador" ? [...CATEGORIAS_BASE, CATEGORIA_DEMO] : CATEGORIAS_BASE),
+    () => (usuario?.rol === "desarrollador" ? [...CATEGORIAS_BASE, CATEGORIA_DEMO] : CATEGORIAS_BASE),
     [usuario?.rol]
   );
   const [categoriaActiva, setCategoriaActiva] = useState<CategoriaConfig>("apariencia");

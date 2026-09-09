@@ -63,7 +63,7 @@ export default function VisitasPage() {
   const [filtroLiceoId, setFiltroLiceoId] = useState("");
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
-  const puedeAgregar = ["administrador", "coordinador", "director", "profesor"].includes(usuario?.rol ?? "");
+  const puedeAgregar = ["desarrollador", "coordinador", "director", "profesor"].includes(usuario?.rol ?? "");
 
   async function cargar() {
     if (!usuario) return;

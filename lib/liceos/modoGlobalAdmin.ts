@@ -11,7 +11,7 @@ import type { Liceo } from "@/types";
  * combinada, con un filtro para acotar a uno en particular. */
 export function useModoGlobalAdmin(): boolean {
   const { usuarioReal, liceoActivo } = useAuth();
-  return usuarioReal?.rol === "administrador" && !liceoActivo;
+  return usuarioReal?.rol === "desarrollador" && !liceoActivo;
 }
 
 /** Catálogo de liceos (id -> Liceo), cargado solo cuando el modo global está

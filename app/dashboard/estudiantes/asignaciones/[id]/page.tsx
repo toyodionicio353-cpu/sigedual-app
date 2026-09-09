@@ -106,7 +106,7 @@ export default function FichaAsignacionPage() {
   }, [usuario, id]);
 
   const puedeEditar = Boolean(usuario && (
-    usuario.rol === "administrador" || usuario.rol === "coordinador" || usuario.rol === "director"
+    usuario.rol === "desarrollador" || usuario.rol === "coordinador" || usuario.rol === "director"
     || (usuario.rol === "profesor" && asignacion?.profesorSupervisorId === usuario.uid)
   ));
 
@@ -234,7 +234,7 @@ export default function FichaAsignacionPage() {
             {estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : "Estudiante no encontrado"} — {centro?.nombre ?? "Centro no encontrado"}
           </p>
         </div>
-        {usuario?.rol === "administrador" && (
+        {usuario?.rol === "desarrollador" && (
           <button
             onClick={eliminarAsignacion}
             disabled={eliminando}

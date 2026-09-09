@@ -117,7 +117,7 @@ export default function UsuariosPage() {
   }
 
   useEffect(() => {
-    if (usuario?.rol === "administrador") {
+    if (usuario?.rol === "desarrollador") {
       cargar().then(() => sincronizar(true));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -191,7 +191,7 @@ export default function UsuariosPage() {
     }
   }
 
-  if (usuario?.rol !== "administrador") {
+  if (usuario?.rol !== "desarrollador") {
     return (
       <div className="p-4 md:p-8">
         <p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p>
@@ -200,7 +200,7 @@ export default function UsuariosPage() {
   }
 
   const ROL_LABEL: Record<Rol, string> = {
-    administrador: "Administrador", coordinador: "Coordinador", director: "Director",
+    desarrollador: "Desarrollador", coordinador: "Coordinador", director: "Director",
     profesor: "Profesor Supervisor", centro_dual: "Centro Dual", estudiante: "Estudiante",
   };
 

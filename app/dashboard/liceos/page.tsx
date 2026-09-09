@@ -43,7 +43,7 @@ export default function LiceosPage() {
   const [eliminando, setEliminando] = useState<string | null>(null);
   const [errorEliminar, setErrorEliminar] = useState("");
 
-  const puedeGestionar = usuario?.rol === "administrador";
+  const puedeGestionar = usuario?.rol === "desarrollador";
 
   useEffect(() => {
     if (usuario && puedeGestionar) cargar();

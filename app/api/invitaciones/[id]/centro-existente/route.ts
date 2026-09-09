@@ -30,7 +30,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const liceoIdUsuario = usuarioDoc?.data.liceoId as string | undefined;
     const autorizado =
       datosInvitacion.profesorUid === uid ||
-      rol === "administrador" ||
+      rol === "desarrollador" ||
       ((rol === "director" || rol === "coordinador") && liceoIdUsuario === datosInvitacion.liceoId);
     if (!autorizado) {
       return NextResponse.json({ error: "No autorizado para revisar esta invitación." }, { status: 403 });

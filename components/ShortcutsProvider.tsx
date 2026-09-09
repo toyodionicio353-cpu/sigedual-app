@@ -66,7 +66,7 @@ export default function ShortcutsProvider() {
         m: "/dashboard/mensajes", s: "/dashboard/soporte",
       };
       const tecla = e.key.toLowerCase();
-      if (tecla === "m" && usuario?.rol !== "administrador") return;
+      if (tecla === "m" && usuario?.rol !== "desarrollador") return;
       const destino = destinos[tecla];
       if (destino) router.push(destino);
     }
