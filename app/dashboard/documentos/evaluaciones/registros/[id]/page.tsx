@@ -11,7 +11,7 @@ import { NIVELES_LOGRO } from "@/lib/evaluaciones/tipos";
 import type { Evaluacion, Estudiante, CentroDual, MaestroGuia, NivelLogro } from "@/types";
 import TituloPagina from "@/components/TituloPagina";
 import LeyendaNiveles from "@/components/evaluaciones/LeyendaNiveles";
-import { ArrowLeft, ClipboardCheck, AlertCircle, Trash2 } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, AlertCircle, Trash2, Printer, FileDown } from "lucide-react";
 
 function NivelesConValor({ valor }: { valor?: NivelLogro }) {
   return (
@@ -116,7 +116,14 @@ export default function RegistroEvaluacionPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-3xl">
-      <div className="mb-6 flex items-start justify-between gap-3">
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #evaluacion-imprimible, #evaluacion-imprimible * { visibility: visible; }
+          #evaluacion-imprimible { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+      `}</style>
+      <div className="mb-6 flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <Link href="/dashboard/documentos/evaluaciones" style={{ color: "var(--text-muted)" }}>
             <ArrowLeft size={20} />
@@ -128,20 +135,39 @@ export default function RegistroEvaluacionPage() {
             </p>
           </div>
         </div>
-        {usuario?.rol === "desarrollador" && (
+        <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
           <button
-            onClick={eliminarEvaluacion}
-            disabled={eliminando}
-            style={{ background: "var(--danger)22", border: "1px solid var(--danger)", color: "var(--danger)" }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex-shrink-0"
+            onClick={() => window.print()}
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
           >
-            <Trash2 size={16} />
-            {eliminando ? "Eliminando..." : "Eliminar evaluación"}
+            <Printer size={16} />
+            Imprimir
           </button>
-        )}
+          <button
+            onClick={() => window.print()}
+            title="Se abre el diálogo de impresión: elige 'Guardar como PDF' como destino."
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            <FileDown size={16} />
+            Exportar PDF
+          </button>
+          {usuario?.rol === "desarrollador" && (
+            <button
+              onClick={eliminarEvaluacion}
+              disabled={eliminando}
+              style={{ background: "var(--danger)22", border: "1px solid var(--danger)", color: "var(--danger)" }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              <Trash2 size={16} />
+              {eliminando ? "Eliminando..." : "Eliminar evaluación"}
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-col gap-5">
+      <div id="evaluacion-imprimible" className="flex flex-col gap-5">
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="rounded-2xl p-5">
           {plantilla && <p style={{ color: "var(--text-muted)" }} className="text-[11px] font-semibold uppercase tracking-wide mb-2">{plantilla.titulo}</p>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
