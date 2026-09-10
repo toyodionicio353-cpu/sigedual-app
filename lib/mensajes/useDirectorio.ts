@@ -16,6 +16,18 @@ interface Directorio {
 }
 
 /**
+ * El id del documento en `usuarios` ES el uid de la cuenta en Firebase Auth
+ * (así se crean en /crear-cuenta, en Usuarios y en el acceso de demo), y es
+ * contra ese uid que se resuelven la sesión y las reglas. El campo `uid` de
+ * adentro del documento es una copia que puede faltar o quedar mal escrita
+ * en una cuenta creada a mano — si se usara esa copia, el mensaje viajaría a
+ * un destinatario que no existe y no lo recibiría nadie. Manda el id.
+ */
+function conUidDelDocumento<T extends Usuario & { id: string }>(doc: T): T {
+  return { ...doc, uid: doc.id };
+}
+
+/**
  * A quién puede escribirle cada usuario. NO es "todo el liceo": se calcula
  * con la misma matriz de autorización del resto de SIGEDUAL (ver
  * lib/permisos/ambito.ts), porque poder mandar un mensaje ya revela que esa
@@ -81,12 +93,15 @@ export function useDirectorioMensajes(): Directorio {
         if (esExterno) {
           if (ambitoExterno.cargando) return;
           const uids = uidsSupervisores ? uidsSupervisores.split(",") : [];
-          // El id del documento en `usuarios` ES el uid de la cuenta.
           const supervisores = uids.length > 0
             ? await obtenerDocumentosPorId<Usuario & { id: string }>("usuarios", uids)
             : [];
           if (cancelado) return;
-          setContactos(supervisores.filter((u) => u.uid !== usuario.uid && u.activo !== false));
+          setContactos(
+            supervisores
+              .map(conUidDelDocumento)
+              .filter((u) => u.uid !== usuario.uid && u.activo !== false)
+          );
           setCargando(false);
           return;
         }
@@ -96,7 +111,7 @@ export function useDirectorioMensajes(): Directorio {
         const snap = await getDocs(query(collection(db, "usuarios"), where("liceoId", "==", usuario.liceoId)));
         if (cancelado) return;
         const delLiceo = snap.docs
-          .map((d) => d.data() as Usuario)
+          .map((d) => conUidDelDocumento({ ...(d.data() as Usuario), id: d.id }))
           .filter((u) => u.uid !== usuario.uid && u.activo !== false);
 
         if (esRolConAccesoCompletoLiceo(rol)) {
