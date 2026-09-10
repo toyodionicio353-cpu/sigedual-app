@@ -17,7 +17,7 @@ import type {
 import Select from "@/components/ui/Select";
 import TituloPagina from "@/components/TituloPagina";
 import {
-  ArrowLeft, MapPin, AlertCircle, PlayCircle, CheckCircle2, Plus, Trash2, Ban, RotateCcw, Lock,
+  ArrowLeft, MapPin, AlertCircle, PlayCircle, CheckCircle2, Plus, Trash2, Ban, RotateCcw, Lock, Printer, FileDown,
 } from "lucide-react";
 
 const inputStyle = { background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" };
@@ -315,6 +315,13 @@ export default function DetalleVisitaPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-3xl">
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #visita-imprimible, #visita-imprimible * { visibility: visible; }
+          #visita-imprimible { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+      `}</style>
       <div className="mb-6 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <Link href="/dashboard/visitas" style={{ color: "var(--text-muted)" }}>
@@ -325,10 +332,27 @@ export default function DetalleVisitaPage() {
             <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{centro?.nombre}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-wrap flex-shrink-0 justify-end">
           <span style={{ color: ESTADO_VISITA_COLOR[estado], background: `${ESTADO_VISITA_COLOR[estado]}22` }} className="text-xs px-3 py-1.5 rounded-full font-semibold">
             {ESTADO_VISITA_LABEL[estado]}
           </span>
+          <button
+            onClick={() => window.print()}
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            <Printer size={16} />
+            Imprimir
+          </button>
+          <button
+            onClick={() => window.print()}
+            title="Se abre el diálogo de impresión: elige 'Guardar como PDF' como destino."
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            <FileDown size={16} />
+            Exportar PDF
+          </button>
           {usuario?.rol === "desarrollador" && (
             <button
               onClick={eliminarVisita}
@@ -342,6 +366,8 @@ export default function DetalleVisitaPage() {
           )}
         </div>
       </div>
+
+      <div id="visita-imprimible">
 
       {error && (
         <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-4 py-3 mb-6">
@@ -549,6 +575,7 @@ export default function DetalleVisitaPage() {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
