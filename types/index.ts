@@ -402,6 +402,15 @@ export interface CentroDual {
   /** uid de quien creó el registro. Poblado desde esta fecha en adelante;
    * los centros creados antes no lo tienen. */
   creadoPor?: string;
+  /** Ubicación en el mapa. Opcional a propósito: los centros creados antes
+   * del Mapa Dual no la tienen y se muestran como "ubicación pendiente" en
+   * vez de inventarles un punto. Solo se guardan si el par completo es
+   * válido y cae dentro de Chile (ver lib/mapa/geo.ts). */
+  latitud?: number;
+  longitud?: number;
+  /** Cuándo se fijó la ubicación, para distinguir un centro sin ubicar de
+   * uno ubicado hace tiempo cuya dirección pudo cambiar. */
+  ubicacionActualizadaEn?: string;
 }
 
 export type EstadoAsignacion =
@@ -438,6 +447,62 @@ export interface Asignacion {
   maestroGuiaId?: string;
   observaciones?: string;
   compatibilidad: Compatibilidad;
+  creadoPor: string;
+  creadoEn: string;
+  actualizadoEn?: string;
+}
+
+/**
+ * Estado registrado de una Práctica Profesional. "proxima_a_finalizar" NO
+ * es un estado guardado: se deriva de `fechaTermino` contra la fecha actual
+ * (igual que el período de prueba de un Centro Dual se deriva de su
+ * `creadoEn`), porque un estado escrito a mano quedaría desactualizado solo
+ * por pasar el tiempo. Ver lib/mapa/estados.ts.
+ */
+export type EstadoPracticaProfesional = "activa" | "finalizada" | "requiere_atencion";
+
+/**
+ * Práctica Profesional: el período que un estudiante realiza DESPUÉS de su
+ * proceso de Formación Dual. A diferencia de un Centro Dual, no está atada
+ * al territorio de operación del liceo — puede registrarse en cualquier
+ * comuna y región de Chile — pero sí pertenece a un liceo, a un estudiante
+ * y a una especialidad, que son los ejes por los que se filtra el acceso
+ * (mismo criterio que el resto de SIGEDUAL, ver lib/permisos/ambito.ts).
+ */
+export interface PracticaProfesional {
+  id: string;
+  liceoId: string;
+  estudianteId: string;
+  /** Se denormaliza desde el Estudiante para que las reglas de Firestore
+   * puedan compartirla entre profesores de la misma especialidad sin un
+   * get() adicional (igual que Estudiante.especialidadId). */
+  especialidadId: string;
+  /** Empresa o institución donde se realiza la práctica. No es un Centro
+   * Dual: una práctica puede ocurrir en un lugar que SIGEDUAL no gestiona. */
+  lugarNombre: string;
+  lugarRut?: string;
+  direccion: string;
+  comuna: string;
+  region: string;
+  contactoNombre?: string;
+  contactoCargo?: string;
+  contactoTelefono?: string;
+  contactoEmail?: string;
+  fechaInicio: string;
+  fechaTermino: string;
+  horasComprometidas?: number;
+  estado: EstadoPracticaProfesional;
+  /** Motivo cuando estado === "requiere_atencion" — sin esto el estado no
+   * le dice nada a quien lo lee en el mapa. */
+  motivoAtencion?: string;
+  profesorSupervisorId?: string;
+  observaciones?: string;
+  /** Ubicación en el mapa. Opcional: una práctica sin coordenadas válidas
+   * se lista como "ubicación pendiente" en vez de recibir un pin inventado.
+   * Debe caer dentro de Chile (ver lib/mapa/geo.ts). */
+  latitud?: number;
+  longitud?: number;
+  ubicacionActualizadaEn?: string;
   creadoPor: string;
   creadoEn: string;
   actualizadoEn?: string;

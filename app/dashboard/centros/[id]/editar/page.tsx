@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { normalizarRut } from "@/lib/rut";
 import CentroDualForm, { type CentroDualFormValues } from "../../_components/CentroDualForm";
 import type { CentroDual, Especialidad } from "@/types";
+import { puntoValido } from "@/lib/mapa/geo";
 import { ArrowLeft, Pencil } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import { sincronizarIndiceRutCentro } from "@/lib/invitaciones/indiceRut";
@@ -58,6 +59,8 @@ export default function EditarCentroDualPage() {
         contactoTelefono: c.contactoTelefono ?? "", contactoEmail: c.contactoEmail ?? "",
         capacidad: c.capacidad != null ? String(c.capacidad) : (c.cuposDisponibles != null ? String(c.cuposDisponibles) : ""),
         estado: c.estado ?? (c.activo === false ? "inactivo" : "activo"),
+        latitud: c.latitud,
+        longitud: c.longitud,
       });
       setEspecialidadesSel(c.especialidades ?? []);
       setAreasSel(c.areasDesempeno ?? []);
@@ -114,6 +117,16 @@ export default function EditarCentroDualPage() {
         // Firestore rechaza `undefined` como valor de campo — para borrar
         // la capacidad (volverla "sin límite") hay que eliminar el campo.
         capacidad: form.capacidad.trim() ? Number(form.capacidad) : deleteField(),
+        // La ubicación va completa o se borra: dejar media coordenada
+        // guardada pondría un pin equivocado en el Mapa Dual. Al quitarla,
+        // el centro vuelve a "ubicación pendiente".
+        ...(puntoValido(form.latitud, form.longitud)
+          ? {
+              latitud: form.latitud as number,
+              longitud: form.longitud as number,
+              ubicacionActualizadaEn: new Date().toISOString(),
+            }
+          : { latitud: deleteField(), longitud: deleteField(), ubicacionActualizadaEn: deleteField() }),
         estado: form.estado,
         activo: form.estado === "activo",
         actualizadoEn: new Date().toISOString(),

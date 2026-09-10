@@ -8,6 +8,7 @@ import { formatearRut, normalizarRut, validarRut, validarEmail, validarTelefonoC
 import { AMBIENTES_CENTRO, HABILIDADES, AREAS_DESEMPENO } from "@/lib/caracteristicas";
 import { REGIONES } from "@/app/dashboard/liceos/_components/LiceoForm";
 import Select from "@/components/ui/Select";
+import SelectorUbicacion from "@/components/mapa/SelectorUbicacion";
 import type { Especialidad, TipoCentroDual, EstadoCentroDual } from "@/types";
 
 export const TIPOS_CENTRO: { value: TipoCentroDual; label: string }[] = [
@@ -42,6 +43,11 @@ export interface CentroDualFormValues {
   contactoEmail: string;
   capacidad: string;
   estado: EstadoCentroDual;
+  /** Ubicación en el Mapa Dual. Van juntas o no van: un par incompleto se
+   * guarda como "sin ubicación" y el centro queda como ubicación pendiente,
+   * nunca con un pin a medias. */
+  latitud?: number;
+  longitud?: number;
 }
 
 export const CENTRO_FORM_VACIO: CentroDualFormValues = {
@@ -294,6 +300,12 @@ export default function CentroDualForm({
         <Campo label="Sitio web (opcional)" error={errores.sitioWeb}>
           <input value={form.sitioWeb} onChange={(e) => set("sitioWeb", e.target.value)} placeholder="https://empresa.cl" style={inputStyle} className={inputClass} />
         </Campo>
+
+        <SelectorUbicacion
+          latitud={form.latitud}
+          longitud={form.longitud}
+          onCambiar={({ latitud, longitud }) => setForm((f) => ({ ...f, latitud, longitud }))}
+        />
       </Seccion>
 
       <Seccion

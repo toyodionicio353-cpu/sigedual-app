@@ -57,7 +57,8 @@ service cloud.firestore {
         'estudiantes_por_run', 'campanias_invitacion', 'campanias_invitacion_estudiante',
         'respuestas_campania', 'respuestas_campania_estudiante', 'demos',
         'planes_comerciales', 'configuracion_comercial', 'documentos_generados', 'especialidades',
-        'documentos_generados_indices', 'envios_evaluacion', 'borradores_mensaje'
+        'documentos_generados_indices', 'envios_evaluacion', 'borradores_mensaje',
+        'practicas_profesionales'
       ];
     }
 
@@ -262,6 +263,36 @@ service cloud.firestore {
         || (datosUsuario().rol in ['profesor', 'centro_dual'] && tieneAutorizacion('estudiante', id))
       );
       // Eliminar un estudiante es una acción administrativa, no de supervisión.
+      allow delete: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
+    }
+
+    // Prácticas Profesionales: el período posterior a la Formación Dual.
+    // Mismo criterio de acceso que `estudiantes` (liceo + especialidad +
+    // ficha propia), porque una práctica identifica a un estudiante
+    // concreto: pertenecer al mismo liceo NO basta para verla.
+    match /practicas_profesionales/{id} {
+      allow read: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        // Profesor: todas las prácticas de SU especialidad en su liceo,
+        // compartidas con los demás profesores de esa especialidad.
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId
+            && ('especialidadId' in datosUsuario()) && datosUsuario().especialidadId == resource.data.especialidadId)
+        // El profesor formalmente a cargo, aunque cambie de especialidad.
+        || resource.data.profesorSupervisorId == request.auth.uid
+        // El estudiante ve exclusivamente su propia práctica.
+        || (datosUsuario().rol == 'estudiante' && datosUsuario().estudianteId == resource.data.estudianteId)
+      );
+      allow create: if request.auth != null && (
+        datosUsuario().rol == 'desarrollador'
+        || (datosUsuario().liceoId == request.resource.data.liceoId
+            && datosUsuario().rol in ['director', 'coordinador', 'profesor'])
+      );
+      allow update: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || (datosUsuario().rol == 'profesor' && resource.data.profesorSupervisorId == request.auth.uid)
+      );
+      // Dar de baja una práctica es una acción administrativa: se hace
+      // cambiando su estado, no borrando el registro histórico.
       allow delete: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
     }
 
