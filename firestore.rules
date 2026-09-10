@@ -57,7 +57,7 @@ service cloud.firestore {
         'estudiantes_por_run', 'campanias_invitacion', 'campanias_invitacion_estudiante',
         'respuestas_campania', 'respuestas_campania_estudiante', 'demos',
         'planes_comerciales', 'configuracion_comercial', 'documentos_generados', 'especialidades',
-        'documentos_generados_indices', 'envios_evaluacion'
+        'documentos_generados_indices', 'envios_evaluacion', 'borradores_mensaje'
       ];
     }
 
@@ -687,14 +687,32 @@ service cloud.firestore {
     // Conversaciones: visibles y editables únicamente por sus participantes
     // — pertenecer al mismo liceo/dominio no da acceso a chats ajenos.
     match /conversaciones/{convId} {
-      allow read, update: if request.auth != null && request.auth.uid in resource.data.participantes;
+      allow read: if request.auth != null && request.auth.uid in resource.data.participantes;
+      // Un participante actualiza el estado del hilo (último mensaje, leído,
+      // destacado, papelera), pero NUNCA quién participa ni a qué liceo
+      // pertenece: sumar a alguien a un hilo ya existente le entregaría todo
+      // el historial anterior sin que el resto lo autorice.
+      allow update: if request.auth != null
+        && request.auth.uid in resource.data.participantes
+        && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['participantes', 'liceoId', 'creadoPor', 'creadoEn']);
       allow create: if request.auth != null && request.auth.uid in request.resource.data.participantes;
+      // La papelera es por persona (`eliminadaPor`): el documento nunca se
+      // borra mientras siga siendo la copia del resto de los participantes.
       allow delete: if false;
     }
     match /conversaciones/{convId}/{subCollection}/{docId} {
       allow read, create: if request.auth != null
         && request.auth.uid in get(/databases/$(database)/documents/conversaciones/$(convId)).data.participantes;
+      // Un mensaje enviado es inmutable — no se edita ni se borra.
       allow update, delete: if false;
+    }
+
+    // Borradores de Mensajes: estrictamente privados de quien los escribe.
+    // El destinatario no existe para Firestore hasta que el mensaje se envía.
+    match /borradores_mensaje/{borradorId} {
+      allow read, update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
     }
 
     // Colecciones de nivel raíz sin regla dedicada (especialidades,
