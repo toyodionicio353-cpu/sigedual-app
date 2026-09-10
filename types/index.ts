@@ -5,7 +5,15 @@ export interface Usuario {
   email: string;
   nombre: string;
   rol: Rol;
+  // Solo profesor: `especialidad` es el nombre (para mostrar) y
+  // `especialidadId` la referencia a `especialidades/{id}` (para las
+  // reglas de Firestore que comparten Estudiantes/Centros Duales/Maestros
+  // Guía entre profesores de la misma especialidad — ver firestore.rules,
+  // `mismaEspecialidadEstudiante`). Ambos se guardan juntos siempre que se
+  // elige una especialidad; una cuenta creada antes de este campo solo
+  // tiene `especialidad` (nombre) hasta que alguien la vuelva a guardar.
   especialidad?: string;
+  especialidadId?: string;
   run?: string;
   liceoId: string;
   activo: boolean;

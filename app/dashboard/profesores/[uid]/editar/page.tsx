@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteField, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearRut, validarRut } from "@/lib/rut";
@@ -19,7 +19,7 @@ export default function EditarProfesorPage() {
   const [profesor, setProfesor] = useState<Usuario | null>(null);
   const [nombre, setNombre] = useState("");
   const [run, setRun] = useState("");
-  const [especialidad, setEspecialidad] = useState("");
+  const [especialidadId, setEspecialidadId] = useState("");
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [cargandoEspecialidades, setCargandoEspecialidades] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -44,16 +44,17 @@ export default function EditarProfesorPage() {
       setProfesor(p);
       setNombre(p.nombre ?? "");
       setRun(p.run ?? "");
-      setEspecialidad(p.especialidad ?? "");
       setLoading(false);
       setCargandoEspecialidades(true);
       const snapEsp = await getDocs(query(collection(db, "especialidades"), where("liceoId", "==", p.liceoId)));
-      setEspecialidades(
-        snapEsp.docs
-          .map((d) => ({ id: d.id, ...d.data() } as Especialidad))
-          .filter((e) => e.estado !== "inactiva")
-          .sort((a, b) => a.nombre.localeCompare(b.nombre))
-      );
+      const listaEspecialidades = snapEsp.docs
+        .map((d) => ({ id: d.id, ...d.data() } as Especialidad))
+        .filter((e) => e.estado !== "inactiva")
+        .sort((a, b) => a.nombre.localeCompare(b.nombre));
+      setEspecialidades(listaEspecialidades);
+      // Cuenta creada antes de que existiera `especialidadId`: se resuelve
+      // por nombre como último recurso, para no perder la selección ya hecha.
+      setEspecialidadId(p.especialidadId ?? listaEspecialidades.find((e) => e.nombre === p.especialidad)?.id ?? "");
       setCargandoEspecialidades(false);
     }
     cargar();
@@ -71,7 +72,8 @@ export default function EditarProfesorPage() {
     try {
       const cambios: Record<string, unknown> = {
         nombre: nombre.trim(),
-        especialidad: especialidad.trim(),
+        especialidad: especialidadId ? (especialidades.find((e) => e.id === especialidadId)?.nombre ?? "") : deleteField(),
+        especialidadId: especialidadId || deleteField(),
       };
       if (run.trim()) cambios.run = formatearRut(run);
       await updateDoc(doc(db, "usuarios", profesor.uid), cambios);
@@ -153,11 +155,11 @@ export default function EditarProfesorPage() {
             </p>
           ) : (
             <Select
-              value={especialidad}
-              onChange={setEspecialidad}
+              value={especialidadId}
+              onChange={setEspecialidadId}
               ariaLabel="Especialidad"
               disabled={cargandoEspecialidades}
-              opciones={[{ value: "", label: "Sin especialidad" }, ...especialidades.map((e) => ({ value: e.nombre, label: e.nombre }))]}
+              opciones={[{ value: "", label: "Sin especialidad" }, ...especialidades.map((e) => ({ value: e.id, label: e.nombre }))]}
             />
           )}
         </div>

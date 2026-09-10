@@ -35,6 +35,17 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/autorizaciones/$(request.auth.uid + '_' + tipo + '_' + recursoId));
     }
 
+    // Ámbito de un profesor por especialidad (reemplaza, para lectura de
+    // Estudiantes/Centros Duales/Maestros Guía, el ámbito por Asignación
+    // formal): comparte automáticamente con cualquier otro profesor de su
+    // liceo que tenga la misma especialidad — ver lib/permisos/ambito.ts.
+    // Un profesor sin especialidad asignada no ve nada por esta vía.
+    function mismaEspecialidadEstudiante(estudianteId) {
+      return request.auth != null
+        && ('especialidadId' in datosUsuario())
+        && get(/databases/$(database)/documents/estudiantes/$(estudianteId)).data.especialidadId == datosUsuario().especialidadId;
+    }
+
     function tieneReglaPropia(coleccion) {
       return coleccion in [
         'usuarios', 'sesiones', 'auditoria', 'liceos', 'codigosAcceso',
@@ -233,7 +244,12 @@ service cloud.firestore {
     match /estudiantes/{id} {
       allow read: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
-        || (datosUsuario().rol in ['profesor', 'centro_dual'] && tieneAutorizacion('estudiante', id))
+        || (datosUsuario().rol == 'centro_dual' && tieneAutorizacion('estudiante', id))
+        // Un profesor ve a TODOS los estudiantes de su especialidad en su
+        // liceo (compartido entre todos los profesores de esa especialidad),
+        // ya no solo a los que tiene formalmente asignados.
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId
+            && ('especialidadId' in datosUsuario()) && datosUsuario().especialidadId == resource.data.especialidadId)
         // Un estudiante ve exclusivamente su propia ficha, nunca la de otro.
         || (datosUsuario().rol == 'estudiante' && datosUsuario().estudianteId == id)
       );
@@ -303,7 +319,11 @@ service cloud.firestore {
     match /centros_duales/{id} {
       allow read: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
-        || (datosUsuario().rol == 'profesor' && tieneAutorizacion('centro', id))
+        // Un profesor ve todos los Centros Duales que trabajan con SU
+        // especialidad en su liceo — compartido entre profesores de esa
+        // misma especialidad, ya no solo los que tiene asignados.
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId
+            && ('especialidadId' in datosUsuario()) && datosUsuario().especialidadId in resource.data.especialidades)
         || (datosUsuario().rol == 'centro_dual' && datosUsuario().centroDualId == id)
         // Un estudiante ve solo el Centro Dual de su propia asignación.
         || (datosUsuario().rol == 'estudiante' && tieneAutorizacion('centro', id))
@@ -322,7 +342,10 @@ service cloud.firestore {
     match /maestros_guia/{id} {
       allow read: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
-        || (datosUsuario().rol == 'profesor' && tieneAutorizacion('maestro', id))
+        // Mismo criterio que Centros Duales: compartido entre profesores
+        // de la misma especialidad, ya no solo los asignados.
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId
+            && ('especialidadId' in datosUsuario()) && datosUsuario().especialidadId in resource.data.especialidades)
         || (datosUsuario().rol == 'centro_dual' && datosUsuario().maestroGuiaId == id)
         // Cuenta Centro Dual "de empresa": ve a todos los Maestros Guía de
         // su propia empresa, no solo a uno.
@@ -354,13 +377,18 @@ service cloud.firestore {
         || (datosUsuario().rol == 'profesor' && (
           resource.data.profesorSupervisorId == request.auth.uid
           || resource.data.profesorId == request.auth.uid
-          || (('estudianteId' in resource.data) && tieneAutorizacion('estudiante', resource.data.estudianteId))
+          || (('estudianteId' in resource.data) && (
+              tieneAutorizacion('estudiante', resource.data.estudianteId)
+              || mismaEspecialidadEstudiante(resource.data.estudianteId)
+          ))
           // Solo cubre el primer estudiante de una visita multi-estudiante —
           // el caso común (un profesor viendo el historial de un estudiante
           // que él mismo no visitó) igual queda cubierto por profesorSupervisorId
           // arriba en la inmensa mayoría de los casos reales.
-          || (('estudianteIds' in resource.data) && resource.data.estudianteIds.size() > 0
-              && tieneAutorizacion('estudiante', resource.data.estudianteIds[0]))
+          || (('estudianteIds' in resource.data) && resource.data.estudianteIds.size() > 0 && (
+              tieneAutorizacion('estudiante', resource.data.estudianteIds[0])
+              || mismaEspecialidadEstudiante(resource.data.estudianteIds[0])
+          ))
         ))
         || (datosUsuario().rol == 'centro_dual' && datosUsuario().centroDualId == resource.data.centroDualId)
         // Un estudiante ve solo las visitas donde él es uno de los
@@ -393,6 +421,7 @@ service cloud.firestore {
       allow read: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
         || (datosUsuario().rol in ['profesor', 'centro_dual'] && tieneAutorizacion('estudiante', resource.data.estudianteId))
+        || (datosUsuario().rol == 'profesor' && mismaEspecialidadEstudiante(resource.data.estudianteId))
         // Un estudiante ve solo sus propias evaluaciones, nunca las de otro.
         || (datosUsuario().rol == 'estudiante' && datosUsuario().estudianteId == resource.data.estudianteId)
       );
