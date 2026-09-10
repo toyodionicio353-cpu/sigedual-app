@@ -9,6 +9,7 @@ import { normalizarRut } from "@/lib/rut";
 import CentroDualForm, { CENTRO_FORM_VACIO, type CentroDualFormValues } from "../_components/CentroDualForm";
 import InvitacionEmpresaSeccion from "../_components/InvitacionEmpresaSeccion";
 import type { CentroDual, Especialidad } from "@/types";
+import { puntoValido } from "@/lib/mapa/geo";
 import { CheckCircle2, Eye, Building2 } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import { useAdvertenciaLiceoGlobal } from "@/lib/liceos/useAdvertenciaLiceoGlobal";
@@ -90,6 +91,15 @@ export default function AgregarCentroDualPage() {
       // ingresó capacidad, el campo simplemente no se escribe (capacidad
       // "sin límite"), en vez de intentar guardar `undefined`.
       if (form.capacidad.trim()) nuevo.capacidad = Number(form.capacidad);
+      // La ubicación va completa o no va: un par a medias dejaría un pin
+      // mal puesto en el Mapa Dual. Sin ella el centro queda como
+      // "ubicación pendiente", que es información honesta.
+      const punto = puntoValido(form.latitud, form.longitud);
+      if (punto) {
+        nuevo.latitud = punto.lat;
+        nuevo.longitud = punto.lng;
+        nuevo.ubicacionActualizadaEn = new Date().toISOString();
+      }
       const ref = await addDoc(collection(db, "centros_duales"), nuevo);
       if (rut) {
         await sincronizarIndiceRutCentro(ref.id, usuario.liceoId, rut);
