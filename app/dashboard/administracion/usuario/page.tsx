@@ -19,6 +19,9 @@ const NACIONALIDADES = ["Chilena", "Argentina", "Boliviana", "Colombiana", "Ecua
 const LIMITE_DESCRIPCION = 280;
 
 interface FormPerfil {
+  /** Solo lo edita el rol desarrollador: para el resto sigue siendo un dato
+   * administrado por la institución (ver firestore.rules, `usuarios`). */
+  nombre: string;
   run: string;
   fechaNacimiento: string;
   nacionalidad: string;
@@ -34,7 +37,7 @@ interface FormPerfil {
 }
 
 const FORM_VACIO: FormPerfil = {
-  run: "", fechaNacimiento: "", nacionalidad: "",
+  nombre: "", run: "", fechaNacimiento: "", nacionalidad: "",
   direccion: "", numeroDireccion: "", depto: "", comuna: "", ciudad: "", region: "",
   telefono: "", telefonoSecundario: "", descripcion: "",
 };
@@ -54,9 +57,15 @@ export default function MiPerfilPage() {
   const [confirmandoSalir, setConfirmandoSalir] = useState(false);
   const [solicitud, setSolicitud] = useState<{ tipo: TipoDatoSolicitud; valor: string } | null>(null);
 
+  /** El nombre lo administra la institución: el propio usuario solo puede
+   * pedir el cambio. El rol desarrollador sí lo edita directamente, acá y en
+   * las cuentas del resto (Administración → Usuarios). */
+  const puedeEditarNombre = usuario?.rol === "desarrollador";
+
   useEffect(() => {
     if (!usuario) return;
     const cargado: FormPerfil = {
+      nombre: usuario.nombre ?? "",
       run: usuario.run ?? "",
       fechaNacimiento: usuario.fechaNacimiento ?? "",
       nacionalidad: usuario.nacionalidad ?? "",
@@ -83,6 +92,10 @@ export default function MiPerfilPage() {
   }
 
   function validarCampo(campo: keyof FormPerfil, valor: string): string | undefined {
+    if (campo === "nombre") {
+      if (!puedeEditarNombre) return undefined;
+      if (!valor.trim()) return "El nombre no puede quedar vacío.";
+    }
     if (campo === "run" && valor.trim() && !validarRut(valor)) return "Ingresa un RUT válido.";
     if ((campo === "telefono" || campo === "telefonoSecundario") && valor.trim() && !validarTelefonoChileno(valor)) {
       return "Ingresa un teléfono válido.";
@@ -116,8 +129,12 @@ export default function MiPerfilPage() {
     if (!validarTodo()) return;
     setGuardando(true);
     try {
+      const { nombre, ...resto } = form;
       const datos = {
-        ...form,
+        ...resto,
+        // Para el resto de los roles el nombre ni siquiera se envía: las
+        // reglas de Firestore lo rechazarían y se perdería todo el guardado.
+        ...(puedeEditarNombre ? { nombre: sanitizarTexto(nombre) } : {}),
         run: form.run.trim() ? formatearRut(form.run) : "",
         descripcion: sanitizarTexto(form.descripcion),
         actualizadoEn: new Date().toISOString(),
@@ -185,14 +202,27 @@ export default function MiPerfilPage() {
 
       {/* Información personal */}
       <Seccion icono={<IdCard size={17} />} titulo="Información personal">
-        <CampoBloqueado
-          label="Nombre completo"
-          valor={usuario.nombre}
-          explicacion="El nombre está administrado por el sistema y no puede modificarse directamente."
-          accion={
-            <BotonSolicitar onClick={() => setSolicitud({ tipo: "nombre", valor: usuario.nombre })} />
-          }
-        />
+        {puedeEditarNombre ? (
+          <Campo label="Nombre completo" error={errores.nombre}>
+            <input
+              value={form.nombre}
+              onChange={(e) => set("nombre", e.target.value)}
+              onBlur={() => alSalirDeCampo("nombre")}
+              placeholder="Nombre y apellido"
+              style={estiloInput(!!errores.nombre)}
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
+            />
+          </Campo>
+        ) : (
+          <CampoBloqueado
+            label="Nombre completo"
+            valor={usuario.nombre}
+            explicacion="El nombre está administrado por el sistema y no puede modificarse directamente."
+            accion={
+              <BotonSolicitar onClick={() => setSolicitud({ tipo: "nombre", valor: usuario.nombre })} />
+            }
+          />
+        )}
 
         <div className="grid sm:grid-cols-2 gap-4 pt-3">
           <Campo label="RUT" error={errores.run}>
