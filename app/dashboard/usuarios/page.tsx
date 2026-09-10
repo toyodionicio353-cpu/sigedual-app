@@ -5,7 +5,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
-import { RefreshCw, Trash2, UserCog } from "lucide-react";
+import { RefreshCw, Trash2, UserCog, Pencil, Check, X } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 import type { Usuario, Rol, Liceo, Especialidad } from "@/types";
@@ -43,6 +43,9 @@ export default function UsuariosPage() {
   const [huerfanoActivo, setHuerfanoActivo] = useState<Huerfano | null>(null);
   const [formHuerfano, setFormHuerfano] = useState(EMPTY_HUERFANO);
   const [guardandoHuerfano, setGuardandoHuerfano] = useState(false);
+  const [editandoUid, setEditandoUid] = useState<string | null>(null);
+  const [nombreEditado, setNombreEditado] = useState("");
+  const [guardandoNombre, setGuardandoNombre] = useState(false);
 
   async function cargar() {
     if (!usuario) return;
@@ -137,6 +140,37 @@ export default function UsuariosPage() {
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error al crear usuario");
     } finally { setGuardando(false); }
+  }
+
+  function cancelarEdicionNombre() {
+    setEditandoUid(null);
+    setNombreEditado("");
+  }
+
+  /** El nombre de una cuenta lo administra la institución: su propio dueño
+   * solo puede pedir el cambio desde Mi perfil, y se aplica desde acá. */
+  async function guardarNombre(u: Usuario) {
+    const nombre = nombreEditado.trim();
+    if (!usuario || !nombre || guardandoNombre || nombre === u.nombre) {
+      cancelarEdicionNombre();
+      return;
+    }
+    setGuardandoNombre(true);
+    setError("");
+    try {
+      await updateDoc(doc(db, "usuarios", u.uid), { nombre, actualizadoEn: new Date().toISOString() });
+      setUsuarios((prev) => prev.map((x) => (x.uid === u.uid ? { ...x, nombre } : x)));
+      registrarEvento({
+        uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+        accion: "editar_nombre_usuario", recurso: "usuarios", recursoId: u.uid,
+        resultado: "permitido", detalle: `${u.nombre} → ${nombre}`,
+      });
+      cancelarEdicionNombre();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo guardar el nombre.");
+    } finally {
+      setGuardandoNombre(false);
+    }
   }
 
   async function completarHuerfano() {
@@ -266,7 +300,56 @@ export default function UsuariosPage() {
             <tbody>
               {usuarios.map((u, i) => (
                 <tr key={u.uid} style={{ borderBottom: i < usuarios.length - 1 ? "1px solid var(--border)" : "none" }}>
-                  <td style={{ color: "var(--text-primary)" }} className="px-5 py-4 font-medium">{u.nombre}</td>
+                  <td style={{ color: "var(--text-primary)" }} className="px-5 py-4 font-medium">
+                    {editandoUid === u.uid ? (
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          value={nombreEditado}
+                          onChange={(e) => setNombreEditado(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") guardarNombre(u);
+                            if (e.key === "Escape") cancelarEdicionNombre();
+                          }}
+                          autoFocus
+                          aria-label={`Nombre de ${u.nombre}`}
+                          style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+                          className="w-44 px-2.5 py-1.5 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
+                        />
+                        <button
+                          onClick={() => guardarNombre(u)}
+                          disabled={!nombreEditado.trim() || guardandoNombre}
+                          title="Guardar nombre"
+                          aria-label="Guardar nombre"
+                          style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+                          className="p-1.5 rounded-lg disabled:opacity-40"
+                        >
+                          <Check size={14} />
+                        </button>
+                        <button
+                          onClick={cancelarEdicionNombre}
+                          title="Cancelar"
+                          aria-label="Cancelar"
+                          style={{ color: "var(--text-muted)" }}
+                          className="p-1.5"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>{u.nombre}</span>
+                        <button
+                          onClick={() => { setEditandoUid(u.uid); setNombreEditado(u.nombre); }}
+                          title="Editar nombre"
+                          aria-label={`Editar el nombre de ${u.nombre}`}
+                          style={{ color: "var(--text-muted)" }}
+                          className="p-1 hover:[color:var(--accent-light)] transition-colors"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      </div>
+                    )}
+                  </td>
                   <td style={{ color: "var(--text-secondary)" }} className="px-5 py-4">{u.email}</td>
                   <td style={{ color: "var(--accent-light)" }} className="px-5 py-4">{ROL_LABEL[u.rol]}</td>
                   <td style={{ color: "var(--text-secondary)" }} className="px-5 py-4">{u.especialidad || "—"}</td>
