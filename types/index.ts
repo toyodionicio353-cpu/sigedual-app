@@ -279,16 +279,48 @@ export interface HistorialCurso {
   confirmadoPor: string;
 }
 
+/** Un hilo de Mensajes: el asunto y los participantes son del hilo completo,
+ * y el estado que cambia de persona a persona (leído, destacado, en papelera)
+ * vive en arreglos de uid dentro del mismo documento — así la bandeja de cada
+ * usuario se resuelve con una sola consulta por `participantes`, sin una
+ * subcolección de estado por persona. */
 export interface Conversacion {
   id: string;
   tipo: "privada" | "grupo";
+  /** Solo hilos creados antes de que existiera `asunto` (chat por nombre). */
   nombre?: string;
+  asunto?: string;
   participantes: string[];
   liceoId: string;
   ultimoMensaje?: string;
+  ultimoRemitenteUid?: string;
+  ultimoRemitenteNombre?: string;
+  /** uid de quienes ya escribieron en el hilo — define qué ve cada persona
+   * en Enviados sin tener que leer todos los mensajes. */
+  remitentes?: string[];
+  cantidadMensajes?: number;
   ultimaActividad: string;
   creadoPor: string;
   creadoEn: string;
+  /** uid de cada participante que todavía NO abrió el último mensaje. */
+  noLeidoPor?: string[];
+  destacadaPor?: string[];
+  /** Papelera por persona: al hilo lo sigue viendo el resto. */
+  eliminadaPor?: string[];
+  /** Eliminado definitivamente para esa persona: desaparece de todas sus
+   * carpetas, incluida la papelera. El documento se conserva porque sigue
+   * siendo la copia del resto de los participantes. */
+  ocultaPara?: string[];
+}
+
+/** Archivo adjunto de un mensaje. La estructura queda definida para cuando
+ * exista la subida de archivos; hoy ningún flujo la escribe, y la vista de
+ * conversación solo los muestra si el mensaje efectivamente los trae. */
+export interface AdjuntoMensaje {
+  nombre: string;
+  url: string;
+  tipo?: string;
+  tamanoBytes?: number;
 }
 
 export interface MensajeConversacion {
@@ -296,6 +328,23 @@ export interface MensajeConversacion {
   texto: string;
   uid: string;
   nombre: string;
+  creadoEn: string;
+  adjuntos?: AdjuntoMensaje[];
+}
+
+/** Borrador de un mensaje sin enviar. Es privado de quien lo escribe (ver
+ * firestore.rules): nunca lo ve el destinatario hasta que se envía. */
+export interface BorradorMensaje {
+  id: string;
+  uid: string;
+  liceoId: string;
+  destinatarios: string[];
+  cc?: string[];
+  asunto?: string;
+  cuerpo?: string;
+  /** Poblado cuando el borrador es la respuesta a un hilo ya existente. */
+  conversacionId?: string;
+  actualizadoEn: string;
   creadoEn: string;
 }
 

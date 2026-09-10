@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Rol } from "@/types";
 import { usePreferencias } from "@/lib/preferencias/context";
+import { useConversaciones } from "@/lib/mensajes/useConversaciones";
 import type { ClaveTraduccion } from "@/lib/preferencias/i18n";
 import {
   LayoutDashboard, Users, Building2, GraduationCap,
@@ -16,7 +17,7 @@ import {
   ChevronDown, UserPlus, ClipboardList,
   UsersRound, Building, ShieldCheck,
   CalendarCheck, FileText, Handshake, ClipboardCheck, FolderOpen,
-  UserCog, School, SlidersHorizontal, LifeBuoy, User, ScrollText, Clock, MapPin,
+  UserCog, School, SlidersHorizontal, LifeBuoy, User, ScrollText, MapPin,
 } from "lucide-react";
 
 interface SubItem {
@@ -176,6 +177,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
   const pathname = usePathname();
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState<string | null>("inicio");
+  const { noLeidos: mensajesNoLeidos } = useConversaciones();
 
   function etiquetaGrupo(menu: NavGroup): string {
     const clave = CLAVE_GRUPO[menu.id];
@@ -277,30 +279,11 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
             ? pathname === menu.href
             : visibleSub.some((s) => s.href === pathname || (s.href !== "/dashboard" && pathname.startsWith(s.href)));
 
-          if (menu.id === "mensajes" && usuario?.rol !== "desarrollador") {
-            return (
-              <button
-                key={menu.id}
-                type="button"
-                disabled
-                title={collapsed ? `${etiquetaGrupo(menu)} — Próximamente` : undefined}
-                style={{ borderRadius: 9, color: "var(--text-muted)", width: "100%", opacity: 0.55, cursor: "not-allowed" }}
-                className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium text-left"
-              >
-                <span style={{ color: "var(--text-muted)", flexShrink: 0 }}>{menu.icon}</span>
-                {!collapsed && (
-                  <>
-                    <span className="flex-1 whitespace-nowrap">{etiquetaGrupo(menu)}</span>
-                    <span style={{ background: "var(--hover-overlay)", color: "var(--text-muted)" }} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap">
-                      <Clock size={10} /> Próximamente
-                    </span>
-                  </>
-                )}
-              </button>
-            );
-          }
-
           if (menu.href) {
+            // Mensajes lleva la cuenta de hilos sin leer, en vivo (ver
+            // lib/mensajes/useConversaciones) — el resto de las secciones no
+            // muestra insignia.
+            const insignia = menu.id === "mensajes" ? mensajesNoLeidos : 0;
             return (
               <Link
                 key={menu.id}
@@ -314,8 +297,33 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 }}
                 className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:[background:var(--hover-overlay)] transition-all"
               >
-                <span style={{ color: isActive ? "var(--text-on-accent)" : "var(--accent)", flexShrink: 0 }}>{menu.icon}</span>
-                {!collapsed && <span className="flex-1 whitespace-nowrap">{etiquetaGrupo(menu)}</span>}
+                <span style={{ color: isActive ? "var(--text-on-accent)" : "var(--accent)", flexShrink: 0, position: "relative" }}>
+                  {menu.icon}
+                  {insignia > 0 && collapsed && (
+                    <span
+                      style={{ background: "var(--accent)", border: "2px solid var(--sidebar-bg)" }}
+                      className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full"
+                      aria-hidden
+                    />
+                  )}
+                </span>
+                {!collapsed && (
+                  <>
+                    <span className="flex-1 whitespace-nowrap">{etiquetaGrupo(menu)}</span>
+                    {insignia > 0 && (
+                      <span
+                        style={{
+                          background: isActive ? "var(--text-on-accent)" : "var(--accent)",
+                          color: isActive ? "var(--accent)" : "var(--text-on-accent)",
+                        }}
+                        className="min-w-[20px] px-1.5 py-0.5 rounded-full text-[11px] font-bold text-center tabular-nums flex-shrink-0"
+                        aria-label={`${insignia} mensajes sin leer`}
+                      >
+                        {insignia > 99 ? "99+" : insignia}
+                      </span>
+                    )}
+                  </>
+                )}
               </Link>
             );
           }
