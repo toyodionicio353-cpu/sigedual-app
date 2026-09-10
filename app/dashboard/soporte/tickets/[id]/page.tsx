@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   doc, getDoc, updateDoc, collection, query, orderBy, onSnapshot, addDoc, where, getDocs,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { crearNotificacion } from "@/lib/notificaciones/crearNotificacion";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
@@ -16,11 +16,12 @@ import {
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 import type { EstadoTicket, MensajeTicket, NotaInternaTicket, PrioridadTicket, Ticket, Usuario } from "@/types";
-import { ArrowLeft, LifeBuoy, Lock, Send, ShieldAlert } from "lucide-react";
+import { ArrowLeft, LifeBuoy, Lock, Send, ShieldAlert, Trash2 } from "lucide-react";
 
 export default function DetalleTicketPage() {
   const { id } = useParams<{ id: string }>();
   const { usuario } = useAuth();
+  const router = useRouter();
   const esAdmin = usuario?.rol === "desarrollador";
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
@@ -32,6 +33,9 @@ export default function DetalleTicketPage() {
   const [texto, setTexto] = useState("");
   const [notaTexto, setNotaTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
+  const [errorEliminar, setErrorEliminar] = useState("");
+
 
   async function cargarTicket() {
     if (!usuario || !id) return;
@@ -183,11 +187,52 @@ export default function DetalleTicketPage() {
     );
   }
 
+  /** Elimina el ticket con todo su hilo. Pasa por el servidor porque los
+   * mensajes son inmutables desde el cliente a propósito (nadie reescribe
+   * la historia de un ticket borrando una respuesta suelta), y porque
+   * Firestore no borra subcolecciones en cascada: si solo se borrara el
+   * documento del ticket, sus mensajes y notas quedarían como basura
+   * invisible que ya nadie puede leer ni eliminar. */
+  async function eliminarTicket() {
+    if (!ticket || eliminando || !auth.currentUser) return;
+    if (!confirm(`¿Eliminar el ticket ${numeroTicket(ticket.numero)}? Se borrará también todo su hilo de mensajes y notas internas. Esta acción no se puede deshacer.`)) return;
+    setEliminando(true);
+    setErrorEliminar("");
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(`/api/admin/tickets/${ticket.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) { setErrorEliminar(data.error || "No se pudo eliminar el ticket."); return; }
+      router.push("/dashboard/soporte/tickets");
+    } catch (e) {
+      setErrorEliminar(e instanceof Error ? e.message : "No se pudo eliminar el ticket.");
+    } finally {
+      setEliminando(false);
+    }
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-3xl">
       <div className="mb-6">
         <p style={{ color: "var(--text-muted)" }} className="text-xs font-mono mb-1">{numeroTicket(ticket.numero)}</p>
-        <TituloPagina icon={<LifeBuoy size={28} />}>{ticket.asunto}</TituloPagina>
+        <div className="flex items-start justify-between gap-4">
+          <TituloPagina icon={<LifeBuoy size={28} />}>{ticket.asunto}</TituloPagina>
+          {esAdmin && (
+            <button
+              onClick={eliminarTicket}
+              disabled={eliminando}
+              style={{ background: "var(--danger)22", border: "1px solid var(--danger)", color: "var(--danger)" }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex-shrink-0"
+            >
+              <Trash2 size={16} />
+              {eliminando ? "Eliminando..." : "Eliminar ticket"}
+            </button>
+          )}
+        </div>
+        {errorEliminar && <p style={{ color: "var(--danger)" }} className="text-xs mt-2">{errorEliminar}</p>}
         <div className="flex flex-wrap items-center gap-2 mt-2">
           <span style={{ color: ESTADO_TICKET_COLOR[ticket.estado], background: ESTADO_TICKET_COLOR[ticket.estado] + "22" }} className="text-xs px-2.5 py-1 rounded-full font-medium">
             {ESTADO_TICKET_LABEL[ticket.estado]}
