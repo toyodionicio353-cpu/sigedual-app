@@ -214,14 +214,14 @@ export default function FichaCentroDualPage() {
         </span>
         {puedeEditar && (
           <>
-            <Link href={`/dashboard/centros/${centro.id}/editar`} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--accent-light)" }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--accent)] transition-colors">
-              <Pencil size={13} />
+            <Link href={`/dashboard/centros/${centro.id}/editar`} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--accent-light)" }} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:[border-color:var(--accent)] transition-colors">
+              <Pencil size={16} />
               Editar
             </Link>
             {puedeEliminar && (
-              <button onClick={eliminar} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--danger)" }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--danger)] transition-colors">
-                <Trash2 size={13} />
-                Eliminar
+              <button onClick={eliminar} style={{ background: "var(--danger)22", border: "1px solid var(--danger)", color: "var(--danger)" }} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
+                <Trash2 size={16} />
+                Eliminar centro dual
               </button>
             )}
           </>
