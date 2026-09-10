@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearFecha } from "@/lib/fecha";
@@ -88,6 +88,7 @@ export default function DetalleVisitaPage() {
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
 
   const [mostrarMenuElemento, setMostrarMenuElemento] = useState(false);
 
@@ -268,6 +269,24 @@ export default function DetalleVisitaPage() {
     }
   }
 
+  async function eliminarVisita() {
+    if (!visita || eliminando) return;
+    if (!confirm("¿Eliminar esta visita? Esta acción no se puede deshacer.")) return;
+    setEliminando(true);
+    try {
+      await deleteDoc(doc(db, "visitas", visita.id));
+      if (usuario) {
+        registrarEvento({
+          uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+          accion: "eliminar_visita", recurso: "visitas", recursoId: visita.id, resultado: "permitido",
+        });
+      }
+      router.push("/dashboard/visitas");
+    } finally {
+      setEliminando(false);
+    }
+  }
+
   if (loading) {
     return <div className="p-4 md:p-8"><p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p></div>;
   }
@@ -306,9 +325,22 @@ export default function DetalleVisitaPage() {
             <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{centro?.nombre}</p>
           </div>
         </div>
-        <span style={{ color: ESTADO_VISITA_COLOR[estado], background: `${ESTADO_VISITA_COLOR[estado]}22` }} className="text-xs px-3 py-1.5 rounded-full font-semibold flex-shrink-0">
-          {ESTADO_VISITA_LABEL[estado]}
-        </span>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span style={{ color: ESTADO_VISITA_COLOR[estado], background: `${ESTADO_VISITA_COLOR[estado]}22` }} className="text-xs px-3 py-1.5 rounded-full font-semibold">
+            {ESTADO_VISITA_LABEL[estado]}
+          </span>
+          {usuario?.rol === "desarrollador" && (
+            <button
+              onClick={eliminarVisita}
+              disabled={eliminando}
+              style={{ background: "var(--danger)22", border: "1px solid var(--danger)", color: "var(--danger)" }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              <Trash2 size={16} />
+              {eliminando ? "Eliminando..." : "Eliminar visita"}
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (

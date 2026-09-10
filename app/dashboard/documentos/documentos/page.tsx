@@ -24,6 +24,9 @@ export default function DocumentosPage() {
   // Centro Dual/Estudiante nunca crean, editan ni eliminan un documento —
   // solo pueden VER el que esté a su nombre (ver useDocumentosCreados).
   const puedeCrear = usuario?.rol !== "centro_dual" && usuario?.rol !== "estudiante";
+  // Eliminar un documento ya emitido es irreversible — a diferencia de
+  // crear/editar/duplicar, queda reservado al rol desarrollador.
+  const puedeEliminar = usuario?.rol === "desarrollador";
 
   const plantillasDefinidas = plantillasParaModulo(TIPO_MODULO);
   const { contexto, cargando: cargandoContexto } = useContextoDocumentos();
@@ -55,7 +58,7 @@ export default function DocumentosPage() {
   }
 
   async function eliminarCreado(item: ItemBiblioteca) {
-    if (!puedeCrear) return;
+    if (!puedeEliminar) return;
     const doc = documentos.find((d) => d.id === item.id);
     if (!doc || !usuario) return;
     if (!confirm(`¿Eliminar "${doc.nombre}"? Esta acción no se puede deshacer.`)) return;
@@ -130,7 +133,7 @@ export default function DocumentosPage() {
         acciones={puedeCrear ? [
           { label: "Editar", onClick: abrirCreado },
           { label: "Duplicar", onClick: duplicarCreado },
-          { label: "Eliminar", onClick: eliminarCreado },
+          ...(puedeEliminar ? [{ label: "Eliminar", onClick: eliminarCreado }] : []),
         ] : []}
       />
     </div>

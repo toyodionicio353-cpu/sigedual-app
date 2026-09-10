@@ -1,16 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import { plantillaEvaluacionPorId } from "@/lib/evaluaciones";
 import { NIVELES_LOGRO } from "@/lib/evaluaciones/tipos";
 import type { Evaluacion, Estudiante, CentroDual, MaestroGuia, NivelLogro } from "@/types";
 import TituloPagina from "@/components/TituloPagina";
 import LeyendaNiveles from "@/components/evaluaciones/LeyendaNiveles";
-import { ArrowLeft, ClipboardCheck, AlertCircle } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, AlertCircle, Trash2 } from "lucide-react";
 
 function NivelesConValor({ valor }: { valor?: NivelLogro }) {
   return (
@@ -40,6 +41,7 @@ function NivelesConValor({ valor }: { valor?: NivelLogro }) {
 export default function RegistroEvaluacionPage() {
   const { id } = useParams<{ id: string }>();
   const { usuario } = useAuth();
+  const router = useRouter();
 
   const [evaluacion, setEvaluacion] = useState<Evaluacion | null>(null);
   const [estudiante, setEstudiante] = useState<Estudiante | null>(null);
@@ -47,6 +49,7 @@ export default function RegistroEvaluacionPage() {
   const [maestroGuia, setMaestroGuia] = useState<MaestroGuia | null>(null);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
 
   useEffect(() => {
     if (!usuario || !id) return;
@@ -73,6 +76,24 @@ export default function RegistroEvaluacionPage() {
     cargar();
   }, [usuario, id]);
 
+  async function eliminarEvaluacion() {
+    if (!evaluacion || eliminando) return;
+    if (!confirm("¿Eliminar esta evaluación? Esta acción no se puede deshacer.")) return;
+    setEliminando(true);
+    try {
+      await deleteDoc(doc(db, "evaluaciones", evaluacion.id));
+      if (usuario) {
+        registrarEvento({
+          uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+          accion: "eliminar_evaluacion", recurso: "evaluaciones", recursoId: evaluacion.id, resultado: "permitido",
+        });
+      }
+      router.push("/dashboard/documentos/evaluaciones");
+    } finally {
+      setEliminando(false);
+    }
+  }
+
   if (loading) {
     return <div className="p-4 md:p-8"><p style={{ color: "var(--text-secondary)" }} className="text-sm">Cargando...</p></div>;
   }
@@ -95,16 +116,29 @@ export default function RegistroEvaluacionPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-3xl">
-      <div className="mb-6 flex items-center gap-3">
-        <Link href="/dashboard/documentos/evaluaciones" style={{ color: "var(--text-muted)" }}>
-          <ArrowLeft size={20} />
-        </Link>
-        <div>
-          <TituloPagina icon={<ClipboardCheck size={28} />}>{plantilla?.nombre ?? "Evaluación"}</TituloPagina>
-          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-            {estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : "Estudiante"} · {evaluacion.fecha}
-          </p>
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard/documentos/evaluaciones" style={{ color: "var(--text-muted)" }}>
+            <ArrowLeft size={20} />
+          </Link>
+          <div>
+            <TituloPagina icon={<ClipboardCheck size={28} />}>{plantilla?.nombre ?? "Evaluación"}</TituloPagina>
+            <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+              {estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : "Estudiante"} · {evaluacion.fecha}
+            </p>
+          </div>
         </div>
+        {usuario?.rol === "desarrollador" && (
+          <button
+            onClick={eliminarEvaluacion}
+            disabled={eliminando}
+            style={{ background: "var(--danger)22", border: "1px solid var(--danger)", color: "var(--danger)" }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex-shrink-0"
+          >
+            <Trash2 size={16} />
+            {eliminando ? "Eliminando..." : "Eliminar evaluación"}
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col gap-5">
