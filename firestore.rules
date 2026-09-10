@@ -380,7 +380,9 @@ service cloud.firestore {
         || resource.data.profesorSupervisorId == request.auth.uid
         || resource.data.profesorId == request.auth.uid
       );
-      allow delete: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
+      // Eliminar una visita es irreversible — a diferencia de cancelarla o
+      // reprogramarla, queda reservado al rol desarrollador.
+      allow delete: if request.auth != null && datosUsuario().rol == 'desarrollador';
     }
 
     // Evaluación de desempeño del estudiante en su Centro Dual. Cada
@@ -399,7 +401,9 @@ service cloud.firestore {
         || (datosUsuario().rol in ['profesor', 'centro_dual'] && tieneAutorizacion('estudiante', request.resource.data.estudianteId))
       );
       allow update: if false;
-      allow delete: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
+      // Eliminar una evaluación ya registrada es irreversible, queda
+      // reservado al rol desarrollador.
+      allow delete: if request.auth != null && datosUsuario().rol == 'desarrollador';
     }
 
     // Envío de una plantilla de Evaluación de un Profesor Supervisor hacia
@@ -439,8 +443,8 @@ service cloud.firestore {
     // autenticado, de cualquier liceo, podía leer y escribir cualquiera —
     // se corrige acá de paso. `centro_dual`/`estudiante` NUNCA crean, editan
     // ni eliminan un documento — solo pueden VER el que esté a su nombre
-    // (por `estudianteId`); crear/editar/eliminar es exclusivo del staff
-    // del liceo (profesor mantiene su alcance de liceo completo).
+    // (por `estudianteId`); crear/editar es del staff del liceo (profesor
+    // mantiene su alcance de liceo completo), eliminar es solo desarrollador.
     match /documentos_generados/{id} {
       allow read: if request.auth != null && (
         esAccesoCompletoLiceo(resource.data.liceoId)
@@ -461,10 +465,10 @@ service cloud.firestore {
         esAccesoCompletoLiceo(resource.data.liceoId)
         || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId)
       );
-      allow delete: if request.auth != null && (
-        esAccesoCompletoLiceo(resource.data.liceoId)
-        || resource.data.creadoPor == request.auth.uid
-      );
+      // Eliminar un documento/convenio ya emitido es irreversible — a
+      // diferencia de crear/editar/duplicar, queda reservado al rol
+      // desarrollador (antes: acceso completo de liceo o el propio creador).
+      allow delete: if request.auth != null && datosUsuario().rol == 'desarrollador';
     }
 
     // Índice de unicidad de nombre para documentos_generados (mismo criterio
