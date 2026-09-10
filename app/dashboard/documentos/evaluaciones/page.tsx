@@ -8,7 +8,8 @@ import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { useAmbitoMaestroGuia } from "@/lib/permisos/useAmbitoMaestroGuia";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { PLANTILLAS_EVALUACION, plantillaEvaluacionPorId } from "@/lib/evaluaciones";
-import { estadoEnvioEvaluacion, diasParaCierre } from "@/lib/evaluaciones/envios";
+import { estadoEnvioEvaluacion, diasParaCierre, horasParaCierre } from "@/lib/evaluaciones/envios";
+import { formatearFecha, formatearHora } from "@/lib/fecha";
 import ModalEnviarEvaluacion from "@/components/evaluaciones/ModalEnviarEvaluacion";
 import type { Evaluacion, Estudiante, EnvioEvaluacion, Asignacion } from "@/types";
 import Select from "@/components/ui/Select";
@@ -181,7 +182,12 @@ export default function EvaluacionesPage() {
                 {enviosPendientes.map((envio) => {
                   const plantilla = plantillaEvaluacionPorId(envio.plantillaId);
                   const dias = diasParaCierre(envio);
+                  const horas = horasParaCierre(envio);
                   const porCerrar = dias <= DIAS_ALERTA_CIERRE;
+                  const textoVencimiento =
+                    horas <= 0 ? "Venció"
+                    : horas <= 24 ? `Vence en ${horas} hora${horas === 1 ? "" : "s"}`
+                    : `Vence en ${dias} día${dias === 1 ? "" : "s"}`;
                   return (
                     <div key={envio.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 flex flex-col gap-3">
                       <div>
@@ -193,7 +199,7 @@ export default function EvaluacionesPage() {
                         className="flex items-center gap-1.5 text-xs font-medium"
                       >
                         {porCerrar ? <AlertTriangle size={13} /> : <Clock size={13} />}
-                        {dias <= 0 ? "Vence hoy" : `Vence en ${dias} día${dias === 1 ? "" : "s"}`} · {envio.fechaFin}
+                        {textoVencimiento} · {formatearFecha(envio.fechaFin)}{envio.fechaFin.includes("T") ? ` ${formatearHora(envio.fechaFin)}` : ""}
                       </p>
                       <Link
                         href={`/dashboard/documentos/evaluaciones/realizar/${envio.plantillaId}?envioId=${envio.id}`}
