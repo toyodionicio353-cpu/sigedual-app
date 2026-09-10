@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { PARTES_LEGALES, TOTAL_PARTES_PLANEADAS } from "@/lib/legal/contenido";
 import type { BloqueLegal } from "@/lib/legal/tipos";
 import { buscarEnDocumento, resaltar } from "@/lib/legal/busqueda";
-import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Menu, X, ArrowUp, Printer } from "lucide-react";
+import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Menu, X, ArrowUp } from "lucide-react";
 
 function irA(id: string) {
   const el = document.getElementById(id);
@@ -145,13 +145,6 @@ export default function DocumentoLegal() {
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16 }} className="p-3 max-h-[70vh] overflow-y-auto">
             {NavContenido}
           </div>
-          <button
-            onClick={() => window.print()}
-            style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium hover:[border-color:var(--accent)] transition-colors"
-          >
-            <Printer size={14} /> Imprimir documento
-          </button>
         </div>
       </aside>
 
