@@ -7,7 +7,7 @@ import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { InvitacionEmpresa, RespuestaInvitacion, CentroDual, EstadoInvitacion, Especialidad } from "@/types";
 import {
-  ArrowLeft, Building2, User2, Sparkles, ClipboardCheck, Users2, CheckCircle2, AlertTriangle, MoreVertical, Wand2,
+  ArrowLeft, Building2, User2, Sparkles, ClipboardCheck, Users2, CheckCircle2, AlertTriangle, Wand2,
 } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import CentroDualForm, { CENTRO_FORM_VACIO, TIPOS_CENTRO, type CentroDualFormValues } from "../../_components/CentroDualForm";
@@ -96,7 +96,6 @@ export default function VistaPreviaInvitacionPage() {
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
 
-  const [menuAbierto, setMenuAbierto] = useState(false);
   const [mostrarFormCentro, setMostrarFormCentro] = useState(false);
   const [guardandoCentro, setGuardandoCentro] = useState(false);
   const [errorCentro, setErrorCentro] = useState("");
@@ -252,30 +251,13 @@ export default function VistaPreviaInvitacionPage() {
             Generada por {invitacion.profesorNombre} · Estado: {ESTADO_LABEL[invitacion.estado]}
           </p>
         </div>
-        <div className="relative flex-shrink-0">
-          <button
-            onClick={() => setMenuAbierto((v) => !v)}
-            style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)", color: "var(--text-secondary)" }}
-            className="p-2 rounded-lg"
-            aria-label="Más acciones"
-          >
-            <MoreVertical size={16} />
-          </button>
-          {menuAbierto && (
-            <>
-              <div className="fixed inset-0 z-30" onClick={() => setMenuAbierto(false)} />
-              <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="absolute right-0 top-full mt-1 w-64 rounded-xl shadow-2xl overflow-hidden z-40 py-1">
-                <button
-                  onClick={() => { setMostrarFormCentro(true); setMenuAbierto(false); }}
-                  style={{ color: "var(--text-primary)" }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:[background:var(--hover-overlay)] transition-colors text-left"
-                >
-                  <Wand2 size={14} /> Autorrellenar Empresa Dual
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+        <button
+          onClick={() => setMostrarFormCentro(true)}
+          style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity flex-shrink-0"
+        >
+          <Wand2 size={16} /> Autorrellenar Empresa Dual
+        </button>
       </div>
 
       {centroResultado ? (
