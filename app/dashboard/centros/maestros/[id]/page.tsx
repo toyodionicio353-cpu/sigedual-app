@@ -263,18 +263,18 @@ export default function FichaMaestroGuiaPage() {
         </span>
         {puedeEditar && (
           <>
-            <Link href={`/dashboard/centros/maestros/${mg.id}/editar`} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--accent-light)" }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--accent)] transition-colors">
-              <Pencil size={13} />
+            <Link href={`/dashboard/centros/maestros/${mg.id}/editar`} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--accent-light)" }} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:[border-color:var(--accent)] transition-colors">
+              <Pencil size={16} />
               Editar
             </Link>
-            <button onClick={cambiarEstado} disabled={actualizando} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--accent)] transition-colors disabled:opacity-50">
-              <Power size={13} />
+            <button onClick={cambiarEstado} disabled={actualizando} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:[border-color:var(--accent)] transition-colors disabled:opacity-50">
+              <Power size={16} />
               {mg.estado === "activo" ? "Marcar inactivo" : "Marcar activo"}
             </button>
             {puedeEliminar && asignacionesDeEsteGuia.length === 0 && (
-              <button onClick={eliminar} disabled={eliminando} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--danger)" }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--danger)] transition-colors disabled:opacity-50">
-                <Trash2 size={13} />
-                Eliminar
+              <button onClick={eliminar} disabled={eliminando} style={{ background: "var(--danger)22", border: "1px solid var(--danger)", color: "var(--danger)" }} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50">
+                <Trash2 size={16} />
+                Eliminar maestro guía
               </button>
             )}
           </>

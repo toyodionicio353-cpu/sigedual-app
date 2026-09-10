@@ -283,11 +283,11 @@ export default function UsuariosPage() {
                       <button
                         onClick={() => eliminarUsuario(u)}
                         disabled={eliminandoUid === u.uid}
-                        style={{ color: "var(--danger)" }}
-                        className="disabled:opacity-40"
+                        style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--danger)" }}
+                        className="p-2 rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50 flex-shrink-0"
                         title="Eliminar usuario"
                       >
-                        <Trash2 size={15} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>

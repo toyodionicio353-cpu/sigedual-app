@@ -188,11 +188,11 @@ export default function FichaEstudiantePage() {
             <button
               onClick={eliminar}
               disabled={eliminando}
-              style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--danger)" }}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium hover:[border-color:var(--danger)] transition-colors disabled:opacity-50"
+              style={{ background: "var(--danger)22", border: "1px solid var(--danger)", color: "var(--danger)" }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              <Trash2 size={15} />
-              Eliminar
+              <Trash2 size={16} />
+              {eliminando ? "Eliminando..." : "Eliminar estudiante"}
             </button>
             <Link
               href={`/dashboard/estudiantes/${estudiante.id}/editar`}
