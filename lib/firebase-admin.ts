@@ -198,6 +198,42 @@ export async function setAuthUserDisabled(uid: string, disabled: boolean): Promi
   }
 }
 
+/**
+ * Cambia el correo de una cuenta en Firebase Authentication.
+ *
+ * El correo NO es un dato más de la ficha: es la credencial con la que la
+ * persona inicia sesión. El campo `email` de `usuarios/{uid}` es solo una
+ * copia para mostrarlo en pantalla — si se cambiara únicamente esa copia,
+ * la ficha diría una cosa y el inicio de sesión seguiría exigiendo la
+ * anterior. Por eso el cambio se hace acá primero y solo después se
+ * actualiza Firestore.
+ *
+ * Se marca el correo como no verificado: la dirección nueva todavía no ha
+ * demostrado pertenecer a nadie.
+ */
+export async function setAuthUserEmail(uid: string, email: string): Promise<void> {
+  const token = await getAccessToken();
+  const res = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:update", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ localId: uid, email, emailVerified: false }),
+  });
+  if (res.ok) return;
+
+  // Los códigos de Identity Toolkit no son para mostrárselos a nadie.
+  const texto = await res.text();
+  if (texto.includes("EMAIL_EXISTS")) {
+    throw new Error("Ese correo ya pertenece a otra cuenta de SIGEDUAL.");
+  }
+  if (texto.includes("INVALID_EMAIL")) {
+    throw new Error("El correo no tiene un formato válido.");
+  }
+  if (texto.includes("USER_NOT_FOUND")) {
+    throw new Error("Esa cuenta ya no existe en Firebase Authentication.");
+  }
+  throw new Error(`No se pudo cambiar el correo en Firebase Auth: ${texto}`);
+}
+
 export async function deleteAuthUser(uid: string): Promise<void> {
   const token = await getAccessToken();
   const res = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:delete", {
