@@ -48,6 +48,15 @@ export default function CrearCuentaPage() {
   const esCentroDual = rol === "centro_dual";
   const esEstudiante = rol === "estudiante";
   const esExterno = esCentroDual || esEstudiante;
+  const esProfesor = rol === "profesor";
+
+  // Especialidad (solo Profesor Supervisor): igual que cuando un
+  // administrador lo crea desde "Agregar profesor", pero acá se resuelve
+  // el liceo por el dominio del correo (recién se está registrando, sin
+  // sesión todavía) para mostrar las especialidades de SU institución.
+  const [especialidad, setEspecialidad] = useState("");
+  const [especialidadesDisponibles, setEspecialidadesDisponibles] = useState<{ id: string; nombre: string }[]>([]);
+  const [cargandoEspecialidades, setCargandoEspecialidades] = useState(false);
 
   // Institución (solo para Estudiante / Centro Dual).
   const [liceos, setLiceos] = useState<LiceoOpcion[]>([]);
@@ -109,6 +118,32 @@ export default function CrearCuentaPage() {
     }, 500);
     return () => clearTimeout(idTimeout);
   }, [esExterno, esEstudiante, liceoId, email]);
+
+  useEffect(() => {
+    setEspecialidad("");
+    if (!esProfesor) {
+      setEspecialidadesDisponibles([]);
+      return;
+    }
+    const dominio = email.trim().split("@")[1]?.toLowerCase();
+    if (!EMAIL_REGEX.test(email.trim()) || !dominio) {
+      setEspecialidadesDisponibles([]);
+      return;
+    }
+    const idTimeout = setTimeout(async () => {
+      setCargandoEspecialidades(true);
+      try {
+        const res = await fetch(`/api/crear-cuenta/especialidades-por-dominio?dominio=${encodeURIComponent(dominio)}`);
+        const data = await res.json();
+        setEspecialidadesDisponibles(res.ok ? (data.especialidades ?? []) : []);
+      } catch {
+        setEspecialidadesDisponibles([]);
+      } finally {
+        setCargandoEspecialidades(false);
+      }
+    }, 500);
+    return () => clearTimeout(idTimeout);
+  }, [esProfesor, email]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -223,6 +258,7 @@ export default function CrearCuentaPage() {
           liceoId: liceoIdFinal,
           activo: true,
           creadoEn: new Date().toISOString(),
+          ...(esProfesor && especialidad ? { especialidad } : {}),
         });
       }
 
@@ -365,6 +401,28 @@ export default function CrearCuentaPage() {
                 style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-muted)" }}
                 className="w-full px-4 py-3 rounded-xl text-sm outline-none cursor-not-allowed"
               />
+            </div>
+          )}
+
+          {esProfesor && (
+            <div>
+              <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">
+                Especialidad
+              </label>
+              <Select
+                value={especialidad}
+                onChange={setEspecialidad}
+                ariaLabel="Especialidad"
+                placeholder={cargandoEspecialidades ? "Cargando..." : "Sin especialidad"}
+                disabled={cargandoEspecialidades || especialidadesDisponibles.length === 0}
+                opciones={[{ value: "", label: "Sin especialidad" }, ...especialidadesDisponibles.map((e) => ({ value: e.nombre, label: e.nombre }))]}
+              />
+              <p style={{ color: "var(--text-muted)" }} className="flex items-start gap-1.5 text-xs mt-2">
+                <Info size={13} className="flex-shrink-0 mt-0.5" />
+                {especialidadesDisponibles.length === 0
+                  ? "Ingresa tu correo institucional para ver las especialidades de tu liceo."
+                  : "Según tu especialidad, verás a los estudiantes que te correspondan."}
+              </p>
             </div>
           )}
 
