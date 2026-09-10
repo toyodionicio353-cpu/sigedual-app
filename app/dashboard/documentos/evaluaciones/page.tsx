@@ -221,45 +221,58 @@ export default function EvaluacionesPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {PLANTILLAS_EVALUACION.map((p) => (
-              <div key={p.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 flex flex-col gap-3">
-                <div>
-                  <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">{p.nombre}</p>
-                  <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{p.especialidad} · {p.nivel}</p>
+              <div key={p.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl flex flex-col">
+                <div className="p-3 pb-0">
+                  {/* Lo que hay dentro del documento: su título y el comienzo
+                      de lo que se evalúa — mismo recuadro que Convenios. */}
+                  <VistaPreviaDocumento
+                    lineas={[
+                      p.titulo,
+                      p.categoriasLogros[0]?.titulo,
+                      p.categoriasLogros[0]?.criterios[0]?.texto,
+                    ].filter(Boolean) as string[]}
+                  />
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  <span style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="px-2.5 py-1 rounded-full text-[11px]">
-                    Evaluación Maestro Guía
-                  </span>
-                  <span style={{ background: "var(--success)22", color: "var(--success)" }} className="px-2.5 py-1 rounded-full text-[11px]">
-                    Activa
-                  </span>
+                <div className="p-4 sm:p-5 pt-4 flex flex-col gap-3">
+                  <div>
+                    <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">{p.nombre}</p>
+                    <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{p.especialidad} · {p.nivel}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <span style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="px-2.5 py-1 rounded-full text-[11px]">
+                      Evaluación Maestro Guía
+                    </span>
+                    <span style={{ background: "var(--success)22", color: "var(--success)" }} className="px-2.5 py-1 rounded-full text-[11px]">
+                      Activa
+                    </span>
+                  </div>
+                  <div className="flex gap-2 mt-1">
+                    <Link
+                      href={`/dashboard/documentos/evaluaciones/realizar/${p.id}`}
+                      style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+                      className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"
+                    >
+                      <Wand2 size={15} /> Realizar
+                    </Link>
+                    <Link
+                      href={`/dashboard/documentos/evaluaciones/vista-previa/${p.id}`}
+                      style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+                      className="px-3 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center"
+                      aria-label="Vista previa"
+                    >
+                      <Eye size={15} />
+                    </Link>
+                  </div>
+                  {puedeEnviar && (
+                    <button
+                      onClick={() => setPlantillaAEnviar({ id: p.id, nombre: p.nombre })}
+                      style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+                      className="px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5"
+                    >
+                      <Send size={15} /> Enviar a un Centro Dual
+                    </button>
+                  )}
                 </div>
-                <div className="flex gap-2 mt-1">
-                  <Link
-                    href={`/dashboard/documentos/evaluaciones/realizar/${p.id}`}
-                    style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
-                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"
-                  >
-                    <Wand2 size={15} /> Realizar
-                  </Link>
-                  <Link
-                    href={`/dashboard/documentos/evaluaciones/vista-previa/${p.id}`}
-                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-                    className="px-3 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center"
-                    aria-label="Vista previa"
-                  >
-                    <Eye size={15} />
-                  </Link>
-                </div>
-                {puedeEnviar && (
-                  <button
-                    onClick={() => setPlantillaAEnviar({ id: p.id, nombre: p.nombre })}
-                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-                    className="px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5"
-                  >
-                    <Send size={15} /> Enviar a un Centro Dual
-                  </button>
-                )}
               </div>
             ))}
           </div>
