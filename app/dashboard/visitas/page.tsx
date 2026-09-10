@@ -16,6 +16,7 @@ import {
 } from "@/lib/visitas/normalizar";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
+import { VistaPreviaDocumento } from "@/components/biblioteca/BibliotecaDocumental";
 import type { CentroDual, Especialidad, Estudiante, MaestroGuia, Usuario, Visita } from "@/types";
 import { AlertCircle, CalendarClock, CalendarCheck, CheckCircle2, MapPin, School, Search, SlidersHorizontal, X } from "lucide-react";
 
@@ -446,34 +447,37 @@ export default function VisitasPage() {
               const hora = horaProgramadaDe(v);
               const estudiantesTxt = nombresEstudiantes(v);
               const preview = vistaPrevia(v);
+              const lineasPreview = [centroNombre(v.centroDualId), estudiantesTxt, preview].filter(Boolean) as string[];
               return (
                 <Link
                   key={v.id}
                   href={`/dashboard/visitas/${v.id}`}
                   style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
-                  className="rounded-2xl p-4 flex flex-col gap-2 hover:[border-color:var(--accent)] transition-colors"
+                  className="rounded-2xl hover:[border-color:var(--accent)] transition-colors flex flex-col"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold leading-snug line-clamp-2 flex-1">{centroNombre(v.centroDualId)}</p>
-                    <span style={{ color: ESTADO_VISITA_COLOR[estado], background: `${ESTADO_VISITA_COLOR[estado]}22` }} className="text-[11px] px-2 py-0.5 rounded-full flex-shrink-0">
-                      {ESTADO_VISITA_LABEL[estado]}
-                    </span>
+                  <div className="p-3 pb-0">
+                    <VistaPreviaDocumento lineas={lineasPreview} />
                   </div>
-                  {estudiantesTxt && <p style={{ color: "var(--text-secondary)" }} className="text-xs truncate">{estudiantesTxt}</p>}
-                  <p style={{ color: "var(--text-muted)" }} className="text-xs">
-                    {formatearFecha(fecha)}{hora ? ` · ${hora}` : ""}
-                  </p>
-                  <p style={{ color: "var(--text-muted)" }} className="text-xs">
-                    Profesor Supervisor: {profesorNombre(profesorSupervisorIdDe(v))}
-                  </p>
-                  {preview && (
-                    <p style={{ color: "var(--text-secondary)" }} className="text-xs line-clamp-2 mt-1">{preview}</p>
-                  )}
-                  {modoGlobal && (
-                    <p style={{ color: "var(--text-muted)" }} className="flex items-center gap-1 text-[11px] mt-1">
-                      <School size={11} /> {liceoNombrePorId[v.liceoId] || "—"}
+                  <div className="p-4 flex flex-col gap-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold leading-snug line-clamp-2 flex-1">{centroNombre(v.centroDualId)}</p>
+                      <span style={{ color: ESTADO_VISITA_COLOR[estado], background: `${ESTADO_VISITA_COLOR[estado]}22` }} className="text-[11px] px-2 py-0.5 rounded-full flex-shrink-0">
+                        {ESTADO_VISITA_LABEL[estado]}
+                      </span>
+                    </div>
+                    {estudiantesTxt && <p style={{ color: "var(--text-secondary)" }} className="text-xs truncate">{estudiantesTxt}</p>}
+                    <p style={{ color: "var(--text-muted)" }} className="text-xs">
+                      {formatearFecha(fecha)}{hora ? ` · ${hora}` : ""}
                     </p>
-                  )}
+                    <p style={{ color: "var(--text-muted)" }} className="text-xs">
+                      Profesor Supervisor: {profesorNombre(profesorSupervisorIdDe(v))}
+                    </p>
+                    {modoGlobal && (
+                      <p style={{ color: "var(--text-muted)" }} className="flex items-center gap-1 text-[11px] mt-1">
+                        <School size={11} /> {liceoNombrePorId[v.liceoId] || "—"}
+                      </p>
+                    )}
+                  </div>
                 </Link>
               );
             })}

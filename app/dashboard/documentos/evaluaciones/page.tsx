@@ -13,6 +13,7 @@ import ModalEnviarEvaluacion from "@/components/evaluaciones/ModalEnviarEvaluaci
 import type { Evaluacion, Estudiante, EnvioEvaluacion, Asignacion } from "@/types";
 import Select from "@/components/ui/Select";
 import TituloPagina from "@/components/TituloPagina";
+import { VistaPreviaDocumento } from "@/components/biblioteca/BibliotecaDocumental";
 import { ClipboardCheck, Wand2, Eye, ChevronRight, Send, Clock, AlertTriangle } from "lucide-react";
 
 type Tab = "plantillas" | "realizadas";
@@ -290,23 +291,29 @@ export default function EvaluacionesPage() {
               <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Aún no hay evaluaciones realizadas</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {evaluacionesFiltradas.map((ev) => {
                 const plantilla = plantillaEvaluacionPorId(ev.plantillaId);
+                const lineasPreview = [nombreEstudiante(ev.estudianteId), plantilla?.nombre, ev.observaciones].filter(Boolean) as string[];
                 return (
                   <Link
                     key={ev.id}
                     href={`/dashboard/documentos/evaluaciones/registros/${ev.id}`}
                     style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
-                    className="rounded-2xl p-4 flex items-center justify-between gap-3 hover:[border-color:var(--accent)] transition-colors"
+                    className="rounded-2xl hover:[border-color:var(--accent)] transition-colors flex flex-col"
                   >
-                    <div className="min-w-0">
-                      <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{nombreEstudiante(ev.estudianteId)}</p>
-                      <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{plantilla?.nombre ?? "Evaluación"} · {ev.fecha}</p>
+                    <div className="p-3 pb-0">
+                      <VistaPreviaDocumento lineas={lineasPreview} />
                     </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <span style={{ color: "var(--accent-light)" }} className="text-sm font-bold">{ev.resultados.promedioGeneral}%</span>
-                      <ChevronRight size={16} style={{ color: "var(--text-muted)" }} />
+                    <div className="p-4 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{nombreEstudiante(ev.estudianteId)}</p>
+                        <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5">{plantilla?.nombre ?? "Evaluación"} · {ev.fecha}</p>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span style={{ color: "var(--accent-light)" }} className="text-sm font-bold">{ev.resultados.promedioGeneral}%</span>
+                        <ChevronRight size={16} style={{ color: "var(--text-muted)" }} />
+                      </div>
                     </div>
                   </Link>
                 );
