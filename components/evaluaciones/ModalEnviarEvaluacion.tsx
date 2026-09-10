@@ -9,9 +9,10 @@ import { Send, X } from "lucide-react";
 const inputStyle = { background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" };
 const inputClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors";
 
-function hoyISO(): string {
+function ahoraISO(): string {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 interface ModalEnviarEvaluacionProps {
@@ -34,8 +35,8 @@ export default function ModalEnviarEvaluacion({
   const [centros, setCentros] = useState<CentroDual[]>([]);
   const [cargandoDatos, setCargandoDatos] = useState(true);
 
-  const [fechaInicio, setFechaInicio] = useState(hoyISO());
-  const [fechaFin, setFechaFin] = useState(hoyISO());
+  const [fechaInicio, setFechaInicio] = useState(ahoraISO());
+  const [fechaFin, setFechaFin] = useState(() => ahoraISO().slice(0, 10) + "T23:59");
   const [seleccionadas, setSeleccionadas] = useState<Set<string>>(new Set());
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
@@ -126,18 +127,18 @@ export default function ModalEnviarEvaluacion({
         </div>
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-5">{plantillaNombre}</p>
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Desde</label>
-            <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} style={inputStyle} className={inputClass} />
+            <input type="datetime-local" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} style={inputStyle} className={inputClass} />
           </div>
           <div>
             <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Hasta</label>
-            <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} style={inputStyle} className={inputClass} />
+            <input type="datetime-local" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} style={inputStyle} className={inputClass} />
           </div>
         </div>
         <p style={{ color: "var(--text-muted)" }} className="text-xs mb-4">
-          El Centro Dual solo verá esta evaluación como disponible entre esas fechas.
+          El Centro Dual solo verá esta evaluación como disponible entre esa fecha y hora.
         </p>
 
         <p style={{ color: "var(--text-secondary)" }} className="text-xs font-semibold uppercase tracking-wide mb-2">
