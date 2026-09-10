@@ -17,13 +17,15 @@ export interface BorradorEnEdicion {
 }
 
 export default function ModalRedactar({
-  contactos, cargandoContactos, inicialValores, enviando,
+  contactos, cargandoContactos, inicialValores, enviando, errorEnvio,
   onCerrar, onEnviar, onGuardarBorrador, onDescartar,
 }: {
   contactos: Usuario[];
   cargandoContactos: boolean;
   inicialValores?: BorradorEnEdicion;
   enviando: boolean;
+  /** Falla real al enviar, informada por la página. */
+  errorEnvio?: string;
   onCerrar: () => void;
   onEnviar: (datos: BorradorEnEdicion) => Promise<void>;
   onGuardarBorrador: (datos: BorradorEnEdicion) => Promise<void>;
@@ -179,7 +181,9 @@ export default function ModalRedactar({
             />
           </div>
 
-          {error && <p style={{ color: "var(--danger)" }} className="text-xs">{error}</p>}
+          {(error || errorEnvio) && (
+            <p style={{ color: "var(--danger)" }} className="text-xs">{error || errorEnvio}</p>
+          )}
         </div>
 
         <div className="flex items-center gap-2 mt-4 flex-shrink-0">

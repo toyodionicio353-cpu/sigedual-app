@@ -54,6 +54,7 @@ function MensajesContenido() {
   const [seleccion, setSeleccion] = useState<string[]>([]);
   const [redactando, setRedactando] = useState<BorradorEnEdicion | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState("");
   const [personas, setPersonas] = useState<Record<string, Usuario>>({});
   const [carpetasAbiertas, setCarpetasAbiertas] = useState(false);
 
@@ -74,7 +75,9 @@ function MensajesContenido() {
       .then((lista) => {
         if (cancelado) return;
         const map: Record<string, Usuario> = {};
-        lista.forEach((u) => (map[u.uid] = u));
+        // Se indexa por el id del documento, que es el uid real de la cuenta
+        // (el campo `uid` de adentro es una copia que puede faltar).
+        lista.forEach((u) => (map[u.id] = { ...u, uid: u.id }));
         setPersonas(map);
       })
       .catch(() => {});
@@ -147,6 +150,7 @@ function MensajesContenido() {
   async function enviarMensaje(datos: BorradorEnEdicion) {
     if (!usuario || enviando) return;
     setEnviando(true);
+    setErrorEnvio("");
     try {
       const id = await iniciarConversacion({
         autor: usuario,
@@ -158,6 +162,10 @@ function MensajesContenido() {
       setRedactando(null);
       setCarpeta("enviados");
       await abrirHilo(id);
+    } catch (err) {
+      // Un envío que falla tiene que decirlo: antes el error se perdía y el
+      // mensaje simplemente no llegaba, sin ninguna señal.
+      setErrorEnvio(err instanceof Error ? err.message : "No fue posible enviar el mensaje.");
     } finally {
       setEnviando(false);
     }
@@ -166,8 +174,11 @@ function MensajesContenido() {
   async function responder(texto: string) {
     if (!usuario || !abierta || enviando) return;
     setEnviando(true);
+    setErrorEnvio("");
     try {
       await responderConversacion(abierta, usuario, texto);
+    } catch (err) {
+      setErrorEnvio(err instanceof Error ? err.message : "No fue posible enviar la respuesta.");
     } finally {
       setEnviando(false);
     }
@@ -191,7 +202,13 @@ function MensajesContenido() {
   // ── Conversación abierta ────────────────────────────────────────────
   if (abierta) {
     return (
-      <div className="h-[calc(100dvh-56px)]" style={{ background: "var(--bg-card)" }}>
+      <div className="h-[calc(100dvh-56px)] flex flex-col" style={{ background: "var(--bg-card)" }}>
+        {errorEnvio && (
+          <div style={{ background: "var(--danger)22", borderBottom: "1px solid var(--danger)" }} className="px-4 py-2.5 flex-shrink-0">
+            <p style={{ color: "var(--danger)" }} className="text-sm font-medium">{errorEnvio}</p>
+          </div>
+        )}
+        <div className="flex-1 min-h-0">
         <VistaConversacion
           conversacion={abierta}
           titulo={tituloDe(abierta)}
@@ -204,6 +221,7 @@ function MensajesContenido() {
           onMarcarNoLeida={async () => { await marcarLeida(abierta.id, false); setAbiertaId(null); }}
           onResponder={responder}
         />
+        </div>
       </div>
     );
   }
@@ -368,6 +386,7 @@ function MensajesContenido() {
           cargandoContactos={cargandoContactos}
           inicialValores={redactando}
           enviando={enviando}
+          errorEnvio={errorEnvio}
           onCerrar={() => setRedactando(null)}
           onEnviar={enviarMensaje}
           onGuardarBorrador={guardarBorrador}
