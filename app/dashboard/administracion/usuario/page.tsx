@@ -62,6 +62,14 @@ export default function MiPerfilPage() {
    * las cuentas del resto (Administración → Usuarios). */
   const puedeEditarNombre = usuario?.rol === "desarrollador";
 
+  /** El correo no es un campo más del perfil: es la credencial de inicio de
+   * sesión, se cambia por el servidor (Firebase Auth) y obliga a volver a
+   * entrar. Por eso tiene su propio estado y su propio guardado, en vez de
+   * viajar con el resto del formulario. */
+  const [correoNuevo, setCorreoNuevo] = useState("");
+  const [cambiandoCorreo, setCambiandoCorreo] = useState(false);
+  const [errorCorreo, setErrorCorreo] = useState("");
+
   useEffect(() => {
     if (!usuario) return;
     const cargado: FormPerfil = {
@@ -81,8 +89,39 @@ export default function MiPerfilPage() {
     };
     setForm(cargado);
     setInicial(cargado);
+    setCorreoNuevo(usuario.email ?? "");
+    setErrorCorreo("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario?.uid]);
+
+  /** Se apoya en la misma ruta de administración que usa Usuarios, porque el
+   * SDK del navegador exige reautenticación reciente para cambiar el correo
+   * de la sesión activa y acá ya se verificó el rol contra Firestore. */
+  async function cambiarMiCorreo() {
+    if (!usuario || !auth.currentUser) return;
+    const email = correoNuevo.trim().toLowerCase();
+    if (!email) { setErrorCorreo("El correo no puede quedar vacío."); return; }
+    if (email === usuario.email.toLowerCase()) { setErrorCorreo(""); return; }
+
+    setCambiandoCorreo(true);
+    setErrorCorreo("");
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(`/api/admin/usuarios/${usuario.uid}/correo`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) { setErrorCorreo(data.error || "No se pudo cambiar el correo."); return; }
+      avisar(`Tu correo de acceso ahora es ${email}. Vuelve a iniciar sesión con esa dirección; la contraseña no cambia.`);
+      await refrescarUsuario();
+    } catch (e) {
+      setErrorCorreo(e instanceof Error ? e.message : "No se pudo cambiar el correo.");
+    } finally {
+      setCambiandoCorreo(false);
+    }
+  }
 
   const hayCambios = useMemo(() => JSON.stringify(form) !== JSON.stringify(inicial), [form, inicial]);
 
@@ -280,20 +319,46 @@ export default function MiPerfilPage() {
 
       {/* Información de contacto */}
       <Seccion icono={<Phone size={17} />} titulo="Información de contacto">
-        <CampoBloqueado
-          label="Correo electrónico"
-          valor={usuario.email}
-          explicacion="Se usa para iniciar sesión y recuperar tu cuenta, por eso permanece bloqueado."
-          badge={
+        {puedeEditarNombre ? (
+          <Campo label="Correo electrónico" error={errorCorreo}>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="email"
+                value={correoNuevo}
+                onChange={(e) => setCorreoNuevo(e.target.value)}
+                placeholder="nombre@sigedual.cl"
+                style={estiloInput(!!errorCorreo)}
+                className="flex-1 px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
+              />
+              <button
+                onClick={cambiarMiCorreo}
+                disabled={cambiandoCorreo || !correoNuevo.trim() || correoNuevo.trim().toLowerCase() === usuario.email.toLowerCase()}
+                style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+                className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40 whitespace-nowrap"
+              >
+                {cambiandoCorreo ? "Cambiando..." : "Cambiar correo"}
+              </button>
+            </div>
+            <p style={{ color: "var(--text-muted)" }} className="text-xs mt-1.5 font-normal">
+              Con este correo inicias sesión. Si lo cambias, la próxima vez tendrás que entrar con el nuevo; la contraseña no se modifica.
+            </p>
+          </Campo>
+        ) : (
+          <CampoBloqueado
+            label="Correo electrónico"
+            valor={usuario.email}
+            explicacion="Se usa para iniciar sesión y recuperar tu cuenta, por eso permanece bloqueado."
+            badge={
             <span
               style={{ color: verificado ? "var(--success)" : "var(--warning)", background: (verificado ? "var(--success)" : "var(--warning)") + "22" }}
               className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
             >
               <Mail size={10} /> {verificado ? "Verificado" : "No verificado"}
             </span>
-          }
-          accion={<BotonSolicitar onClick={() => setSolicitud({ tipo: "correo", valor: usuario.email })} texto="Solicitar cambio de correo" />}
-        />
+            }
+            accion={<BotonSolicitar onClick={() => setSolicitud({ tipo: "correo", valor: usuario.email })} texto="Solicitar cambio de correo" />}
+          />
+        )}
 
         <div className="grid sm:grid-cols-2 gap-4 pt-3">
           <Campo label="Teléfono" error={errores.telefono}>

@@ -5,7 +5,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
-import { RefreshCw, Trash2, UserCog, Pencil, Check, X } from "lucide-react";
+import { RefreshCw, Trash2, UserCog, Pencil } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 import type { Usuario, Rol, Liceo, Especialidad } from "@/types";
@@ -43,9 +43,10 @@ export default function UsuariosPage() {
   const [huerfanoActivo, setHuerfanoActivo] = useState<Huerfano | null>(null);
   const [formHuerfano, setFormHuerfano] = useState(EMPTY_HUERFANO);
   const [guardandoHuerfano, setGuardandoHuerfano] = useState(false);
-  const [editandoUid, setEditandoUid] = useState<string | null>(null);
-  const [nombreEditado, setNombreEditado] = useState("");
-  const [guardandoNombre, setGuardandoNombre] = useState(false);
+  const [editando, setEditando] = useState<Usuario | null>(null);
+  const [formEditar, setFormEditar] = useState({ nombre: "", email: "" });
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+  const [errorEdicion, setErrorEdicion] = useState("");
 
   async function cargar() {
     if (!usuario) return;
@@ -142,34 +143,70 @@ export default function UsuariosPage() {
     } finally { setGuardando(false); }
   }
 
-  function cancelarEdicionNombre() {
-    setEditandoUid(null);
-    setNombreEditado("");
+  function abrirEdicion(u: Usuario) {
+    setEditando(u);
+    setFormEditar({ nombre: u.nombre, email: u.email });
+    setErrorEdicion("");
   }
 
-  /** El nombre de una cuenta lo administra la institución: su propio dueño
-   * solo puede pedir el cambio desde Mi perfil, y se aplica desde acá. */
-  async function guardarNombre(u: Usuario) {
-    const nombre = nombreEditado.trim();
-    if (!usuario || !nombre || guardandoNombre || nombre === u.nombre) {
-      cancelarEdicionNombre();
-      return;
-    }
-    setGuardandoNombre(true);
-    setError("");
+  function cerrarEdicion() {
+    setEditando(null);
+    setErrorEdicion("");
+  }
+
+  /** Nombre y correo de una cuenta los administra la institución: su propio
+   * dueño solo puede pedir el cambio desde Mi perfil, y se aplica desde acá.
+   *
+   * El correo se cambia primero y por el servidor, porque no es un dato de
+   * la ficha sino la credencial de inicio de sesión: si esa parte falla (el
+   * correo ya es de otra cuenta, por ejemplo) no se toca nada más, para no
+   * dejar la ficha diciendo algo distinto de lo que Firebase Auth acepta. */
+  async function guardarEdicion() {
+    if (!editando || !usuario || !auth.currentUser) return;
+    const nombre = formEditar.nombre.trim();
+    const email = formEditar.email.trim().toLowerCase();
+    if (!nombre) { setErrorEdicion("El nombre no puede quedar vacío."); return; }
+    if (!email) { setErrorEdicion("El correo no puede quedar vacío."); return; }
+
+    const cambiaNombre = nombre !== editando.nombre;
+    const cambiaCorreo = email !== editando.email.toLowerCase();
+    if (!cambiaNombre && !cambiaCorreo) { cerrarEdicion(); return; }
+
+    setGuardandoEdicion(true);
+    setErrorEdicion("");
     try {
-      await updateDoc(doc(db, "usuarios", u.uid), { nombre, actualizadoEn: new Date().toISOString() });
-      setUsuarios((prev) => prev.map((x) => (x.uid === u.uid ? { ...x, nombre } : x)));
-      registrarEvento({
-        uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
-        accion: "editar_nombre_usuario", recurso: "usuarios", recursoId: u.uid,
-        resultado: "permitido", detalle: `${u.nombre} → ${nombre}`,
-      });
-      cancelarEdicionNombre();
+      if (cambiaCorreo) {
+        const token = await auth.currentUser.getIdToken();
+        const res = await fetch(`/api/admin/usuarios/${editando.uid}/correo`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const data = (await res.json()) as { error?: string };
+        if (!res.ok) { setErrorEdicion(data.error || "No se pudo cambiar el correo."); return; }
+      }
+
+      if (cambiaNombre) {
+        await updateDoc(doc(db, "usuarios", editando.uid), { nombre, actualizadoEn: new Date().toISOString() });
+        registrarEvento({
+          uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
+          accion: "editar_nombre_usuario", recurso: "usuarios", recursoId: editando.uid,
+          resultado: "permitido", detalle: `${editando.nombre} → ${nombre}`,
+        });
+      }
+
+      setUsuarios((prev) => prev.map((x) => (x.uid === editando.uid ? { ...x, nombre, email } : x)));
+
+      // Cambiarse el correo a uno mismo deja la sesión apuntando a una
+      // credencial que ya no existe: hay que volver a entrar con la nueva.
+      if (cambiaCorreo && editando.uid === usuario.uid) {
+        alert(`Tu correo de acceso ahora es ${email}. Cierra sesión y vuelve a entrar con esa dirección (la contraseña no cambia).`);
+      }
+      cerrarEdicion();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo guardar el nombre.");
+      setErrorEdicion(e instanceof Error ? e.message : "No se pudieron guardar los cambios.");
     } finally {
-      setGuardandoNombre(false);
+      setGuardandoEdicion(false);
     }
   }
 
@@ -301,54 +338,18 @@ export default function UsuariosPage() {
               {usuarios.map((u, i) => (
                 <tr key={u.uid} style={{ borderBottom: i < usuarios.length - 1 ? "1px solid var(--border)" : "none" }}>
                   <td style={{ color: "var(--text-primary)" }} className="px-5 py-4 font-medium">
-                    {editandoUid === u.uid ? (
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          value={nombreEditado}
-                          onChange={(e) => setNombreEditado(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") guardarNombre(u);
-                            if (e.key === "Escape") cancelarEdicionNombre();
-                          }}
-                          autoFocus
-                          aria-label={`Nombre de ${u.nombre}`}
-                          style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
-                          className="w-44 px-2.5 py-1.5 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
-                        />
-                        <button
-                          onClick={() => guardarNombre(u)}
-                          disabled={!nombreEditado.trim() || guardandoNombre}
-                          title="Guardar nombre"
-                          aria-label="Guardar nombre"
-                          style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
-                          className="p-1.5 rounded-lg disabled:opacity-40"
-                        >
-                          <Check size={14} />
-                        </button>
-                        <button
-                          onClick={cancelarEdicionNombre}
-                          title="Cancelar"
-                          aria-label="Cancelar"
-                          style={{ color: "var(--text-muted)" }}
-                          className="p-1.5"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span>{u.nombre}</span>
-                        <button
-                          onClick={() => { setEditandoUid(u.uid); setNombreEditado(u.nombre); }}
-                          title="Editar nombre"
-                          aria-label={`Editar el nombre de ${u.nombre}`}
-                          style={{ color: "var(--text-muted)" }}
-                          className="p-1 hover:[color:var(--accent-light)] transition-colors"
-                        >
-                          <Pencil size={13} />
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span>{u.nombre}</span>
+                      <button
+                        onClick={() => abrirEdicion(u)}
+                        title="Editar nombre y correo"
+                        aria-label={`Editar el nombre y el correo de ${u.nombre}`}
+                        style={{ color: "var(--text-muted)" }}
+                        className="p-1 hover:[color:var(--accent-light)] transition-colors"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    </div>
                   </td>
                   <td style={{ color: "var(--text-secondary)" }} className="px-5 py-4">{u.email}</td>
                   <td style={{ color: "var(--accent-light)" }} className="px-5 py-4">{ROL_LABEL[u.rol]}</td>
@@ -461,6 +462,48 @@ export default function UsuariosPage() {
               <button onClick={() => setHuerfanoActivo(null)} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex-1 py-2.5 rounded-xl text-sm font-medium">Cancelar</button>
               <button onClick={completarHuerfano} disabled={guardandoHuerfano || !formHuerfano.nombre.trim()} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50">
                 {guardandoHuerfano ? "Guardando..." : "Guardar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editando && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div role="dialog" aria-modal="true" aria-label="Editar cuenta" style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="w-full max-w-md rounded-2xl p-5 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold mb-1">Editar cuenta</h2>
+            <p style={{ color: "var(--text-secondary)" }} className="text-sm mb-6">{ROL_LABEL[editando.rol]}</p>
+            <div className="flex flex-col gap-4">
+              <div>
+                <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Nombre completo</label>
+                <input
+                  type="text"
+                  value={formEditar.nombre}
+                  onChange={(e) => setFormEditar((f) => ({ ...f, nombre: e.target.value }))}
+                  autoFocus
+                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
+                />
+              </div>
+              <div>
+                <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Correo de acceso</label>
+                <input
+                  type="email"
+                  value={formEditar.email}
+                  onChange={(e) => setFormEditar((f) => ({ ...f, email: e.target.value }))}
+                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
+                />
+                <p style={{ color: "var(--text-muted)" }} className="text-xs mt-1.5">
+                  Es la dirección con la que esta persona inicia sesión. Si la cambias, deberá entrar con la nueva; la contraseña no se modifica.
+                </p>
+              </div>
+              {errorEdicion && <p style={{ color: "var(--danger)" }} className="text-xs">{errorEdicion}</p>}
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={cerrarEdicion} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex-1 py-2.5 rounded-xl text-sm font-medium">Cancelar</button>
+              <button onClick={guardarEdicion} disabled={guardandoEdicion || !formEditar.nombre.trim() || !formEditar.email.trim()} style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="flex-1 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50">
+                {guardandoEdicion ? "Guardando..." : "Guardar"}
               </button>
             </div>
           </div>
