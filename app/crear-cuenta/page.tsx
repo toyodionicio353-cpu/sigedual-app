@@ -54,7 +54,7 @@ export default function CrearCuentaPage() {
   // administrador lo crea desde "Agregar profesor", pero acá se resuelve
   // el liceo por el dominio del correo (recién se está registrando, sin
   // sesión todavía) para mostrar las especialidades de SU institución.
-  const [especialidad, setEspecialidad] = useState("");
+  const [especialidadId, setEspecialidadId] = useState("");
   const [especialidadesDisponibles, setEspecialidadesDisponibles] = useState<{ id: string; nombre: string }[]>([]);
   const [cargandoEspecialidades, setCargandoEspecialidades] = useState(false);
 
@@ -120,7 +120,7 @@ export default function CrearCuentaPage() {
   }, [esExterno, esEstudiante, liceoId, email]);
 
   useEffect(() => {
-    setEspecialidad("");
+    setEspecialidadId("");
     if (!esProfesor) {
       setEspecialidadesDisponibles([]);
       return;
@@ -258,7 +258,9 @@ export default function CrearCuentaPage() {
           liceoId: liceoIdFinal,
           activo: true,
           creadoEn: new Date().toISOString(),
-          ...(esProfesor && especialidad ? { especialidad } : {}),
+          ...(esProfesor && especialidadId
+            ? { especialidad: especialidadesDisponibles.find((e) => e.id === especialidadId)?.nombre ?? "", especialidadId }
+            : {}),
         });
       }
 
@@ -410,12 +412,12 @@ export default function CrearCuentaPage() {
                 Especialidad
               </label>
               <Select
-                value={especialidad}
-                onChange={setEspecialidad}
+                value={especialidadId}
+                onChange={setEspecialidadId}
                 ariaLabel="Especialidad"
                 placeholder={cargandoEspecialidades ? "Cargando..." : "Sin especialidad"}
                 disabled={cargandoEspecialidades || especialidadesDisponibles.length === 0}
-                opciones={[{ value: "", label: "Sin especialidad" }, ...especialidadesDisponibles.map((e) => ({ value: e.nombre, label: e.nombre }))]}
+                opciones={[{ value: "", label: "Sin especialidad" }, ...especialidadesDisponibles.map((e) => ({ value: e.id, label: e.nombre }))]}
               />
               <p style={{ color: "var(--text-muted)" }} className="flex items-start gap-1.5 text-xs mt-2">
                 <Info size={13} className="flex-shrink-0 mt-0.5" />

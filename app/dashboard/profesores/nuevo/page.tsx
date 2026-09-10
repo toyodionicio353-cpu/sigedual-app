@@ -23,7 +23,7 @@ export default function AgregarProfesorPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [run, setRun] = useState("");
-  const [especialidad, setEspecialidad] = useState("");
+  const [especialidadId, setEspecialidadId] = useState("");
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [cargandoEspecialidades, setCargandoEspecialidades] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -65,7 +65,7 @@ export default function AgregarProfesorPage() {
         email: email.trim(),
         nombre: nombre.trim(),
         rol: "profesor",
-        especialidad: especialidad.trim(),
+        ...(especialidadId ? { especialidad: especialidades.find((e) => e.id === especialidadId)?.nombre ?? "", especialidadId } : {}),
         liceoId: usuario.liceoId,
         activo: true,
         creadoEn: new Date().toISOString(),
@@ -129,11 +129,11 @@ export default function AgregarProfesorPage() {
             </p>
           ) : (
             <Select
-              value={especialidad}
-              onChange={setEspecialidad}
+              value={especialidadId}
+              onChange={setEspecialidadId}
               ariaLabel="Especialidad"
               disabled={cargandoEspecialidades}
-              opciones={[{ value: "", label: "Sin especialidad" }, ...especialidades.map((e) => ({ value: e.nombre, label: e.nombre }))]}
+              opciones={[{ value: "", label: "Sin especialidad" }, ...especialidades.map((e) => ({ value: e.id, label: e.nombre }))]}
             />
           )}
         </div>

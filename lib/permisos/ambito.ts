@@ -9,17 +9,26 @@ import type { Rol } from "@/types";
  *   administrador             | Global — todos los liceos, sin excepción.
  *   director                  | Todo su liceo (institucional completo).
  *   coordinador                | Toda la gestión TP de su liceo.
- *   profesor                  | Solo su ámbito asignado: los estudiantes,
- *                              | centros duales y maestros guía vinculados
- *                              | a él a través de una Asignacion donde
- *                              | profesorSupervisorId sea su uid.
+ *   profesor                  | Lectura: todos los estudiantes, centros
+ *                              | duales y maestros guía de SU MISMA
+ *                              | especialidad en su liceo — compartido con
+ *                              | cualquier otro profesor de esa especialidad
+ *                              | (Usuario.especialidadId), sin importar
+ *                              | quién los creó. Escritura (crear/editar
+ *                              | Visitas, cambiar estado, etc.) sigue
+ *                              | exigiendo la Asignacion formal
+ *                              | (profesorSupervisorId == su uid). Un
+ *                              | profesor sin especialidad no ve nada por
+ *                              | esta vía.
  *   centro_dual / estudiante   | Su propia información (sin cambios en
  *                              | esta entrega — fuera del alcance pedido).
  *
  * Regla de oro: el dominio/liceo define la institución; el rol define el
- * nivel de responsabilidad; el ámbito (Asignacion) define qué información
- * puede ver un profesor dentro de esa institución. Pertenecer al mismo
- * liceo NUNCA es, por sí solo, motivo para otorgar acceso.
+ * nivel de responsabilidad; la especialidad define qué información puede
+ * VER un profesor dentro de esa institución (compartida entre colegas de
+ * la misma especialidad); la Asignacion formal sigue definiendo qué puede
+ * EDITAR. Pertenecer al mismo liceo NUNCA es, por sí solo, motivo para
+ * otorgar acceso.
  */
 
 /** Roles con visión institucional completa de su liceo (o global, para
