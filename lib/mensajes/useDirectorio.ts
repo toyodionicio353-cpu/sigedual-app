@@ -45,6 +45,13 @@ function conUidDelDocumento<T extends Usuario & { id: string }>(doc: T): T {
  *
  * Los tres últimos casos son también lo único que firestore.rules les deja
  * leer de `usuarios`, así que la consulta nunca pide más de lo permitido.
+ *
+ * Además, TODO usuario ve a cualquier cuenta con rol `desarrollador` como
+ * contacto, sin importar el liceo — es el único canal de soporte/dirección
+ * técnica de SIGEDUAL y no tiene sentido que quede oculto por no compartir
+ * liceo con quien pregunta. `firestore.rules` ya expone esas cuentas a
+ * cualquier autenticado (`resource.data.rol == 'desarrollador'`), así que
+ * esto tampoco pide más de lo que las reglas permiten.
  */
 export function useDirectorioMensajes(): Directorio {
   const { usuario } = useAuth();
@@ -90,6 +97,20 @@ export function useDirectorioMensajes(): Directorio {
 
     (async () => {
       try {
+        // Cuentas `desarrollador` (soporte/dirección técnica): se agregan a
+        // cualquier lista de contactos, sin importar el liceo. Se busca una
+        // sola vez por carga y se reutiliza en las tres ramas de abajo.
+        const snapDesarrolladores = await getDocs(query(collection(db, "usuarios"), where("rol", "==", "desarrollador")));
+        if (cancelado) return;
+        const desarrolladores = snapDesarrolladores.docs
+          .map((d) => conUidDelDocumento({ ...(d.data() as Usuario), id: d.id }))
+          .filter((u) => u.uid !== usuario.uid && u.activo !== false);
+
+        function conDesarrolladores(base: Usuario[]): Usuario[] {
+          const vistos = new Set(base.map((u) => u.uid));
+          return [...base, ...desarrolladores.filter((d) => !vistos.has(d.uid))];
+        }
+
         if (esExterno) {
           if (ambitoExterno.cargando) return;
           const uids = uidsSupervisores ? uidsSupervisores.split(",") : [];
@@ -98,9 +119,11 @@ export function useDirectorioMensajes(): Directorio {
             : [];
           if (cancelado) return;
           setContactos(
-            supervisores
-              .map(conUidDelDocumento)
-              .filter((u) => u.uid !== usuario.uid && u.activo !== false)
+            conDesarrolladores(
+              supervisores
+                .map(conUidDelDocumento)
+                .filter((u) => u.uid !== usuario.uid && u.activo !== false)
+            )
           );
           setCargando(false);
           return;
@@ -115,7 +138,7 @@ export function useDirectorioMensajes(): Directorio {
           .filter((u) => u.uid !== usuario.uid && u.activo !== false);
 
         if (esRolConAccesoCompletoLiceo(rol)) {
-          setContactos(delLiceo);
+          setContactos(conDesarrolladores(delLiceo));
           setCargando(false);
           return;
         }
@@ -123,16 +146,18 @@ export function useDirectorioMensajes(): Directorio {
         // Profesor: staff completo, pero de estudiantes/empresas solo lo que
         // ya está en su ámbito — Mensajes no amplía lo que puede ver.
         setContactos(
-          delLiceo.filter((u) => {
-            if (u.rol === "estudiante") return Boolean(u.estudianteId && idsAmbitoProfesor.estudiantes.has(u.estudianteId));
-            if (u.rol === "centro_dual") {
-              return Boolean(
-                (u.centroDualId && idsAmbitoProfesor.centros.has(u.centroDualId))
-                || (u.maestroGuiaId && idsAmbitoProfesor.maestros.has(u.maestroGuiaId))
-              );
-            }
-            return true;
-          })
+          conDesarrolladores(
+            delLiceo.filter((u) => {
+              if (u.rol === "estudiante") return Boolean(u.estudianteId && idsAmbitoProfesor.estudiantes.has(u.estudianteId));
+              if (u.rol === "centro_dual") {
+                return Boolean(
+                  (u.centroDualId && idsAmbitoProfesor.centros.has(u.centroDualId))
+                  || (u.maestroGuiaId && idsAmbitoProfesor.maestros.has(u.maestroGuiaId))
+                );
+              }
+              return true;
+            })
+          )
         );
         setCargando(false);
       } catch {
