@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, Search, FileText, Eye, Printer, FileDown } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Search, FileText, Eye } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import type { DocumentoGenerado, EstadoDocumentoGenerado, Estudiante, SegmentoDocumento, TipoModuloDocumento } from "@/types";
 import type { ContextoResolucion, PlantillaDocumento } from "@/types/plantillas";
@@ -230,20 +230,8 @@ export default function EditorDocumento({
     }
   }
 
-  function imprimirOExportar() {
-    setVistaPrevia(true);
-    setTimeout(() => window.print(), 50);
-  }
-
   return (
     <div className="p-4 md:p-8 max-w-3xl">
-      <style>{`
-        @media print {
-          body * { visibility: hidden; }
-          #documento-imprimible, #documento-imprimible * { visibility: visible; }
-          #documento-imprimible { position: absolute; left: 0; top: 0; width: 100%; }
-        }
-      `}</style>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -276,23 +264,6 @@ export default function EditorDocumento({
               {vistaPrevia ? "Editar" : "Vista previa"}
             </button>
           )}
-          <button
-            onClick={imprimirOExportar}
-            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
-          >
-            <Printer size={16} />
-            Imprimir
-          </button>
-          <button
-            onClick={imprimirOExportar}
-            title="Se abre el diálogo de impresión: elige 'Guardar como PDF' como destino."
-            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
-          >
-            <FileDown size={16} />
-            Exportar PDF
-          </button>
           <button
             onClick={onCancelar}
             style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
@@ -376,7 +347,7 @@ export default function EditorDocumento({
       )}
 
       {/* Documento */}
-      <div id="documento-imprimible" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-8 mb-6">
+      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-8 mb-6">
         <div className="flex flex-col gap-5">
           {contenido.map((parrafo, pi) => (
             <p
