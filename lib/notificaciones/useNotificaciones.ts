@@ -10,7 +10,7 @@ import type { Notificacion } from "@/types";
  * como para la tarjeta "Notificaciones" de Inicio y /dashboard/notificaciones,
  * para que el estado leído/no leído quede siempre sincronizado entre las tres. */
 export function useNotificaciones(limite = 30) {
-  const { usuario } = useAuth();
+  const { usuario, liceoActivo } = useAuth();
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
   const [cargando, setCargando] = useState(true);
 
@@ -32,7 +32,14 @@ export function useNotificaciones(limite = 30) {
     const unsub = onSnapshot(
       q,
       (snap) => {
-        const lista = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notificacion));
+        let lista = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notificacion));
+        // La cuenta desarrollador es global y recibe notificaciones de
+        // cualquier liceo — al "entrar" a uno puntual (modo global admin,
+        // ver lib/liceos/modoGlobalAdmin.ts), la bandeja debe acotarse a
+        // ese liceo, igual que ya ocurre con el resto de los datos que
+        // filtran por `usuario.liceoId`. Sin liceoActivo (vista global, o
+        // cualquier otro rol) se muestran todas, sin este filtro.
+        if (liceoActivo) lista = lista.filter((n) => n.liceoId === liceoActivo.id);
         lista.sort((a, b) => (b.creadoEn ?? "").localeCompare(a.creadoEn ?? ""));
         setNotificaciones(lista.slice(0, limite));
         setCargando(false);
@@ -45,7 +52,7 @@ export function useNotificaciones(limite = 30) {
       }
     );
     return () => unsub();
-  }, [usuario, limite]);
+  }, [usuario, liceoActivo, limite]);
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
 
