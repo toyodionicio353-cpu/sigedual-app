@@ -74,8 +74,6 @@ export function validarNovedad(
     segmentos.push({ texto: trozo.texto, negrita: trozo.negrita === true });
   }
   const descripcion = normalizarDescripcion(segmentos);
-  if (descripcion.length === 0) return { error: "La publicación necesita un contenido." };
-
   const usados = caracteresUsados(descripcion);
   if (usados > MAX_CARACTERES) {
     return { error: `El contenido supera el límite: ${usados} de ${MAX_CARACTERES} caracteres (sin contar espacios).` };
@@ -84,8 +82,8 @@ export function validarNovedad(
   const fuente = bruto.fuente as FuenteNovedad;
   if (!FUENTES.includes(fuente)) return { error: "La tipografía elegida no está permitida." };
 
-  if (!Array.isArray(bruto.imagenes) || bruto.imagenes.length === 0) {
-    return { error: "La publicación necesita al menos una fotografía." };
+  if (!Array.isArray(bruto.imagenes)) {
+    return { error: "Las fotografías tienen un formato inválido." };
   }
   if (bruto.imagenes.length > MAX_IMAGENES) {
     return { error: `No se pueden publicar más de ${MAX_IMAGENES} fotografías.` };
@@ -105,6 +103,13 @@ export function validarNovedad(
       return { error: "Solo se admiten fotografías (JPG, PNG o WebP). No se permiten vídeos ni GIF." };
     }
     imagenes.push({ url: foto.url, ruta: foto.ruta });
+  }
+
+  // Una publicación puede ser solo texto, solo fotografías, o ambas cosas
+  // — pero no puede estar vacía: un título suelto no comunica nada a quien
+  // lo lea en la sección pública.
+  if (usados === 0 && imagenes.length === 0) {
+    return { error: "La publicación necesita al menos un texto o una fotografía." };
   }
 
   if (typeof bruto.expiraEn !== "string" || !bruto.expiraEn) {

@@ -69,9 +69,13 @@ export default function NuevaNovedadPage() {
   const restantes = Math.max(0, MAX_POR_SEMESTRE - publicadasSemestre);
   const sinCupo = restantes === 0;
 
+  // El título es obligatorio; el contenido puede ser texto, fotografías o
+  // ambas cosas, pero no puede faltar todo: un título suelto no le dice
+  // nada a quien lo lea en la sección pública.
+  const hayContenido = usados > 0 || imagenes.length > 0;
   const puedePublicar = useMemo(
-    () => titulo.trim().length > 0 && usados > 0 && imagenes.length > 0 && !sinCupo && !guardando,
-    [titulo, usados, imagenes.length, sinCupo, guardando]
+    () => titulo.trim().length > 0 && hayContenido && !sinCupo && !guardando,
+    [titulo, hayContenido, sinCupo, guardando]
   );
 
   function limpiar() {
@@ -242,7 +246,10 @@ export default function NuevaNovedadPage() {
           </p>
         </div>
 
-        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)" }} className="rounded-xl p-3">
+        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-light)" }} className="rounded-xl p-3 flex flex-col gap-1">
+          <p style={{ color: "var(--text-secondary)" }} className="text-xs">
+            Necesitas un <strong>título</strong> y, además, texto o al menos una fotografía. Puedes publicar solo con fotos, solo con texto, o con ambas cosas.
+          </p>
           <p style={{ color: "var(--text-secondary)" }} className="text-xs">
             Una vez publicada <strong>no se puede editar</strong>. Si hay un error, elimínala y crea otra.
           </p>
