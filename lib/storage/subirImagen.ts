@@ -36,6 +36,14 @@ export class ErrorSubida extends Error {
 function traducir(err: unknown): ErrorSubida {
   const codigo = (err as StorageError)?.code ?? "desconocido";
 
+  // El error crudo va a la consola del navegador: un fallo de CORS o un
+  // 404 del bucket dejan ahí detalles (la URL exacta, la cabecera que
+  // falta) que el SDK no expone en su objeto de error, y que son justo lo
+  // que hace falta para saber qué configurar.
+  if (typeof console !== "undefined") {
+    console.error("[SIGEDUAL] Falló la subida a Firebase Storage:", codigo, err);
+  }
+
   switch (codigo) {
     case "storage/unauthorized":
       return new ErrorSubida(
@@ -60,8 +68,8 @@ function traducir(err: unknown): ErrorSubida {
       );
     case "storage/retry-limit-exceeded":
       return new ErrorSubida(
-        "La subida tardó demasiado y se canceló. Suele ser conexión lenta o una imagen muy pesada; prueba con una más liviana.",
-        codigo, true
+        "La subida se quedó en 0% y no avanzó. Esto casi nunca es la imagen: lo habitual es que el almacenamiento no esté habilitado en el proyecto de Firebase, o que al bucket le falte la configuración de CORS para aceptar subidas desde el sitio web.",
+        codigo, false
       );
     case "storage/canceled":
       return new ErrorSubida("La subida se canceló.", codigo, true);
