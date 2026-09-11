@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import PlanesResumen from "@/components/planes/PlanesResumen";
 import { auth, db } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -172,8 +173,14 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Noticias e imágenes (debajo en móvil, a la derecha en escritorio) */}
-      <div className="flex-1 px-4 pb-10 lg:p-16 flex flex-col">
+      {/* Planes y noticias (debajo en móvil, a la derecha en escritorio) */}
+      <div className="flex-1 px-4 pb-10 lg:p-16 flex flex-col gap-8">
+        {/* Los planes van antes que las noticias porque son información
+            real y publicada; las tarjetas de noticias siguen siendo
+            marcadores de posición. */}
+        <PlanesResumen />
+
+        <div className="flex flex-col">
         <h3 style={{ color: "var(--text-secondary)" }} className="text-label text-xs mb-4">
           Noticias y novedades
         </h3>
@@ -193,6 +200,7 @@ export default function LoginPage() {
               </p>
             </div>
           ))}
+        </div>
         </div>
       </div>
     </div>
