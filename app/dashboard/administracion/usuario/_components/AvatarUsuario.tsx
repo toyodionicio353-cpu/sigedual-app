@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref, deleteObject } from "firebase/storage";
+import { subirImagen, ErrorSubida } from "@/lib/storage/subirImagen";
 import { doc, updateDoc } from "firebase/firestore";
 import { db, storage } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -20,6 +21,7 @@ export default function AvatarUsuario({ avatarUrl, nombre }: { avatarUrl?: strin
   const inputRef = useRef<HTMLInputElement>(null);
   const [previa, setPrevia] = useState<{ archivo: File; url: string } | null>(null);
   const [subiendo, setSubiendo] = useState(false);
+  const [progreso, setProgreso] = useState(0);
   const [eliminando, setEliminando] = useState(false);
   const [error, setError] = useState("");
 
@@ -44,18 +46,24 @@ export default function AvatarUsuario({ avatarUrl, nombre }: { avatarUrl?: strin
     setSubiendo(true);
     setError("");
     try {
-      const referencia = ref(storage, `avatars/${usuario.uid}`);
-      await uploadBytes(referencia, previa.archivo);
-      const url = await getDownloadURL(referencia);
+      // La ruta lleva marca de tiempo para que el navegador no siga
+      // mostrando la foto anterior desde su caché tras cambiarla.
+      const { url } = await subirImagen(previa.archivo, `avatars/${usuario.uid}/${Date.now()}`, {
+        onProgreso: setProgreso,
+      });
       await updateDoc(doc(db, "usuarios", usuario.uid), { avatarUrl: url, actualizadoEn: new Date().toISOString() });
       await refrescarUsuario();
       avisar("Foto de perfil actualizada.");
       URL.revokeObjectURL(previa.url);
       setPrevia(null);
-    } catch {
-      setError("No se pudo subir la foto. Inténtalo nuevamente.");
+    } catch (err) {
+      // Antes este catch se tragaba el error entero y solo decía
+      // "inténtalo nuevamente", que no permite arreglar nada. Firebase da
+      // un código exacto por cada causa y ahora se muestra.
+      setError(err instanceof ErrorSubida ? `${err.message} (${err.codigo})` : "No se pudo subir la foto. Inténtalo nuevamente.");
     } finally {
       setSubiendo(false);
+      setProgreso(0);
     }
   }
 
@@ -111,7 +119,7 @@ export default function AvatarUsuario({ avatarUrl, nombre }: { avatarUrl?: strin
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
             >
               {subiendo && <Loader2 size={13} className="animate-spin" />}
-              {subiendo ? "Guardando..." : "Guardar foto"}
+              {subiendo ? `Subiendo ${progreso}%` : "Guardar foto"}
             </button>
             <button
               onClick={cancelarPrevia}
