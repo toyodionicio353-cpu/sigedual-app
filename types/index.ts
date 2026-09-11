@@ -700,6 +700,101 @@ export interface NotaInternaTicket {
   creadoEn: string;
 }
 
+// ── Noticias y novedades (sección pública de SIGEDUAL) ───────────────────
+
+/** Las cinco tipografías permitidas en el cuerpo de una novedad. La
+ * interfaz de SIGEDUAL sigue usando Inter: esto solo afecta al texto de la
+ * publicación. No se admiten fuentes externas ni tamaños a medida. */
+export type FuenteNovedad = "arial" | "times" | "inter" | "georgia" | "verdana";
+
+/**
+ * Un trozo de texto de la descripción, en negrita o no.
+ *
+ * La descripción NO se guarda como HTML. Guardar HTML libre en un
+ * documento que después se pinta en una página pública es la vía directa a
+ * una inyección de scripts, y además haría imposible contar los
+ * caracteres con exactitud. Con segmentos, el texto es texto: se cuenta
+ * sin ambigüedad y se dibuja sin `dangerouslySetInnerHTML`.
+ *
+ * Los saltos de línea viven dentro de `texto`.
+ */
+export interface SegmentoTexto {
+  texto: string;
+  negrita?: boolean;
+}
+
+export interface ImagenNovedad {
+  url: string;
+  /** Ruta en Firebase Storage, para poder borrar el archivo cuando se
+   * elimina la publicación y no dejar imágenes huérfanas ocupando espacio. */
+  ruta: string;
+  ancho?: number;
+  alto?: number;
+}
+
+/**
+ * "borrador": preparada pero no publicada. NO consume cupo semestral.
+ * "publicada": visible públicamente mientras no expire.
+ * "expirada": reservado. Hoy NO se escribe: que una publicación haya
+ *   caducado se deduce comparando `expiraEn` con la fecha actual, así deja
+ *   de verse sola al llegar su término sin depender de ninguna tarea
+ *   programada que alguien tenga que mantener encendida. El registro se
+ *   conserva para el historial administrativo del liceo.
+ */
+export type EstadoNovedad = "borrador" | "publicada" | "expirada";
+
+/**
+ * Una publicación de "Noticias y novedades".
+ *
+ * Públicamente conviven las de todos los liceos; administrativamente cada
+ * liceo solo ve y gestiona las suyas (ver firestore.rules).
+ *
+ * Una vez publicada es inmutable: si hay un error, se elimina y se crea
+ * otra. Por eso no existe una fecha de "actualizado".
+ */
+export interface Novedad {
+  id: string;
+  liceoId: string;
+  /** Nombre del liceo copiado al publicar. Se denormaliza porque la vista
+   * pública no tiene sesión y no puede resolver el liceo con un get() por
+   * cada tarjeta; además deja constancia de con qué nombre se publicó. */
+  liceoNombre: string;
+  titulo: string;
+  descripcion: SegmentoTexto[];
+  fuente: FuenteNovedad;
+  /** De 1 a 5. Nunca vacío en una publicada, nunca más de cinco. */
+  imagenes: ImagenNovedad[];
+  estado: EstadoNovedad;
+  creadoPor: string;
+  creadoPorNombre: string;
+  creadoEn: string;
+  /** Solo en las publicadas. */
+  publicadoEn?: string;
+  /** Como máximo dos meses después de `publicadoEn`. */
+  expiraEn?: string;
+  visualizaciones?: number;
+  /** Semestre y año contra los que se descontó el cupo. Se guardan al
+   * publicar para que el conteo no dependa de recalcular fechas después. */
+  semestre?: 1 | 2;
+  anio?: number;
+}
+
+/**
+ * Cupo semestral de publicaciones de un liceo. Documento propio (id
+ * `{liceoId}_{anio}_{semestre}`) y no un campo dentro del liceo, porque el
+ * límite se comprueba y se incrementa de forma atómica al publicar: si el
+ * conteo se hiciera contando documentos, dos publicaciones simultáneas
+ * podrían colarse ambas como la número 20.
+ */
+export interface CupoNovedades {
+  id: string;
+  liceoId: string;
+  anio: number;
+  semestre: 1 | 2;
+  publicadas: number;
+  actualizadoEn: string;
+}
+
 export type TipoNotificacion =
   | "alerta"
   | "aviso"
