@@ -1,6 +1,6 @@
 import type { FuenteNovedad, ImagenNovedad, SegmentoTexto } from "@/types";
 import { MAX_CARACTERES, MAX_IMAGENES, MAX_TITULO, caracteresUsados, normalizarDescripcion } from "./texto";
-import { expiracionMaxima } from "./semestre";
+import { expiracionMaxima, topeIndependiente } from "./semestre";
 
 export const FUENTES: FuenteNovedad[] = ["arial", "times", "inter", "georgia", "verdana"];
 
@@ -57,7 +57,10 @@ export function validarNovedad(
     imagenes?: unknown;
     expiraEn?: unknown;
   },
-  ahora: Date = new Date()
+  ahora: Date = new Date(),
+  /** El editor independiente (SIGEDUAL) no está sujeto al tope de dos
+   * meses pensado para las convocatorias de un liceo. */
+  independiente = false
 ): { error: string } | { datos: DatosNovedadValidados } {
   const titulo = typeof bruto.titulo === "string" ? bruto.titulo.trim() : "";
   if (!titulo) return { error: "La publicación necesita un título." };
@@ -122,8 +125,13 @@ export function validarNovedad(
   }
   // Un margen de un minuto absorbe la diferencia entre el reloj del
   // navegador que propuso la fecha y el del servidor que la comprueba.
-  if (expira.getTime() > expiracionMaxima(ahora).getTime() + 60_000) {
-    return { error: "Una publicación no puede permanecer más de dos meses." };
+  const tope = independiente ? topeIndependiente(ahora) : expiracionMaxima(ahora);
+  if (expira.getTime() > tope.getTime() + 60_000) {
+    return {
+      error: independiente
+        ? "Una publicación no puede permanecer más de un año."
+        : "Una publicación no puede permanecer más de dos meses.",
+    };
   }
 
   return { datos: { titulo, descripcion, fuente, imagenes, expiraEn: expira.toISOString() } };
