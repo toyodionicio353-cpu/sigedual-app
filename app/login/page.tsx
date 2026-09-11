@@ -3,17 +3,11 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import PlanesResumen from "@/components/planes/PlanesResumen";
+import NoticiasLogin from "@/components/novedades/NoticiasLogin";
 import { auth, db } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { Newspaper, ImageIcon, Megaphone } from "lucide-react";
-
-const NOTICIAS_PLACEHOLDER = [
-  { icon: Newspaper, titulo: "Noticias del programa dual" },
-  { icon: ImageIcon, titulo: "Galería de actividades" },
-  { icon: Megaphone, titulo: "Avisos y comunicados" },
-];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -175,28 +169,7 @@ export default function LoginPage() {
 
       {/* Planes y noticias (debajo en móvil, a la derecha en escritorio) */}
       <div className="flex-1 px-4 pb-10 lg:p-16 flex flex-col gap-8">
-        <div className="flex flex-col">
-        <h3 style={{ color: "var(--text-secondary)" }} className="text-label text-xs mb-4">
-          Noticias y novedades
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
-          {NOTICIAS_PLACEHOLDER.map(({ icon: Icon, titulo }, i) => (
-            <div
-              key={i}
-              style={{ background: "var(--bg-card)", border: "1px dashed var(--border-light)" }}
-              className="rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-2 min-h-[140px]"
-            >
-              <Icon size={22} style={{ color: "var(--text-muted)" }} />
-              <p style={{ color: "var(--text-muted)" }} className="text-xs font-medium">
-                {titulo}
-              </p>
-              <p style={{ color: "var(--text-muted)" }} className="text-label text-[10px] opacity-70">
-                Próximamente
-              </p>
-            </div>
-          ))}
-        </div>
-        </div>
+        <NoticiasLogin />
 
         {/* Al final de la columna: primero se ve el acceso y las novedades;
             los planes cierran la página para quien siga bajando. */}

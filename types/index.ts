@@ -735,8 +735,11 @@ export interface ImagenNovedad {
 /**
  * "borrador": preparada pero no publicada. NO consume cupo semestral.
  * "publicada": visible públicamente mientras no expire.
- * "expirada": pasó su fecha de término. Deja de verse en público, pero el
- *   registro se conserva para el historial administrativo del liceo.
+ * "expirada": reservado. Hoy NO se escribe: que una publicación haya
+ *   caducado se deduce comparando `expiraEn` con la fecha actual, así deja
+ *   de verse sola al llegar su término sin depender de ninguna tarea
+ *   programada que alguien tenga que mantener encendida. El registro se
+ *   conserva para el historial administrativo del liceo.
  */
 export type EstadoNovedad = "borrador" | "publicada" | "expirada";
 

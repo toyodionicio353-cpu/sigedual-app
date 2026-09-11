@@ -18,6 +18,7 @@ import {
   UsersRound, Building, ShieldCheck,
   CalendarCheck, FileText, Handshake, ClipboardCheck, FolderOpen,
   UserCog, School, SlidersHorizontal, LifeBuoy, User, ScrollText, MapPin,
+  Megaphone,
 } from "lucide-react";
 
 interface SubItem {
@@ -128,6 +129,7 @@ const MENUS: NavGroup[] = [
       { href: "/dashboard/administracion/seguridad", label: "Seguridad", icon: <ShieldCheck size={16} strokeWidth={2.25} />, roles: ["desarrollador", "director"] },
       { href: "/dashboard/administracion/usuario", label: "Usuario", icon: <User size={16} strokeWidth={2.25} />, roles: ["desarrollador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
       { href: "/dashboard/administracion/configuracion", label: "Configuración", icon: <SlidersHorizontal size={16} strokeWidth={2.25} />, roles: ["desarrollador", "coordinador", "director", "profesor", "centro_dual", "estudiante"] },
+      { href: "/dashboard/administracion/novedades", label: "Nueva novedad", icon: <Megaphone size={16} strokeWidth={2.25} />, roles: ["desarrollador", "director", "coordinador"] },
       { href: "/dashboard/administracion/plan", label: "Plan SIGEDUAL", icon: <Building size={16} strokeWidth={2.25} />, roles: ["desarrollador", "director"] },
     ],
   },
