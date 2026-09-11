@@ -8,7 +8,8 @@ import { MAX_BYTES_IMAGEN, TIPOS_IMAGEN, esTipoImagenPermitido } from "@/lib/nov
 import type { ImagenNovedad } from "@/types";
 
 /**
- * Fotografías de una novedad: de 1 a 5, y solo fotografías.
+ * Fotografías de una novedad: hasta 5, y solo fotografías. Son
+ * opcionales: una publicación puede ser solo texto.
  *
  * El filtro NO es "empieza por image/": un GIF es `image/gif` y pasaría.
  * Se comprueba contra una lista explícita de formatos, acá y otra vez en
@@ -123,7 +124,7 @@ export default function SubirFotos({
           className="rounded-xl py-8 flex flex-col items-center justify-center gap-2 text-xs disabled:opacity-50"
         >
           <ImagePlus size={20} />
-          Agrega al menos una fotografía
+          Agregar fotografías (opcional)
         </button>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
