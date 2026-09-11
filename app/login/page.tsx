@@ -175,11 +175,6 @@ export default function LoginPage() {
 
       {/* Planes y noticias (debajo en móvil, a la derecha en escritorio) */}
       <div className="flex-1 px-4 pb-10 lg:p-16 flex flex-col gap-8">
-        {/* Los planes van antes que las noticias porque son información
-            real y publicada; las tarjetas de noticias siguen siendo
-            marcadores de posición. */}
-        <PlanesResumen />
-
         <div className="flex flex-col">
         <h3 style={{ color: "var(--text-secondary)" }} className="text-label text-xs mb-4">
           Noticias y novedades
@@ -202,6 +197,10 @@ export default function LoginPage() {
           ))}
         </div>
         </div>
+
+        {/* Al final de la columna: primero se ve el acceso y las novedades;
+            los planes cierran la página para quien siga bajando. */}
+        <PlanesResumen />
       </div>
     </div>
   );
