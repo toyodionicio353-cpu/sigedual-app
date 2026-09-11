@@ -58,7 +58,7 @@ service cloud.firestore {
         'respuestas_campania', 'respuestas_campania_estudiante', 'demos',
         'planes_comerciales', 'configuracion_comercial', 'documentos_generados', 'especialidades',
         'documentos_generados_indices', 'envios_evaluacion', 'borradores_mensaje',
-        'practicas_profesionales'
+        'practicas_profesionales', 'novedades', 'cupos_novedades'
       ];
     }
 
@@ -159,6 +159,58 @@ service cloud.firestore {
     match /configuracion_comercial/{docId} {
       allow read: if true;
       allow write: if request.auth != null && datosUsuario().rol == 'desarrollador';
+    }
+
+    // ── Noticias y novedades ─────────────────────────────────────────
+    //
+    // Doble naturaleza a propósito: el escaparate es común a todo
+    // SIGEDUAL y se lee sin sesión, pero la gestión sigue separada por
+    // liceo. Que la publicación de otro liceo se vea en el login NO
+    // significa que su coordinador pueda tocarla.
+    match /novedades/{novedadId} {
+      // Lectura abierta: la sección pública vive en el login, donde nadie
+      // tiene sesión todavía. Una regla no puede filtrar por estado sin
+      // romper las consultas de lista, así que quien lee filtra por
+      // estado y vigencia; acá no hay nada privado que proteger — un
+      // borrador solo contiene lo que su propio liceo escribió y aún no
+      // publicó, y la interfaz nunca lo muestra en público.
+      allow read: if true;
+
+      // Crear: solo el propio liceo, y solo roles con responsabilidad
+      // institucional. Un profesor no publica a nombre del liceo.
+      allow create: if request.auth != null
+        && datosUsuario().rol in ['desarrollador', 'director', 'coordinador']
+        && (datosUsuario().rol == 'desarrollador'
+            || datosUsuario().liceoId == request.resource.data.liceoId)
+        && request.resource.data.creadoPor == request.auth.uid;
+
+      // Editar: SOLO mientras es borrador. Una novedad publicada queda
+      // inmutable: si hay un error se elimina y se publica otra. Publicar
+      // (borrador → publicada) tampoco pasa por acá, lo hace el servidor
+      // con la cuenta de servicio, que es donde se comprueba el cupo
+      // semestral de forma atómica.
+      allow update: if request.auth != null
+        && resource.data.estado == 'borrador'
+        && request.resource.data.estado == 'borrador'
+        && datosUsuario().rol in ['desarrollador', 'director', 'coordinador']
+        && (datosUsuario().rol == 'desarrollador'
+            || datosUsuario().liceoId == resource.data.liceoId)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['liceoId', 'creadoPor', 'creadoEn', 'visualizaciones', 'publicadoEn', 'semestre', 'anio']);
+
+      // Eliminar: el propio liceo puede retirar lo suyo, publicado o no.
+      allow delete: if request.auth != null
+        && datosUsuario().rol in ['desarrollador', 'director', 'coordinador']
+        && (datosUsuario().rol == 'desarrollador'
+            || datosUsuario().liceoId == resource.data.liceoId);
+    }
+
+    // Cupo semestral por liceo. Lectura para que el panel muestre
+    // "12 / 20"; escritura exclusiva del servidor, porque el límite solo
+    // es real si se comprueba e incrementa en la misma operación atómica.
+    match /cupos_novedades/{cupoId} {
+      allow read: if request.auth != null;
+      allow write: if false;
     }
 
     match /codigosAcceso/{liceoId} {
