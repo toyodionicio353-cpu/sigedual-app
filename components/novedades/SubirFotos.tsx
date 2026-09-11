@@ -1,7 +1,8 @@
 "use client";
 import { useRef, useState } from "react";
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref, deleteObject } from "firebase/storage";
 import { storage } from "@/lib/firebase";
+import { subirImagen, diagnosticarStorage, ErrorSubida } from "@/lib/storage/subirImagen";
 import { ImagePlus, X, ArrowLeft, ArrowRight } from "lucide-react";
 import { MAX_IMAGENES } from "@/lib/novedades/texto";
 import { MAX_BYTES_IMAGEN, TIPOS_IMAGEN, esTipoImagenPermitido } from "@/lib/novedades/validar";
@@ -27,6 +28,9 @@ export default function SubirFotos({
 }) {
   const input = useRef<HTMLInputElement | null>(null);
   const [subiendo, setSubiendo] = useState(false);
+  const [progreso, setProgreso] = useState(0);
+  const [diagnostico, setDiagnostico] = useState("");
+  const [probando, setProbando] = useState(false);
   const [error, setError] = useState("");
 
   const lleno = imagenes.length >= MAX_IMAGENES;
@@ -37,6 +41,7 @@ export default function SubirFotos({
     if (elegidos.length === 0) return;
 
     setError("");
+    setDiagnostico("");
     const espacio = MAX_IMAGENES - imagenes.length;
     if (elegidos.length > espacio) {
       setError(`Solo caben ${espacio} ${espacio === 1 ? "fotografía más" : "fotografías más"}: el máximo es ${MAX_IMAGENES}.`);
@@ -54,20 +59,27 @@ export default function SubirFotos({
     }
 
     setSubiendo(true);
+    setProgreso(0);
     try {
       const nuevas: ImagenNovedad[] = [];
-      for (const archivo of elegidos) {
+      for (let i = 0; i < elegidos.length; i++) {
+        const archivo = elegidos[i];
         const extension = archivo.name.slice(archivo.name.lastIndexOf(".")).toLowerCase() || ".jpg";
         const ruta = `${carpeta}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}${extension}`;
-        const referencia = ref(storage, ruta);
-        await uploadBytes(referencia, archivo, { contentType: archivo.type });
-        nuevas.push({ url: await getDownloadURL(referencia), ruta });
+        nuevas.push(await subirImagen(archivo, ruta, {
+          // Progreso repartido entre todas las fotos de la tanda, para que
+          // la barra no vuelva a cero con cada archivo.
+          onProgreso: (p) => setProgreso(Math.round(((i + p / 100) / elegidos.length) * 100)),
+        }));
       }
       onCambiar([...imagenes, ...nuevas]);
     } catch (err) {
-      setError(err instanceof Error ? `No se pudo subir la fotografía: ${err.message}` : "No se pudo subir la fotografía.");
+      // Se muestra el código de Firebase: sin él, un fallo de permisos y
+      // uno de red se ven igual y no hay forma de saber qué arreglar.
+      setError(err instanceof ErrorSubida ? `${err.message} (${err.codigo})` : "No se pudo subir la fotografía.");
     } finally {
       setSubiendo(false);
+      setProgreso(0);
     }
   }
 
@@ -100,7 +112,7 @@ export default function SubirFotos({
           style={{ color: "var(--accent-light)" }}
           className="inline-flex items-center gap-1.5 text-xs font-semibold hover:underline disabled:opacity-40 disabled:no-underline"
         >
-          <ImagePlus size={13} /> {subiendo ? "Subiendo..." : "Agregar fotografía"}
+          <ImagePlus size={13} /> {subiendo ? `Subiendo ${progreso}%` : "Agregar fotografía"}
         </button>
       </div>
 
@@ -189,7 +201,33 @@ export default function SubirFotos({
           Llegaste al máximo de {MAX_IMAGENES} fotografías.
         </p>
       )}
-      {error && <p style={{ color: "var(--danger)" }} className="text-xs">{error}</p>}
+      {error && (
+        <div style={{ background: "var(--danger)11", border: "1px solid var(--danger)" }} className="rounded-lg p-3 flex flex-col gap-2">
+          <p style={{ color: "var(--danger)" }} className="text-xs">{error}</p>
+          <button
+            type="button"
+            onClick={async () => {
+              setProbando(true);
+              setDiagnostico("");
+              const r = await diagnosticarStorage(carpeta);
+              setDiagnostico(
+                r.ok
+                  ? "El almacenamiento responde bien. El problema es de esta imagen en concreto: prueba con otra, más liviana."
+                  : `El almacenamiento no está aceptando archivos. Código: ${r.codigo}. ${r.mensaje}`
+              );
+              setProbando(false);
+            }}
+            disabled={probando}
+            style={{ color: "var(--accent-light)" }}
+            className="text-xs font-semibold hover:underline text-left disabled:opacity-50"
+          >
+            {probando ? "Probando..." : "Probar el almacenamiento"}
+          </button>
+          {diagnostico && (
+            <p style={{ color: "var(--text-secondary)" }} className="text-xs">{diagnostico}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
