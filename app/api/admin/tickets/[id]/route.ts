@@ -45,6 +45,18 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     }
     await deleteDocument(`tickets/${id}`);
 
+    // Sus avisos de la campana apuntan a un ticket que ya no existe: si
+    // quedaran, el usuario haría clic y solo vería "no existe". Se listan
+    // todas y se filtran en memoria porque el cliente REST de este
+    // proyecto no hace consultas con filtro; eliminar un ticket es una
+    // acción administrativa rara, así que el costo es despreciable.
+    const avisos = await listCollectionDocs("notificaciones");
+    for (const aviso of avisos) {
+      if (aviso.data.recurso === "ticket" && aviso.data.recursoId === id) {
+        await deleteDocument(`notificaciones/${aviso.id}`);
+      }
+    }
+
     const solicitante = await getDocument(`usuarios/${solicitanteUid}`);
     await registrarEventoServidor({
       uid: solicitanteUid,

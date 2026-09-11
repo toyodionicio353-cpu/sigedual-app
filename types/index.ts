@@ -728,6 +728,13 @@ export interface Notificacion {
   leida: boolean;
   accionHref?: string;
   accionLabel?: string;
+  /** Qué originó la notificación, para poder darla por vista cuando el
+   * usuario atiende ese algo directamente (abre el hilo de mensajes, entra
+   * al ticket) y no solo cuando entra desde la notificación misma.
+   * Opcional: las notificaciones creadas antes de este campo no lo tienen
+   * y siguen funcionando, solo que se marcan a mano. */
+  recurso?: string;
+  recursoId?: string;
   creadoEn: string;
   leidaEn?: string;
 }

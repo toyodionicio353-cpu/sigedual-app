@@ -54,7 +54,17 @@ export function useNotificaciones(limite = 30) {
     return () => unsub();
   }, [usuario, liceoActivo, limite]);
 
-  const noLeidas = notificaciones.filter((n) => !n.leida).length;
+  /**
+   * Lo que sigue pendiente de atención. La bandeja muestra esto, no la
+   * lista completa: una notificación es un aviso de que algo pasó, y una
+   * vez atendida deja de ser un pendiente. Si las leídas se quedaran en la
+   * bandeja, cada aviso habría que apagarlo a mano dos veces — leerlo y
+   * después borrarlo — y mientras tanto la lista miente sobre lo que falta
+   * por hacer. Las leídas no se pierden: quedan tras "Ver leídas".
+   */
+  const pendientes = notificaciones.filter((n) => !n.leida);
+  const leidas = notificaciones.filter((n) => n.leida);
+  const noLeidas = pendientes.length;
 
   async function marcarLeida(id: string) {
     await updateDoc(doc(db, "notificaciones", id), { leida: true, leidaEn: new Date().toISOString() });
@@ -72,12 +82,18 @@ export function useNotificaciones(limite = 30) {
     await deleteDoc(doc(db, "notificaciones", id));
   }
 
-  async function eliminarTodas() {
-    if (notificaciones.length === 0) return;
+  /** Vacía el historial de avisos ya atendidos. NO toca los pendientes:
+   * borrar de un golpe algo que el usuario todavía no vio seria perder
+   * información sin que se entere. */
+  async function eliminarLeidas() {
+    if (leidas.length === 0) return;
     const batch = writeBatch(db);
-    notificaciones.forEach((n) => batch.delete(doc(db, "notificaciones", n.id)));
+    leidas.forEach((n) => batch.delete(doc(db, "notificaciones", n.id)));
     await batch.commit();
   }
 
-  return { notificaciones, noLeidas, cargando, marcarLeida, marcarTodasLeidas, eliminarNotificacion, eliminarTodas };
+  return {
+    notificaciones, pendientes, leidas, noLeidas, cargando,
+    marcarLeida, marcarTodasLeidas, eliminarNotificacion, eliminarLeidas,
+  };
 }

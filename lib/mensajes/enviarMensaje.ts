@@ -4,6 +4,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { crearNotificacion } from "@/lib/notificaciones/crearNotificacion";
+import { marcarNotificacionesDeRecurso } from "@/lib/notificaciones/marcarPorRecurso";
 import type { Conversacion, Usuario } from "@/types";
 
 const PREVIA_MAX = 140;
@@ -73,10 +74,19 @@ export async function marcarHiloLeido(conversacionId: string, uid: string): Prom
   const snap = await getDoc(doc(db, "conversaciones", conversacionId));
   if (!snap.exists()) return;
   const datos = snap.data() as Conversacion;
+  // Hilo que este usuario ya tenía leído: no hay nada que apagar, y salir
+  // acá evita consultar su bandeja cada vez que abre una conversación.
   if (!datos.noLeidoPor?.includes(uid)) return;
+
   await updateDoc(doc(db, "conversaciones", conversacionId), {
     noLeidoPor: datos.noLeidoPor.filter((u) => u !== uid),
   });
+
+  // Haber abierto el hilo ya es haberse enterado: el aviso de la campana
+  // se apaga aunque el usuario haya llegado por Mensajes y no desde la
+  // notificación. Solo hace falta para un hilo que estaba sin leer, que es
+  // exactamente cuando existe una notificación suya pendiente.
+  await marcarNotificacionesDeRecurso(uid, "conversacion", conversacionId);
 }
 
 function previa(cuerpo: string): string {
@@ -97,6 +107,8 @@ async function notificar(destinatarios: string[], autor: Usuario, asunto: string
         descripcion: `${autor.nombre}: ${previa(cuerpo)}`,
         accionHref: `/dashboard/mensajes?hilo=${conversacionId}`,
         accionLabel: "Abrir mensaje",
+        recurso: "conversacion",
+        recursoId: conversacionId,
       }).catch(() => {})
     )
   );

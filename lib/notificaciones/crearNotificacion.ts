@@ -11,6 +11,11 @@ interface DatosNotificacion {
   prioridad?: "baja" | "media" | "alta";
   accionHref?: string;
   accionLabel?: string;
+  /** Vincula la notificación con lo que la originó (ej: "conversacion" +
+   * el id del hilo), para poder darla por vista cuando el usuario atiende
+   * ese recurso directamente. */
+  recurso?: string;
+  recursoId?: string;
 }
 
 function construirNotificacion(datos: DatosNotificacion): Omit<Notificacion, "id"> {
@@ -26,6 +31,10 @@ function construirNotificacion(datos: DatosNotificacion): Omit<Notificacion, "id
   if (datos.prioridad) nueva.prioridad = datos.prioridad;
   if (datos.accionHref) nueva.accionHref = datos.accionHref;
   if (datos.accionLabel) nueva.accionLabel = datos.accionLabel;
+  // Firestore rechaza `undefined`: los campos opcionales solo se escriben
+  // si traen valor.
+  if (datos.recurso) nueva.recurso = datos.recurso;
+  if (datos.recursoId) nueva.recursoId = datos.recursoId;
   return nueva;
 }
 
