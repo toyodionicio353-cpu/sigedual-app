@@ -20,6 +20,7 @@ import { useNotificaciones } from "@/lib/notificaciones/useNotificaciones";
 import { ESTADOS_TICKET_ABIERTOS, ESTADO_TICKET_LABEL, ESTADO_TICKET_COLOR, PRIORIDAD_TICKET_COLOR, numeroTicket } from "@/lib/tickets/constantes";
 import ListaNotificaciones from "@/components/notificaciones/ListaNotificaciones";
 import MapaDualCard from "./_inicio/MapaDualCard";
+import NovedadesCard from "./_inicio/NovedadesCard";
 import type { Asignacion, CentroDual, EnvioEvaluacion, Estudiante, MaestroGuia, Rol, Ticket, Usuario, Visita } from "@/types";
 import {
   Users, Building2, BookOpen, UsersRound, CalendarCheck, MapPin, ArrowRight, Pin,
@@ -395,6 +396,8 @@ export default function DashboardPage() {
           </div>
 
           <MapaDualCard />
+
+          <NovedadesCard />
         </div>
 
         {/* Columna lateral */}

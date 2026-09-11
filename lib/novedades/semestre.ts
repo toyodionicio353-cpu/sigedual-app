@@ -39,17 +39,47 @@ export function expiracionMaxima(desde: Date = new Date()): Date {
   return limite;
 }
 
+/**
+ * Editor independiente: SIGEDUAL publicando en su propio nombre, no como
+ * uno de los liceos. Es quien mantiene la plataforma, así que sus avisos
+ * (novedades del sistema, anuncios generales) no compiten por el cupo de
+ * ningún establecimiento ni caducan al ritmo de una convocatoria escolar.
+ */
+export const LICEO_SIGEDUAL = "sigedual";
+export const NOMBRE_SIGEDUAL = "SIGEDUAL";
+
+/** ¿Este rol publica por su cuenta, fuera del cupo de los liceos? */
+export function esEditorIndependiente(rol: string | undefined): boolean {
+  return rol === "desarrollador";
+}
+
 /** Opciones de duración ofrecidas al publicar. Dos meses es el máximo y
  * también lo que viene elegido por defecto. */
 export const DURACIONES_DIAS = [7, 15, 30, 45, 60] as const;
 
-/** Fecha de término a partir de una duración en días, nunca más allá del
- * tope de dos meses. */
-export function expiracionDesdeDias(dias: number, desde: Date = new Date()): Date {
+/** Duraciones del editor independiente: las mismas, más plazos largos
+ * para avisos que no dependen de una convocatoria. */
+export const DURACIONES_DIAS_INDEPENDIENTE = [7, 15, 30, 45, 60, 90, 180, 365] as const;
+
+/** Tope de permanencia del editor independiente: un año. Sigue habiendo
+ * un tope — una publicación sin vencimiento se queda ahí para siempre y
+ * nadie se acuerda de retirarla. */
+export const DIAS_MAX_INDEPENDIENTE = 365;
+
+/** Fecha de término a partir de una duración en días, sin pasarse del
+ * tope que corresponda a quien publica. */
+export function expiracionDesdeDias(dias: number, desde: Date = new Date(), independiente = false): Date {
   const fin = new Date(desde);
   fin.setDate(fin.getDate() + dias);
-  const tope = expiracionMaxima(desde);
+  const tope = independiente ? topeIndependiente(desde) : expiracionMaxima(desde);
   return fin > tope ? tope : fin;
+}
+
+/** Último término admisible para el editor independiente. */
+export function topeIndependiente(desde: Date = new Date()): Date {
+  const limite = new Date(desde);
+  limite.setDate(limite.getDate() + DIAS_MAX_INDEPENDIENTE);
+  return limite;
 }
 
 /** ¿Sigue vigente? Una novedad sin fecha de término no se considera

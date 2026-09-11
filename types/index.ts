@@ -777,6 +777,10 @@ export interface Novedad {
    * publicar para que el conteo no dependa de recalcular fechas después. */
   semestre?: 1 | 2;
   anio?: number;
+  /** Publicada por SIGEDUAL en su propio nombre, no por un liceo. No
+   * consume el cupo semestral de ningún establecimiento y admite plazos
+   * más largos. */
+  independiente?: boolean;
 }
 
 /**

@@ -5,7 +5,10 @@ import {
 } from "@/lib/firebase-admin";
 import { registrarEventoServidor } from "@/lib/auditoria/registrarEvento";
 import { validarNovedad } from "@/lib/novedades/validar";
-import { MAX_POR_SEMESTRE, idCupo, periodoDe } from "@/lib/novedades/semestre";
+import {
+  MAX_POR_SEMESTRE, idCupo, periodoDe, esEditorIndependiente,
+  LICEO_SIGEDUAL, NOMBRE_SIGEDUAL,
+} from "@/lib/novedades/semestre";
 import type { Rol } from "@/types";
 
 export const runtime = "nodejs";
@@ -39,29 +42,72 @@ export async function POST(request: Request) {
 
     const cuerpo = (await request.json()) as Record<string, unknown>;
 
-    // El liceo sale de la ficha del usuario, NUNCA del cuerpo de la
-    // petición: si viniera de afuera, cualquiera podría publicar a nombre
-    // de otro liceo y gastarle su cupo. El desarrollador es el único que
-    // puede indicar uno, por ser un rol global sin liceo propio.
-    const liceoIdUsuario = (ficha.data.liceoId as string) ?? "";
-    const liceoId = rol === "desarrollador"
-      ? ((cuerpo.liceoId as string) || liceoIdUsuario)
-      : liceoIdUsuario;
+    // El editor independiente es SIGEDUAL publicando en su propio nombre,
+    // no como uno de los liceos: no consume el cupo de ningún
+    // establecimiento y sus avisos se firman como SIGEDUAL.
+    const independiente = esEditorIndependiente(rol);
+
+    // Para el resto, el liceo sale de la ficha del usuario y NUNCA del
+    // cuerpo de la petición: si viniera de afuera, cualquiera podría
+    // publicar a nombre de otro liceo y gastarle su cupo.
+    const liceoId = independiente ? LICEO_SIGEDUAL : ((ficha.data.liceoId as string) ?? "");
     if (!liceoId) {
       return NextResponse.json({ error: "Tu cuenta no tiene un liceo asociado; no se puede publicar." }, { status: 400 });
     }
 
     const ahora = new Date();
-    const validacion = validarNovedad(cuerpo, ahora);
+    const validacion = validarNovedad(cuerpo, ahora, independiente);
     if ("error" in validacion) return NextResponse.json({ error: validacion.error }, { status: 400 });
     const datos = validacion.datos;
 
-    const liceo = await getDocument(`liceos/${liceoId}`);
-    const liceoNombre = (liceo?.data.nombre as string) ?? "Liceo";
+    let liceoNombre = NOMBRE_SIGEDUAL;
+    if (!independiente) {
+      const liceo = await getDocument(`liceos/${liceoId}`);
+      liceoNombre = (liceo?.data.nombre as string) ?? "Liceo";
+    }
 
     const periodo = periodoDe(ahora);
     const rutaCupo = `cupos_novedades/${idCupo(liceoId, periodo)}`;
     const borradorId = typeof cuerpo.borradorId === "string" ? cuerpo.borradorId : "";
+
+    const construirNovedad = (id: string) => ({
+      liceoId, liceoNombre,
+      titulo: datos.titulo,
+      descripcion: datos.descripcion,
+      fuente: datos.fuente,
+      imagenes: datos.imagenes,
+      estado: "publicada",
+      creadoPor: uid,
+      creadoPorNombre: (ficha.data.nombre as string) ?? "",
+      creadoEn: (typeof cuerpo.creadoEn === "string" && cuerpo.creadoEn) || ahora.toISOString(),
+      publicadoEn: ahora.toISOString(),
+      expiraEn: datos.expiraEn,
+      visualizaciones: 0,
+      semestre: periodo.semestre,
+      anio: periodo.anio,
+      independiente,
+      id,
+    });
+
+    const nuevoId = () => borradorId || `${liceoId}_${ahora.getTime()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    // El editor independiente no pasa por el contador semestral: ese cupo
+    // reparte un recurso entre establecimientos, y SIGEDUAL no es uno de
+    // ellos. Sin contador disputado, tampoco hace falta la escritura
+    // atómica ni los reintentos.
+    if (independiente) {
+      const id = nuevoId();
+      const { id: _descartar, ...novedad } = construirNovedad(id);
+      void _descartar;
+      await commitTransaccional([{ tipo: "set", path: `novedades/${id}`, data: novedad }]);
+
+      await registrarEventoServidor({
+        uid, nombre: (ficha.data.nombre as string) ?? "", rol,
+        liceoId, accion: "publicar_novedad", recurso: "novedades", recursoId: id,
+        resultado: "permitido", detalle: datos.titulo,
+      });
+      return NextResponse.json({ ok: true, id, independiente: true });
+    }
 
     for (let intento = 0; intento < REINTENTOS; intento++) {
       const cupo = await getDocumentConVersion(rutaCupo);
