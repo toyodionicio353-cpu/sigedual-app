@@ -396,8 +396,10 @@ export interface EscrituraTransaccional {
   /** "update" exige que el documento no haya cambiado desde `updateTime`
    * (falla si otra escritura concurrente lo modificó primero — es lo que
    * evita superar un cupo compartido). "create" exige que el documento
-   * todavía no exista. */
-  tipo: "update" | "create";
+   * todavía no exista. "set" escribe sin precondición propia: se usa para
+   * el documento que NO es el recurso disputado, cuando la atomicidad ya
+   * la garantiza la precondición de otra escritura del mismo commit. */
+  tipo: "update" | "create" | "set";
   path: string;
   data: Record<string, unknown>;
   updateTime?: string;
@@ -431,9 +433,11 @@ export async function commitTransaccional(writes: EscrituraTransaccional[]): Pro
       if (w.tipo === "update") {
         write.updateMask = { fieldPaths: Object.keys(w.data) };
         write.currentDocument = { updateTime: w.updateTime };
-      } else {
+      } else if (w.tipo === "create") {
         write.currentDocument = { exists: false };
       }
+      // "set": sin `currentDocument` — se escribe el documento completo,
+      // exista o no. El commit sigue siendo atómico con el resto.
       return write;
     }),
   };
