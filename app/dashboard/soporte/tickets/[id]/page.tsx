@@ -8,6 +8,7 @@ import {
 import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { crearNotificacion } from "@/lib/notificaciones/crearNotificacion";
+import { marcarNotificacionesDeRecurso } from "@/lib/notificaciones/marcarPorRecurso";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import {
   ESTADO_TICKET_LABEL, ESTADO_TICKET_COLOR, PRIORIDAD_TICKET_LABEL, PRIORIDAD_TICKET_COLOR,
@@ -47,6 +48,10 @@ export default function DetalleTicketPage() {
         setDenegado(true);
       } else {
         setTicket({ id: snap.id, ...snap.data() } as Ticket);
+        // Entrar al ticket ya es haberse enterado: se apaga su aviso de la
+        // campana aunque se haya llegado por Soporte y no desde la
+        // notificación.
+        marcarNotificacionesDeRecurso(usuario.uid, "ticket", id);
       }
     } catch {
       setDenegado(true);
@@ -97,6 +102,8 @@ export default function DetalleTicketPage() {
           descripcion: texto.trim().slice(0, 120),
           accionHref: `/dashboard/soporte/tickets/${ticket.id}`,
           accionLabel: "Ver ticket",
+          recurso: "ticket",
+          recursoId: ticket.id,
         });
       }
     } finally {
@@ -135,6 +142,8 @@ export default function DetalleTicketPage() {
         descripcion: ticket.asunto,
         accionHref: `/dashboard/soporte/tickets/${ticket.id}`,
         accionLabel: "Ver ticket",
+        recurso: "ticket",
+        recursoId: ticket.id,
       });
     }
   }

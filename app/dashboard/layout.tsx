@@ -93,7 +93,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [mobileOpen, setMobileOpen] = useState(false);
   const [panelNotifAbierto, setPanelNotifAbierto] = useState(false);
   const panelNotifRef = useRef<HTMLDivElement>(null);
-  const { notificaciones, noLeidas, cargando: cargandoNotif, marcarLeida, eliminarNotificacion } = useNotificaciones();
+  const { pendientes, noLeidas, cargando: cargandoNotif, marcarLeida, eliminarNotificacion } = useNotificaciones();
   const demoLiceo = useDemoDeLiceo();
 
   useEffect(() => {
@@ -220,7 +220,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Link>
                   </div>
                   <ListaNotificaciones
-                    notificaciones={notificaciones}
+                    notificaciones={pendientes}
                     cargando={cargandoNotif}
                     onMarcarLeida={marcarLeida}
                     onEliminar={eliminarNotificacion}

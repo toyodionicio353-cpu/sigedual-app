@@ -53,6 +53,8 @@ export async function crearTicket(datos: DatosTicket): Promise<{ id: string; num
         prioridad: datos.prioridad === "critica" ? "alta" : datos.prioridad === "alta" ? "alta" : "media",
         accionHref: `/dashboard/soporte/tickets/${ticketRef.id}`,
         accionLabel: "Ver ticket",
+        recurso: "ticket",
+        recursoId: ticketRef.id,
       })
     )
   );
