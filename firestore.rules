@@ -168,13 +168,22 @@ service cloud.firestore {
     // liceo. Que la publicación de otro liceo se vea en el login NO
     // significa que su coordinador pueda tocarla.
     match /novedades/{novedadId} {
-      // Lectura abierta: la sección pública vive en el login, donde nadie
-      // tiene sesión todavía. Una regla no puede filtrar por estado sin
-      // romper las consultas de lista, así que quien lee filtra por
-      // estado y vigencia; acá no hay nada privado que proteger — un
-      // borrador solo contiene lo que su propio liceo escribió y aún no
-      // publicó, y la interfaz nunca lo muestra en público.
-      allow read: if true;
+      // Lectura: lo PUBLICADO es público sin sesión, porque la sección
+      // vive en el login, donde nadie la tiene todavía. Un borrador no:
+      // es algo que un liceo está preparando y aún no decidió mostrar, y
+      // con lectura abierta cualquiera podría leerlo antes de tiempo.
+      // Los borradores quedan para su propio liceo (y para el rol
+      // desarrollador, que ya tiene alcance global).
+      //
+      // Esto no rompe las consultas: la vista pública filtra por
+      // `estado == 'publicada'` y la pantalla de administración filtra
+      // por `liceoId`, así que cada una cae entera dentro de una de las
+      // dos ramas.
+      allow read: if resource.data.estado == 'publicada'
+        || (request.auth != null && (
+            datosUsuario().rol == 'desarrollador'
+            || datosUsuario().liceoId == resource.data.liceoId
+          ));
 
       // Crear: solo el propio liceo, y solo roles con responsabilidad
       // institucional. Un profesor no publica a nombre del liceo.
