@@ -13,7 +13,7 @@ import TarjetaNovedad from "@/components/novedades/TarjetaNovedad";
  * empujaría el formulario fuera de la pantalla.
  */
 export default function NoticiasLogin({ limite = 4 }: { limite?: number }) {
-  const { novedades, cargando } = useNovedadesPublicas();
+  const { novedades, cargando, error } = useNovedadesPublicas();
   const visibles = novedades.slice(0, limite);
 
   return (
@@ -42,10 +42,10 @@ export default function NoticiasLogin({ limite = 4 }: { limite?: number }) {
         >
           <Newspaper size={20} style={{ color: "var(--text-muted)" }} />
           <p style={{ color: "var(--text-muted)" }} className="text-xs font-medium">
-            Todavía no hay publicaciones
+            {error ? "No se pudieron cargar las novedades" : "Todavía no hay publicaciones"}
           </p>
           <p style={{ color: "var(--text-muted)" }} className="text-[10px] opacity-70">
-            Aquí aparecerán las novedades de los establecimientos
+            {error ? "Vuelve a intentarlo más tarde" : "Aquí aparecerán las novedades de los establecimientos"}
           </p>
         </div>
       ) : (

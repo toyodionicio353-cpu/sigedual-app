@@ -12,7 +12,7 @@ import Select from "@/components/ui/Select";
  * liceos. No pide sesión ni registro — solo se mira.
  */
 export default function NovedadesPage() {
-  const { novedades, cargando } = useNovedadesPublicas();
+  const { novedades, cargando, error } = useNovedadesPublicas();
   const [liceo, setLiceo] = useState("");
 
   // Se ofrecen solo los liceos que efectivamente tienen algo publicado:
@@ -63,10 +63,10 @@ export default function NovedadesPage() {
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-10 text-center max-w-md mx-auto">
             <Newspaper size={22} style={{ color: "var(--text-muted)" }} className="mx-auto mb-3" />
             <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">
-              Todavía no hay publicaciones
+              {error ? "No se pudieron cargar las novedades" : "Todavía no hay publicaciones"}
             </p>
             <p style={{ color: "var(--text-muted)" }} className="text-xs mt-1">
-              Cuando un establecimiento publique una novedad, aparecerá aquí.
+              {error ?? "Cuando un establecimiento publique una novedad, aparecerá aquí."}
             </p>
           </div>
         ) : (

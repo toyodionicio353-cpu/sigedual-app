@@ -21,6 +21,10 @@ import type { Novedad } from "@/types";
 export function useNovedadesPublicas() {
   const [novedades, setNovedades] = useState<Novedad[]>([]);
   const [cargando, setCargando] = useState(true);
+  /** Se distingue de una lista vacía a propósito: "no hay publicaciones" y
+   * "no se pudieron leer" se ven igual en pantalla, y confundirlos hace
+   * invisible un problema de configuración que sí tiene arreglo. */
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelado = false;
@@ -35,10 +39,21 @@ export function useNovedadesPublicas() {
             .filter((n) => estaVigente(n.expiraEn, ahora))
             .sort((a, b) => (b.publicadoEn ?? "").localeCompare(a.publicadoEn ?? ""))
         );
-      } catch {
-        // Sin novedades no se muestra un error en la cara de un visitante:
-        // la sección simplemente queda vacía.
-        if (!cancelado) setNovedades([]);
+      } catch (e) {
+        if (cancelado) return;
+        setNovedades([]);
+        const codigo = (e as { code?: string })?.code ?? "";
+        // El caso típico: las reglas de Firestore desplegadas todavía no
+        // permiten leer `novedades` sin sesión, así que el escaparate
+        // público queda vacío aunque las publicaciones sí existan.
+        setError(
+          codigo === "permission-denied"
+            ? "Las reglas de Firestore no permiten leer las novedades sin iniciar sesión."
+            : "No se pudieron cargar las novedades."
+        );
+        if (typeof console !== "undefined") {
+          console.error("[SIGEDUAL] No se pudieron leer las novedades:", codigo, e);
+        }
       } finally {
         if (!cancelado) setCargando(false);
       }
@@ -46,5 +61,5 @@ export function useNovedadesPublicas() {
     return () => { cancelado = true; };
   }, []);
 
-  return { novedades, cargando };
+  return { novedades, cargando, error };
 }
