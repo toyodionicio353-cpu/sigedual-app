@@ -94,14 +94,20 @@ export default function MapaDualCard() {
           >
             <MapPinOff size={22} style={{ color: "var(--text-muted)" }} />
             <p style={{ color: "var(--text-secondary)" }} className="text-sm font-medium">
-              {centros.length + practicas.length === 0
-                ? "Todavía no hay actividades ubicadas en el mapa"
-                : "Ningún resultado con estos filtros"}
+              {centros.length + practicas.length > 0
+                ? "Ningún resultado con estos filtros"
+                : sinUbicacion.length > 0
+                  ? sinUbicacion.length === 1
+                    ? "Hay 1 registro sin ubicación guardada"
+                    : `Hay ${sinUbicacion.length} registros sin ubicación guardada`
+                  : "Todavía no hay actividades ubicadas en el mapa"}
             </p>
             <p style={{ color: "var(--text-muted)" }} className="text-xs max-w-xs">
-              {centros.length + practicas.length === 0
-                ? "Los Centros Duales aparecen acá cuando se registra su ubicación desde su ficha."
-                : "Prueba cambiando el tipo de actividad o los estados seleccionados."}
+              {centros.length + practicas.length > 0
+                ? "Prueba cambiando el tipo de actividad o los estados seleccionados."
+                : sinUbicacion.length > 0
+                  ? `Existen, pero el mapa necesita su latitud y longitud: ${sinUbicacion.slice(0, 3).map((r) => r.nombre).join(", ")}${sinUbicacion.length > 3 ? "…" : ""}. Se guarda editando cada ficha, en "Ubicación y contacto".`
+                  : "Los Centros Duales aparecen acá cuando se registra su ubicación desde su ficha."}
             </p>
           </div>
         )}
