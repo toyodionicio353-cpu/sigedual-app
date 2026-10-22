@@ -11,10 +11,11 @@ import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import { estadoCanonico, fechaProgramadaDe, profesorSupervisorIdDe, ESTADO_VISITA_LABEL, ESTADO_VISITA_COLOR } from "@/lib/visitas/normalizar";
 import type { Estudiante, Especialidad, Visita, CentroDual, Usuario, Asignacion } from "@/types";
 import CentroFaltas from "@/components/faltas/CentroFaltas";
+import PanelObservaciones from "@/components/observaciones/PanelObservaciones";
 import {
   ArrowLeft, BadgeCheck, Phone, GraduationCap, HeartPulse,
   Sparkles, FileText, Users, Pencil, History, Trash2, ShieldAlert, MapPin,
-  CalendarX,
+  CalendarX, MessageSquareWarning,
 } from "lucide-react";
 
 const ESTADO_COLOR: Record<string, string> = {
@@ -282,6 +283,24 @@ export default function FichaEstudiantePage() {
                 especialidadId: estudiante.especialidadId,
                 liceoId: estudiante.liceoId,
                 profesorSupervisorId: asignacion.profesorSupervisorId,
+              } : undefined}
+            />
+          </div>
+        </Seccion>
+
+        {/* Lo que el Centro Dual levantó sobre este estudiante. Va en la
+            ficha del liceo porque acá es donde se responde y se cierra:
+            si viviera solo del lado del centro, un reclamo no tendría a
+            nadie a cargo. */}
+        <Seccion icon={<MessageSquareWarning size={16} />} titulo="Observaciones del Centro Dual">
+          <div className="sm:col-span-2">
+            <PanelObservaciones
+              estudianteId={id}
+              contexto={asignacion ? {
+                centroDualId: asignacion.centroDualId,
+                especialidadId: estudiante.especialidadId,
+                liceoId: estudiante.liceoId,
+                asignacionId: asignacion.id,
               } : undefined}
             />
           </div>

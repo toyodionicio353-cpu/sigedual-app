@@ -59,7 +59,7 @@ service cloud.firestore {
         'planes_comerciales', 'configuracion_comercial', 'documentos_generados', 'especialidades',
         'documentos_generados_indices', 'envios_evaluacion', 'borradores_mensaje',
         'practicas_profesionales', 'novedades', 'cupos_novedades',
-        'faltas_dual', 'permisos_dual'
+        'faltas_dual', 'permisos_dual', 'observaciones_dual'
       ];
     }
 
@@ -404,6 +404,43 @@ service cloud.firestore {
       // Una falta no se borra: se anula, para que el historial del
       // estudiante no cambie sin dejar rastro. Borrar de verdad queda
       // reservado al rol desarrollador.
+      allow delete: if request.auth != null && datosUsuario().rol == 'desarrollador';
+    }
+
+    // Observaciones, reclamos y reconocimientos que el Centro Dual levanta
+    // sobre un estudiante que recibe. Canal con seguimiento: lo abre quien
+    // lo vive, el liceo lo responde y lo cierra.
+    match /observaciones_dual/{id} {
+      allow read: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId
+            && ('especialidadId' in datosUsuario()) && datosUsuario().especialidadId == resource.data.especialidadId)
+        // El Centro Dual ve las de SU empresa, nunca las de otra.
+        || (datosUsuario().rol == 'centro_dual' && datosUsuario().centroDualId == resource.data.centroDualId)
+      );
+      // Deliberadamente SIN acceso del estudiante: un reclamo del centro
+      // sobre su desempeño lo conversa el liceo con él, no se lo entrega
+      // crudo la aplicación.
+
+      allow create: if request.auth != null
+        && request.resource.data.estado == 'abierta'
+        && request.resource.data.creadoPor == request.auth.uid
+        && (
+          esAccesoCompletoLiceo(request.resource.data.liceoId)
+          || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == request.resource.data.liceoId)
+          || (datosUsuario().rol == 'centro_dual'
+              && datosUsuario().centroDualId == request.resource.data.centroDualId)
+        );
+
+      // Responder y cerrar es del liceo: el Centro Dual no puede dar por
+      // resuelto su propio reclamo. Tampoco reescribe lo que ya escribió,
+      // porque es el registro de un hecho con fecha.
+      allow update: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId
+            && ('especialidadId' in datosUsuario()) && datosUsuario().especialidadId == resource.data.especialidadId)
+      );
+
       allow delete: if request.auth != null && datosUsuario().rol == 'desarrollador';
     }
 
