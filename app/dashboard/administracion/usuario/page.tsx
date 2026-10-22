@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -12,8 +12,9 @@ import Select from "@/components/ui/Select";
 import AvatarUsuario from "./_components/AvatarUsuario";
 import CampoBloqueado from "./_components/CampoBloqueado";
 import ModalSolicitud from "./_components/ModalSolicitud";
-import type { TipoDatoSolicitud } from "@/types";
-import { User, Phone, FileText, IdCard, Shield, KeyRound, Mail } from "lucide-react";
+import { perfilDesdeCentroDual, perfilDesdeEstudiante } from "@/lib/cuentas/datosHeredados";
+import type { CentroDual, Estudiante, TipoDatoSolicitud } from "@/types";
+import { User, Phone, FileText, IdCard, Shield, KeyRound, Mail, Download } from "lucide-react";
 
 const NACIONALIDADES = ["Chilena", "Argentina", "Boliviana", "Colombiana", "Ecuatoriana", "Peruana", "Venezolana", "Otra"];
 const LIMITE_DESCRIPCION = 280;
@@ -121,6 +122,59 @@ export default function MiPerfilPage() {
     } finally {
       setCambiandoCorreo(false);
     }
+  }
+
+  /**
+   * Datos de la ficha a la que está vinculada esta cuenta (Centro Dual o
+   * Estudiante) que todavía faltan en el perfil.
+   *
+   * Las cuentas nuevas ya nacen con ellos (ver la ruta que las completa),
+   * pero las creadas antes quedaron en blanco y nadie va a volver a
+   * escribir a mano lo que el liceo ya registró.
+   *
+   * No se guarda solo: se ofrece rellenar el formulario y el usuario
+   * decide, porque el perfil es suyo y puede que haya dejado un campo
+   * vacío a propósito. Por eso tampoco pisa nada: solo campos vacíos.
+   */
+  const [heredables, setHeredables] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let cancelado = false;
+    const idCentro = usuario?.centroDualId;
+    const idEstudiante = usuario?.estudianteId;
+    // La cuenta de un Maestro Guía puntual describe a esa persona, no a la
+    // empresa: su dirección no es la del Centro Dual.
+    const traerCentro = Boolean(idCentro) && !usuario?.maestroGuiaId;
+    if (!traerCentro && !idEstudiante) { setHeredables({}); return; }
+
+    (async () => {
+      try {
+        const ruta = idEstudiante ? `estudiantes/${idEstudiante}` : `centros_duales/${idCentro}`;
+        const snap = await getDoc(doc(db, ruta));
+        if (cancelado || !snap.exists()) return;
+        const datos = { id: snap.id, ...snap.data() };
+        setHeredables(
+          idEstudiante
+            ? perfilDesdeEstudiante(datos as Estudiante)
+            : perfilDesdeCentroDual(datos as CentroDual)
+        );
+      } catch {
+        // Sin permiso o sin ficha: simplemente no se ofrece nada.
+        if (!cancelado) setHeredables({});
+      }
+    })();
+    return () => { cancelado = true; };
+  }, [usuario?.centroDualId, usuario?.estudianteId, usuario?.maestroGuiaId]);
+
+  const faltantes = useMemo(
+    () => Object.entries(heredables).filter(
+      ([clave, valor]) => valor && !String(form[clave as keyof FormPerfil] ?? "").trim()
+    ),
+    [heredables, form]
+  );
+
+  function traerDesdeFicha() {
+    setForm((f) => ({ ...f, ...Object.fromEntries(faltantes) }));
   }
 
   const hayCambios = useMemo(() => JSON.stringify(form) !== JSON.stringify(inicial), [form, inicial]);
@@ -238,6 +292,27 @@ export default function MiPerfilPage() {
           </div>
         </div>
       </div>
+
+      {faltantes.length > 0 && (
+        <div
+          style={{ background: "var(--bg-card)", border: "1px solid var(--accent)" }}
+          className="rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between"
+        >
+          <p style={{ color: "var(--text-secondary)" }} className="text-sm">
+            Tu institución ya registró {faltantes.length === 1 ? "un dato" : `${faltantes.length} datos`} tuyos
+            {usuario.estudianteId ? " en tu ficha de estudiante" : " al crear el Centro Dual"}.
+            Puedes traerlos acá en vez de escribirlos de nuevo.
+          </p>
+          <button
+            type="button"
+            onClick={traerDesdeFicha}
+            style={{ background: "var(--accent)", color: "var(--text-on-accent)" }}
+            className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 flex-shrink-0"
+          >
+            <Download size={15} /> Completar con mis datos
+          </button>
+        </div>
+      )}
 
       {/* Información personal */}
       <Seccion icono={<IdCard size={17} />} titulo="Información personal">
