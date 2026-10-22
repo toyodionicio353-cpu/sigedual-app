@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireCallerUid, getDocument, listCollectionDocs, setDocument } from "@/lib/firebase-admin";
 import { registrarEventoServidor } from "@/lib/auditoria/registrarEvento";
+import { perfilDesdeCentroDual } from "@/lib/cuentas/datosHeredados";
 import type { CentroDual, Liceo, Usuario } from "@/types";
 
 export const runtime = "nodejs";
@@ -69,6 +70,9 @@ export async function POST(request: Request) {
     await setDocument(`usuarios/${uid}`, {
       uid, email: email.trim(), nombre, rol: "centro_dual",
       centroDualId, liceoId, activo: true, creadoEn: ahora,
+      // El liceo ya registró estos datos al crear el Centro Dual: la
+      // cuenta nace con ellos en vez de con el perfil en blanco.
+      ...perfilDesdeCentroDual(centro),
     });
 
     await registrarEventoServidor({

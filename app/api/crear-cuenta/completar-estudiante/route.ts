@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireCallerUid, getDocument, listCollectionDocs, setDocument } from "@/lib/firebase-admin";
 import { registrarEventoServidor } from "@/lib/auditoria/registrarEvento";
+import { perfilDesdeEstudiante } from "@/lib/cuentas/datosHeredados";
 import type { Estudiante, Liceo, Usuario } from "@/types";
 
 export const runtime = "nodejs";
@@ -64,6 +65,9 @@ export async function POST(request: Request) {
     await setDocument(`usuarios/${uid}`, {
       uid, email: email.trim(), nombre, rol: "estudiante",
       estudianteId, liceoId, activo: true, creadoEn: ahora,
+      // El liceo ya registró estos datos al matricular: la cuenta nace
+      // con ellos en vez de con el perfil en blanco.
+      ...perfilDesdeEstudiante(estudiante),
     });
 
     await registrarEventoServidor({
