@@ -1,11 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Building2, MapPin, GraduationCap, Sparkles, CalendarCheck, CheckCircle2,
   ArrowLeft, ArrowRight, UserRound,
 } from "lucide-react";
 import { formatearRut, normalizarRut, validarRut, validarEmail, validarTelefonoChileno } from "@/lib/rut";
-import { AMBIENTES_CENTRO, HABILIDADES, AREAS_DESEMPENO } from "@/lib/caracteristicas";
+import { AMBIENTES_CENTRO, HABILIDADES, areasParaEspecialidades } from "@/lib/caracteristicas";
 import { REGIONES } from "@/app/dashboard/liceos/_components/LiceoForm";
 import Select from "@/components/ui/Select";
 import SelectorUbicacion from "@/components/mapa/SelectorUbicacion";
@@ -204,6 +204,25 @@ export default function CentroDualForm({
     return { errs, errEsp };
   }
 
+  /**
+   * Las áreas se ajustan a las especialidades elegidas: un centro de
+   * Mecánica no debería tener que elegir entre "Recursos Humanos" y
+   * "Contabilidad" para describir dónde trabajará el estudiante.
+   *
+   * Las ya elegidas se mantienen visibles aunque no pertenezcan a la
+   * especialidad actual — si desaparecieran de la lista, cambiar la
+   * especialidad borraría esas áreas sin que nadie se entere.
+   */
+  const areasDisponibles = useMemo(
+    () => areasParaEspecialidades(especialidadesSel.map(especialidadNombreDe), areasSel),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [especialidadesSel, areasSel, especialidadesDisponibles]
+  );
+
+  function especialidadNombreDe(id: string): string {
+    return especialidadesDisponibles.find((e) => e.id === id)?.nombre ?? "";
+  }
+
   function especialidadNombre(id: string): string {
     return especialidadesDisponibles.find((e) => e.id === id)?.nombre || id;
   }
@@ -355,9 +374,12 @@ export default function CentroDualForm({
 
       <div className="sm:col-span-2 mt-2">
         <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium mb-1">Áreas de desempeño</p>
-        <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">Áreas en las que el estudiante podría desempeñarse dentro del centro.</p>
+        <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">
+          Áreas en las que el estudiante podría desempeñarse dentro del centro.
+          {especialidadesSel.length > 0 ? " Se ajustan a las especialidades que elegiste arriba." : ""}
+        </p>
         <div className="flex flex-wrap gap-2">
-          {AREAS_DESEMPENO.map((a) => {
+          {areasDisponibles.map((a) => {
             const activo = areasSel.includes(a);
             return (
               <button key={a} type="button" onClick={() => toggleArea(a)}

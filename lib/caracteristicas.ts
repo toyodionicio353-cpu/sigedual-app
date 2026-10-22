@@ -27,7 +27,9 @@ export const AMBIENTES_CENTRO = [
 ];
 
 // Áreas dentro del centro en las que un estudiante podría desempeñarse
-// durante su práctica dual.
+// durante su práctica dual. Esta lista general se usa cuando todavía no se
+// sabe la especialidad — por ejemplo en el formulario público que completa
+// la empresa, donde el liceo asigna las especialidades después.
 export const AREAS_DESEMPENO = [
   "Administración",
   "Recursos Humanos",
@@ -39,6 +41,152 @@ export const AREAS_DESEMPENO = [
   "Ventas",
   "Producción",
 ];
+
+/**
+ * Áreas que tienen sentido en cualquier centro, sea cual sea la
+ * especialidad: un estudiante de Mecánica igual puede atender público o
+ * llevar la bodega de repuestos.
+ */
+const AREAS_TRANSVERSALES = [
+  "Atención al cliente",
+  "Bodega e inventario",
+  "Administración",
+  "Prevención de riesgos",
+];
+
+interface GrupoAreas {
+  /** Palabras que se buscan dentro del nombre de la especialidad. Se
+   * compara por texto y no por id porque cada liceo crea su propio
+   * catálogo y los nombres varían ("Contabilidad", "Contabilidad y
+   * Administración"). */
+  claves: string[];
+  areas: string[];
+}
+
+/**
+ * Áreas propias de cada familia de especialidad Técnico Profesional.
+ *
+ * Curado a mano, igual que EQUIVALENCIAS_RASGO_AMBIENTE: no inventa datos
+ * de ningún centro, solo propone opciones razonables para que nadie tenga
+ * que elegir "Producción" para un estudiante de Enfermería. Se amplía acá
+ * cuando aparezca una especialidad nueva.
+ */
+const AREAS_POR_ESPECIALIDAD: GrupoAreas[] = [
+  {
+    claves: ["contabilidad", "administracion", "finanzas", "secretariado"],
+    areas: [
+      "Contabilidad", "Tesorería", "Remuneraciones", "Facturación y cobranza",
+      "Recursos Humanos", "Oficina de partes", "Ventas", "Informática y ofimática",
+    ],
+  },
+  {
+    claves: ["mecanica", "automotriz", "metalmecanica", "matriceria"],
+    areas: [
+      "Mantenimiento mecánico", "Motor y transmisión", "Frenos y suspensión",
+      "Sistema eléctrico automotriz", "Soldadura", "Torno y fresado",
+      "Diagnóstico y escáner", "Bodega de repuestos",
+    ],
+  },
+  {
+    claves: ["agropecuaria", "agricola", "pecuaria", "forestal"],
+    areas: [
+      "Producción agrícola", "Producción pecuaria", "Manejo de ganado", "Lechería",
+      "Riego", "Maquinaria agrícola", "Invernadero y vivero", "Sanidad animal",
+      "Registros de producción",
+    ],
+  },
+  {
+    claves: ["parvulo", "parvularia", "educacion inicial"],
+    areas: [
+      "Sala cuna", "Nivel medio", "Nivel de transición", "Apoyo pedagógico",
+      "Material didáctico", "Alimentación y mudas", "Recreación y juego",
+      "Registro de asistencia",
+    ],
+  },
+  {
+    claves: ["enfermeria", "salud"],
+    areas: [
+      "Atención de pacientes", "Toma de signos vitales", "Esterilización",
+      "Apoyo en procedimientos", "Registro clínico", "Higiene y confort",
+      "Admisión y recepción", "Botiquín y farmacia",
+    ],
+  },
+  {
+    claves: ["electricidad", "electronica", "electrico"],
+    areas: [
+      "Instalaciones eléctricas", "Mantenimiento eléctrico", "Tableros y automatización",
+      "Lectura de planos", "Montaje de equipos",
+    ],
+  },
+  {
+    claves: ["gastronomia", "alimentacion", "cocina"],
+    areas: [
+      "Cocina caliente", "Cocina fría", "Pastelería y panadería",
+      "Servicio de comedor", "Higiene y manipulación de alimentos",
+      "Bodega de alimentos",
+    ],
+  },
+  {
+    claves: ["construccion", "edificacion", "obras"],
+    areas: [
+      "Obra gruesa", "Terminaciones", "Instalaciones sanitarias",
+      "Lectura de planos", "Bodega de materiales",
+    ],
+  },
+  {
+    claves: ["informatica", "telecomunicaciones", "conectividad", "programacion"],
+    areas: [
+      "Soporte técnico", "Redes y conectividad", "Mantenimiento de equipos",
+      "Instalación de software", "Mesa de ayuda", "Desarrollo y sitios web",
+    ],
+  },
+  {
+    claves: ["turismo", "hoteleria"],
+    areas: [
+      "Recepción", "Reservas", "Housekeeping", "Guía y atención de visitantes",
+      "Eventos",
+    ],
+  },
+  {
+    claves: ["vestuario", "textil", "confeccion"],
+    areas: ["Corte", "Confección", "Diseño y patronaje", "Control de calidad", "Terminaciones"],
+  },
+];
+
+function normalizar(texto: string): string {
+  return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+/**
+ * Áreas a ofrecer según las especialidades que atiende el centro.
+ *
+ * Une las áreas de cada especialidad reconocida más las transversales. Si
+ * no hay especialidades elegidas, o ninguna coincide con el catálogo, cae
+ * en la lista general: es preferible ofrecer de más que dejar a alguien
+ * sin ninguna opción porque su liceo nombró la especialidad distinto.
+ *
+ * `yaElegidas` se agrega siempre, aunque no pertenezca a la especialidad:
+ * si un centro guardó "Producción" y después se le cambia la especialidad,
+ * esa área tiene que seguir visible — si desapareciera de la lista, editar
+ * el centro la borraría sin que nadie se entere.
+ */
+export function areasParaEspecialidades(
+  nombresEspecialidad: string[],
+  yaElegidas: string[] = []
+): string[] {
+  const nombres = nombresEspecialidad.map(normalizar).filter(Boolean);
+
+  const coincidencias = AREAS_POR_ESPECIALIDAD.filter((grupo) =>
+    grupo.claves.some((clave) => nombres.some((nombre) => nombre.includes(clave)))
+  );
+
+  const base = coincidencias.length === 0
+    ? AREAS_DESEMPENO
+    : [...coincidencias.flatMap((g) => g.areas), ...AREAS_TRANSVERSALES];
+
+  // Set para quitar duplicados: dos especialidades pueden compartir un área.
+  return Array.from(new Set([...base, ...yaElegidas]));
+}
 
 // Vocabulario compartido entre estudiante (habilidades) y centro (habilidades
 // valoradas): al usar el mismo texto en ambos lados, la comparación es directa.
