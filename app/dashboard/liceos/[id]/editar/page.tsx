@@ -7,6 +7,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { useFeedback } from "@/lib/preferencias/useFeedback";
 import LiceoForm, { type LiceoFormValues, type EspecialidadForm } from "../../_components/LiceoForm";
 import type { Liceo, Especialidad } from "@/types";
 import { ArrowLeft, Pencil } from "lucide-react";
@@ -16,6 +17,7 @@ export default function EditarLiceoPage() {
   const { id } = useParams<{ id: string }>();
   const { usuario } = useAuth();
   const router = useRouter();
+  const avisar = useFeedback();
 
   const [valores, setValores] = useState<LiceoFormValues | null>(null);
   const [especialidades, setEspecialidades] = useState<EspecialidadForm[]>([]);
@@ -23,7 +25,6 @@ export default function EditarLiceoPage() {
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const [mensaje, setMensaje] = useState("");
   const [errorSistema, setErrorSistema] = useState("");
 
   const puedeGestionar = usuario?.rol === "desarrollador";
@@ -79,7 +80,6 @@ export default function EditarLiceoPage() {
     if (!usuario || !id || guardando) return;
     setGuardando(true);
     setErrorSistema("");
-    setMensaje("");
     try {
       await updateDoc(doc(db, "liceos", id), {
         ...nuevosValores,
@@ -99,8 +99,11 @@ export default function EditarLiceoPage() {
         }
       }
 
-      setMensaje("Cambios guardados correctamente.");
-      await cargar();
+      // Guardar cierra la edición: se vuelve a la ficha, que es donde
+      // se comprueba el cambio. El aviso va por el toast global porque
+      // un mensaje dentro de esta página moriría con la navegación.
+      avisar("Cambios guardados correctamente.");
+      router.push(`/dashboard/liceos/${id}`);
     } catch (err) {
       const detalle = err instanceof Error ? err.message : String(err);
       setErrorSistema(`No se pudieron guardar los cambios. Intenta nuevamente. (${detalle})`);
@@ -163,11 +166,6 @@ export default function EditarLiceoPage() {
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Actualiza la información del establecimiento.</p>
       </div>
 
-      {mensaje && (
-        <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-3 mb-6">
-          <p style={{ color: "var(--success)" }} className="text-sm font-medium">{mensaje}</p>
-        </div>
-      )}
       {errorSistema && (
         <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-4 py-3 mb-6">
           <p style={{ color: "var(--danger)" }} className="text-sm font-medium">{errorSistema}</p>

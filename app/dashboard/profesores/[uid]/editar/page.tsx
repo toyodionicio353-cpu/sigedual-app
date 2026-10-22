@@ -5,6 +5,7 @@ import Link from "next/link";
 import { doc, getDoc, updateDoc, deleteField, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { useFeedback } from "@/lib/preferencias/useFeedback";
 import { formatearRut, validarRut } from "@/lib/rut";
 import type { Especialidad, Usuario } from "@/types";
 import { ArrowLeft, Pencil } from "lucide-react";
@@ -15,6 +16,7 @@ export default function EditarProfesorPage() {
   const { uid } = useParams<{ uid: string }>();
   const { usuario } = useAuth();
   const router = useRouter();
+  const avisar = useFeedback();
 
   const [profesor, setProfesor] = useState<Usuario | null>(null);
   const [nombre, setNombre] = useState("");
@@ -26,7 +28,6 @@ export default function EditarProfesorPage() {
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
-  const [mensaje, setMensaje] = useState("");
 
   const puedeEditar = usuario?.rol === "desarrollador";
 
@@ -68,7 +69,6 @@ export default function EditarProfesorPage() {
     if (!profesor || !puedeGuardar || guardando) return;
     setGuardando(true);
     setError("");
-    setMensaje("");
     try {
       const cambios: Record<string, unknown> = {
         nombre: nombre.trim(),
@@ -77,7 +77,11 @@ export default function EditarProfesorPage() {
       };
       if (run.trim()) cambios.run = formatearRut(run);
       await updateDoc(doc(db, "usuarios", profesor.uid), cambios);
-      setMensaje("Cambios guardados correctamente.");
+      // Guardar cierra la edición: se vuelve a la ficha, que es donde
+      // se comprueba el cambio. El aviso va por el toast global porque
+      // un mensaje dentro de esta página moriría con la navegación.
+      avisar("Cambios guardados correctamente.");
+      router.push(`/dashboard/profesores/${uid}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudieron guardar los cambios.");
     } finally {
@@ -122,11 +126,6 @@ export default function EditarProfesorPage() {
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{profesor.email}</p>
       </div>
 
-      {mensaje && (
-        <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-3 mb-6">
-          <p style={{ color: "var(--success)" }} className="text-sm font-medium">{mensaje}</p>
-        </div>
-      )}
       {error && (
         <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-4 py-3 mb-6">
           <p style={{ color: "var(--danger)" }} className="text-sm font-medium">{error}</p>

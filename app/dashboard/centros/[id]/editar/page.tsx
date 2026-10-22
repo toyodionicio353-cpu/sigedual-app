@@ -5,6 +5,7 @@ import Link from "next/link";
 import { doc, getDoc, updateDoc, deleteField, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { useFeedback } from "@/lib/preferencias/useFeedback";
 import { normalizarRut } from "@/lib/rut";
 import CentroDualForm, { type CentroDualFormValues } from "../../_components/CentroDualForm";
 import type { CentroDual, Especialidad } from "@/types";
@@ -17,6 +18,7 @@ export default function EditarCentroDualPage() {
   const { id } = useParams<{ id: string }>();
   const { usuario } = useAuth();
   const router = useRouter();
+  const avisar = useFeedback();
 
   const [centroOriginal, setCentroOriginal] = useState<CentroDual | null>(null);
   const [valores, setValores] = useState<CentroDualFormValues | null>(null);
@@ -30,7 +32,6 @@ export default function EditarCentroDualPage() {
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [errorSistema, setErrorSistema] = useState("");
-  const [mensaje, setMensaje] = useState("");
 
   const puedeEditar = usuario?.rol === "desarrollador" || usuario?.rol === "profesor";
 
@@ -90,7 +91,6 @@ export default function EditarCentroDualPage() {
     if (!usuario || !id || !centroOriginal || guardando) return;
     setGuardando(true);
     setErrorSistema("");
-    setMensaje("");
     try {
       const rutNuevo = form.rut.trim() ? normalizarRut(form.rut) : "";
       await updateDoc(doc(db, "centros_duales", id), {
@@ -134,7 +134,11 @@ export default function EditarCentroDualPage() {
       if (rutNuevo !== (centroOriginal.rut ? normalizarRut(centroOriginal.rut) : "")) {
         await sincronizarIndiceRutCentro(id, usuario.liceoId, rutNuevo, centroOriginal.rut);
       }
-      setMensaje("Cambios guardados correctamente.");
+      // Guardar cierra la edición: se vuelve a la ficha, que es donde
+      // se comprueba el cambio. El aviso va por el toast global porque
+      // un mensaje dentro de esta página moriría con la navegación.
+      avisar("Cambios guardados correctamente.");
+      router.push(`/dashboard/centros/${id}`);
     } catch (err) {
       const detalle = err instanceof Error ? err.message : String(err);
       setErrorSistema(`No se pudieron guardar los cambios. Intenta nuevamente. (${detalle})`);
@@ -180,11 +184,6 @@ export default function EditarCentroDualPage() {
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Actualiza los datos de {centroOriginal?.nombre}.</p>
       </div>
 
-      {mensaje && (
-        <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-3 mb-6">
-          <p style={{ color: "var(--success)" }} className="text-sm font-medium">{mensaje}</p>
-        </div>
-      )}
       {errorSistema && (
         <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-4 py-3 mb-6">
           <p style={{ color: "var(--danger)" }} className="text-sm font-medium">{errorSistema}</p>
