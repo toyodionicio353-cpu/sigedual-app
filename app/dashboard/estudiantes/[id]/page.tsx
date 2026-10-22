@@ -9,10 +9,12 @@ import { formatearFecha } from "@/lib/fecha";
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import { estadoCanonico, fechaProgramadaDe, profesorSupervisorIdDe, ESTADO_VISITA_LABEL, ESTADO_VISITA_COLOR } from "@/lib/visitas/normalizar";
-import type { Estudiante, Especialidad, Visita, CentroDual, Usuario } from "@/types";
+import type { Estudiante, Especialidad, Visita, CentroDual, Usuario, Asignacion } from "@/types";
+import CentroFaltas from "@/components/faltas/CentroFaltas";
 import {
   ArrowLeft, BadgeCheck, Phone, GraduationCap, HeartPulse,
   Sparkles, FileText, Users, Pencil, History, Trash2, ShieldAlert, MapPin,
+  CalendarX,
 } from "lucide-react";
 
 const ESTADO_COLOR: Record<string, string> = {
@@ -57,6 +59,9 @@ export default function FichaEstudiantePage() {
   const [visitas, setVisitas] = useState<Visita[]>([]);
   const [centros, setCentros] = useState<CentroDual[]>([]);
   const [profesores, setProfesores] = useState<Usuario[]>([]);
+  // Asignación vigente: de ahí salen el centro, la especialidad y el
+  // profesor a cargo que quedan grabados en cada falta.
+  const [asignacion, setAsignacion] = useState<Asignacion | null>(null);
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [denegado, setDenegado] = useState(false);
@@ -108,6 +113,17 @@ export default function FichaEstudiantePage() {
           ]);
           setCentros(snapsCentro.filter((s) => s.exists()).map((s) => ({ id: s!.id, ...s!.data() } as CentroDual)));
           setProfesores(snapsProfesor.filter((s) => s.exists()).map((s) => s!.data() as Usuario));
+
+          // La asignación vigente para poder registrar faltas. Si no hay
+          // ninguna en curso, el centro de faltas lo dice y no deja
+          // registrar: una falta sin Centro Dual no significa nada.
+          const snapAsignaciones = await getDocs(query(collection(db, "asignaciones"), where("estudianteId", "==", id)));
+          const asignaciones = snapAsignaciones.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion));
+          setAsignacion(
+            asignaciones.find((a) => a.estado === "en_proceso" || a.estado === "asignada")
+            ?? asignaciones.sort((a, b) => (b.creadoEn ?? "").localeCompare(a.creadoEn ?? ""))[0]
+            ?? null
+          );
         }
       } catch {
         // Las reglas de Firestore denegaron la lectura (fuera de ámbito/liceo).
@@ -254,6 +270,21 @@ export default function FichaEstudiantePage() {
           <Dato label="Especialidad" valor={especialidadNombre} />
           <Dato label="Jornada" valor={estudiante.jornada} />
           <Dato label="Centro dual asignado" valor={estudiante.centroDualId ? "Asignado" : "Sin empresa asignada"} />
+        </Seccion>
+
+        <Seccion icon={<CalendarX size={16} />} titulo="Faltas a la Formación Dual">
+          <div className="sm:col-span-2">
+            <CentroFaltas
+              estudianteId={id}
+              contexto={asignacion ? {
+                asignacionId: asignacion.id,
+                centroDualId: asignacion.centroDualId,
+                especialidadId: estudiante.especialidadId,
+                liceoId: estudiante.liceoId,
+                profesorSupervisorId: asignacion.profesorSupervisorId,
+              } : undefined}
+            />
+          </div>
         </Seccion>
 
         {visitas.length > 0 && (
