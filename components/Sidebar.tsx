@@ -68,6 +68,9 @@ const MENUS: NavGroup[] = [
     roles: ["desarrollador", "coordinador", "director", "profesor", "centro_dual"],
     sub: [
       { href: "/dashboard/centros", label: "Lista de centros", icon: <Building size={16} strokeWidth={2.25} />, roles: ["desarrollador", "coordinador", "director", "profesor", "centro_dual"] },
+      // Solo el Centro Dual: es su propia gente, no un listado del liceo.
+      // El liceo entra a los mismos estudiantes por Estudiantes → Lista.
+      { href: "/dashboard/centros/estudiantes", label: "Mis estudiantes", icon: <Users size={16} strokeWidth={2.25} />, roles: ["centro_dual"] },
       { href: "/dashboard/centros/nuevo", label: "Agregar centro", icon: <Building2 size={16} strokeWidth={2.25} />, roles: ["desarrollador", "profesor"] },
       { href: "/dashboard/centros/maestros", label: "Lista de maestro guía", icon: <UsersRound size={16} strokeWidth={2.25} />, roles: ["desarrollador", "coordinador", "director", "profesor"] },
       { href: "/dashboard/centros/maestros/nuevo", label: "Agregar maestro guía", icon: <UserPlus size={16} strokeWidth={2.25} />, roles: ["desarrollador", "profesor"] },

@@ -580,6 +580,62 @@ export interface FaltaDual {
 }
 
 /**
+ * Lo que el Centro Dual tiene que decir sobre un estudiante que recibe:
+ * una observación de su desempeño, un reclamo por una conducta, o un
+ * reconocimiento.
+ *
+ * Es un canal con destinatario y seguimiento, no un chat: lo abre el
+ * Centro Dual (o el liceo), el liceo responde y lo cierra. Por eso tiene
+ * estado — si fuera un mensaje suelto, un reclamo quedaría sin nadie
+ * responsable de resolverlo.
+ *
+ * NO reemplaza a Mensajes (conversación libre) ni a las Evaluaciones
+ * (instrumento formal con pauta): esto es el registro de un hecho puntual
+ * ocurrido en el centro, atado a un estudiante.
+ */
+export type TipoObservacionDual = "observacion" | "reclamo" | "felicitacion";
+
+/**
+ * "abierta" la deja quien la escribe; el liceo la toma ("en_revision") y
+ * la cierra con una respuesta. El Centro Dual nunca la cierra: no puede
+ * dar por resuelto su propio reclamo.
+ */
+export type EstadoObservacionDual = "abierta" | "en_revision" | "cerrada";
+
+export interface ObservacionDual {
+  id: string;
+  liceoId: string;
+  estudianteId: string;
+  centroDualId: string;
+  /** Se denormaliza del estudiante para que las reglas de Firestore
+   * resuelvan el ámbito del profesor sin un get() adicional, igual que en
+   * FaltaDual. */
+  especialidadId: string;
+  asignacionId?: string;
+
+  tipo: TipoObservacionDual;
+  /** Fecha del hecho (AAAA-MM-DD), no la de escritura: un reclamo se puede
+   * registrar al día siguiente y lo que importa es cuándo ocurrió. */
+  fecha: string;
+  texto: string;
+  estado: EstadoObservacionDual;
+
+  creadoPor: string;
+  creadoPorNombre: string;
+  creadoPorRol: Rol;
+  creadoEn: string;
+
+  /** Respuesta del liceo. Queda junto a la observación y no en otro lado,
+   * para que quien la lea vea el hecho y lo que se hizo al respecto. */
+  respuesta?: string;
+  respondidaPor?: string;
+  respondidaPorNombre?: string;
+  respondidaEn?: string;
+  actualizadoEn?: string;
+}
+
+
+/**
  * Solicitud de Permiso para ausentarse del Centro de Aprendizaje — el
  * documento en papel que firma el Jefe de Especialidad y del que toma
  * conocimiento el Centro Dual.
