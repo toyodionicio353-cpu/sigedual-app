@@ -140,6 +140,7 @@ export default function EstudianteDelCentroPage() {
     especialidadId: estudiante.especialidadId,
     liceoId: asignacion.liceoId,
     profesorSupervisorId: asignacion.profesorSupervisorId,
+    estudianteNombre: nombreCompleto(estudiante),
   };
 
   const emergencia = [estudiante.alergias, estudiante.enfermedadesCronicas].filter((t) => t?.trim());
@@ -245,6 +246,8 @@ export default function EstudianteDelCentroPage() {
           especialidadId: estudiante.especialidadId,
           liceoId: asignacion.liceoId,
           asignacionId: asignacion.id,
+          profesorSupervisorId: asignacion.profesorSupervisorId,
+          estudianteNombre: nombreCompleto(estudiante),
         }}
       />
 
