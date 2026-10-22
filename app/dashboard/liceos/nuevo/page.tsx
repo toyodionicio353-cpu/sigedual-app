@@ -6,6 +6,7 @@ import { collection, getDocs, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import LiceoForm, { LICEO_FORM_VACIO, type LiceoFormValues, type EspecialidadForm } from "../_components/LiceoForm";
+import { puntoValido } from "@/lib/mapa/geo";
 import type { Liceo } from "@/types";
 import { CheckCircle2, Eye, School } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
@@ -37,13 +38,22 @@ export default function AgregarLiceoPage() {
     setErrorSistema("");
     try {
       const ahora = new Date().toISOString();
-      const nuevo = {
-        ...valores,
+      const { latitud, longitud, ...camposTexto } = valores;
+      const nuevo: Record<string, unknown> = {
+        ...camposTexto,
         dominioCorreo: valores.dominioCorreo.trim().toLowerCase(),
         creadoEn: ahora,
         actualizadoEn: ahora,
         actualizadoPor: usuario.uid,
       };
+      // La ubicación va completa o no va: sin ella el liceo funciona igual,
+      // solo no se dibuja en el Mapa Dual.
+      const punto = puntoValido(latitud, longitud);
+      if (punto) {
+        nuevo.latitud = punto.lat;
+        nuevo.longitud = punto.lng;
+        nuevo.ubicacionActualizadaEn = ahora;
+      }
       const ref = await addDoc(collection(db, "liceos"), nuevo);
       const activas = especialidades.filter((e) => e.estado === "activa" && e.nombre.trim());
       await Promise.all(

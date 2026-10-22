@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc,
+  doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, deleteField,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -12,6 +12,7 @@ import LiceoForm, { type LiceoFormValues, type EspecialidadForm } from "../../_c
 import type { Liceo, Especialidad } from "@/types";
 import { ArrowLeft, Pencil } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import { puntoValido } from "@/lib/mapa/geo";
 
 export default function EditarLiceoPage() {
   const { id } = useParams<{ id: string }>();
@@ -55,6 +56,8 @@ export default function EditarLiceoPage() {
       telefono: s(l.telefono), email: s(l.email), sitioWeb: s(l.sitioWeb),
       dominioCorreo: s(l.dominioCorreo),
       estado: l.estado ?? "activo",
+      latitud: l.latitud,
+      longitud: l.longitud,
     });
     setEspecialidades(
       snapEsp.docs.map((d) => {
@@ -81,9 +84,19 @@ export default function EditarLiceoPage() {
     setGuardando(true);
     setErrorSistema("");
     try {
+      const { latitud, longitud, ...camposTexto } = nuevosValores;
       await updateDoc(doc(db, "liceos", id), {
-        ...nuevosValores,
+        ...camposTexto,
         dominioCorreo: nuevosValores.dominioCorreo.trim().toLowerCase(),
+        // La ubicación va completa o se borra: media coordenada pondría el
+        // liceo en un punto equivocado del Mapa Dual.
+        ...(puntoValido(latitud, longitud)
+          ? {
+              latitud: latitud as number,
+              longitud: longitud as number,
+              ubicacionActualizadaEn: new Date().toISOString(),
+            }
+          : { latitud: deleteField(), longitud: deleteField(), ubicacionActualizadaEn: deleteField() }),
         actualizadoEn: new Date().toISOString(),
         actualizadoPor: usuario.uid,
       });

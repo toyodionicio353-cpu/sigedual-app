@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { validarEmail, validarTelefonoChileno, validarRut, formatearRut } from "@/lib/rut";
 import Select from "@/components/ui/Select";
+import SelectorUbicacion from "@/components/mapa/SelectorUbicacion";
 
 export const REGIONES = [
   "Arica y Parinacota", "Tarapacá", "Antofagasta", "Atacama", "Coquimbo",
@@ -42,6 +43,10 @@ export interface LiceoFormValues {
   sitioWeb: string;
   dominioCorreo: string;
   estado: "activo" | "inactivo";
+  /** Ubicación en el Mapa Dual. Opcional: sin ella el liceo funciona
+   * igual, solo no se dibuja. */
+  latitud?: number;
+  longitud?: number;
 }
 
 export interface EspecialidadForm {
@@ -253,6 +258,13 @@ export default function LiceoForm({
             <Select value={form.region} onChange={(v) => set("region", v)} ariaLabel="Región"
               opciones={[{ value: "", label: "Selecciona una región" }, ...REGIONES.map((r) => ({ value: r, label: r }))]} />
           </Campo>
+
+          <SelectorUbicacion
+            latitud={form.latitud}
+            longitud={form.longitud}
+            onCambiar={({ latitud, longitud }) => setForm((f) => ({ ...f, latitud, longitud }))}
+            etiqueta="Ubicación del establecimiento en el mapa"
+          />
         </Seccion>
 
         <Seccion icon={<UserCog size={16} />} titulo="Responsable del establecimiento">

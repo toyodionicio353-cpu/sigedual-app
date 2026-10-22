@@ -174,6 +174,13 @@ export const COLOR_CENTRO: Record<EstadoPinCentro, string> = {
 };
 
 export const COLOR_PRACTICA = "#DB2777";
+/**
+ * Liceo. No es una actividad ni tiene estados: es el punto de referencia
+ * del mapa, el establecimiento desde el que se coordina todo. Por eso usa
+ * un color propio que no pertenece a ninguna escala de estado, para que
+ * nadie lo lea como "disponible" o "requiere atención".
+ */
+export const COLOR_LICEO = "#0891B2";
 /** Anillo del período de prueba — se suma al color principal, no lo reemplaza. */
 export const COLOR_ANILLO_NUEVO = "#9333EA";
 

@@ -13,7 +13,7 @@ import {
   calcularCapacidad, esCentroNuevo, estadoDeCentro, estadoDePractica, ocupaCupo,
   type CapacidadCentro, type EstadoPinCentro, type EstadoPinPractica,
 } from "./estados";
-import type { Asignacion, CentroDual, Estudiante, PracticaProfesional } from "@/types";
+import type { Asignacion, CentroDual, Estudiante, Liceo, PracticaProfesional } from "@/types";
 
 /** Datos mínimos de un estudiante para la ficha del mapa. El mapa no es
  * una vía para consultar la ficha completa de nadie. */
@@ -46,13 +46,27 @@ export interface PinPractica {
   estudiante: EstudianteEnMapa | null;
 }
 
-export type PinMapa = PinCentro | PinPractica;
+/**
+ * El establecimiento. No es una actividad: no tiene estados, no se filtra
+ * y no se agrupa en clusters — es el punto de referencia fijo del mapa.
+ */
+export interface PinLiceo {
+  tipo: "liceo";
+  id: string;
+  liceo: Liceo;
+  punto: Punto;
+  /** El liceo al que pertenece la cuenta de quien mira. En modo global
+   * (desarrollador sin liceo elegido) no hay ninguno propio. */
+  esPropio: boolean;
+}
+
+export type PinMapa = PinCentro | PinPractica | PinLiceo;
 
 /** Registro que existe y el usuario puede ver, pero que no tiene una
  * ubicación utilizable. No recibe pin: se lista aparte para que alguien
  * complete su ubicación desde el formulario correspondiente. */
 export interface RegistroSinUbicacion {
-  tipo: "centro" | "practica";
+  tipo: "centro" | "practica" | "liceo";
   id: string;
   nombre: string;
   direccion: string;
@@ -61,6 +75,7 @@ export interface RegistroSinUbicacion {
 export interface DatosMapa {
   centros: PinCentro[];
   practicas: PinPractica[];
+  liceos: PinLiceo[];
   sinUbicacion: RegistroSinUbicacion[];
   cargando: boolean;
   error: string | null;
@@ -100,6 +115,7 @@ export function useDatosMapa(): DatosMapa {
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [practicasRaw, setPracticasRaw] = useState<PracticaProfesional[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [liceosRaw, setLiceosRaw] = useState<Liceo[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -141,6 +157,21 @@ export function useDatosMapa(): DatosMapa {
 
     (async () => {
       try {
+        // El establecimiento: el propio de la cuenta, o todos en modo
+        // global. Se lee por id salvo en modo global, donde el
+        // desarrollador ya consulta la colección completa en otros
+        // módulos. Un fallo acá no puede dejar el mapa sin centros, por
+        // eso no comparte el try de más abajo.
+        if (modoGlobal && esRolConAccesoCompletoLiceo(rol)) {
+          escuchar<Liceo>(collection(db, "liceos"), setLiceosRaw);
+        } else if (liceoId) {
+          obtenerDocumentosPorId<Liceo>("liceos", [liceoId])
+            .then((ls) => { if (!cancelado) setLiceosRaw(ls); })
+            .catch(() => { if (!cancelado) setLiceosRaw([]); });
+        } else {
+          setLiceosRaw([]);
+        }
+
         if (rol === "profesor") {
           // Centros y estudiantes por id (su ámbito ya resuelto); las
           // asignaciones, en vivo, son las suyas.
@@ -238,7 +269,17 @@ export function useDatosMapa(): DatosMapa {
   return useMemo(() => {
     const centros: PinCentro[] = [];
     const practicas: PinPractica[] = [];
+    const liceos: PinLiceo[] = [];
     const sinUbicacion: RegistroSinUbicacion[] = [];
+
+    for (const liceo of liceosRaw) {
+      const punto = puntoValido(liceo.latitud, liceo.longitud);
+      if (!punto) {
+        sinUbicacion.push({ tipo: "liceo", id: liceo.id, nombre: liceo.nombre, direccion: [liceo.direccion, liceo.comuna].filter(Boolean).join(", ") });
+        continue;
+      }
+      liceos.push({ tipo: "liceo", id: liceo.id, liceo, punto, esPropio: liceo.id === liceoId });
+    }
 
     for (const centro of centrosRaw) {
       const propias = asignacionesPorCentro[centro.id] ?? [];
@@ -280,6 +321,6 @@ export function useDatosMapa(): DatosMapa {
       });
     }
 
-    return { centros, practicas, sinUbicacion, cargando, error };
-  }, [centrosRaw, practicasRaw, asignacionesPorCentro, estudiantePorId, ahora, cargando, error]);
+    return { centros, practicas, liceos, sinUbicacion, cargando, error };
+  }, [centrosRaw, practicasRaw, liceosRaw, liceoId, asignacionesPorCentro, estudiantePorId, ahora, cargando, error]);
 }
