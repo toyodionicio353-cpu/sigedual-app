@@ -57,6 +57,12 @@ function textoBuscable(pin: PinMapa): string {
       ...pin.estudiantes.map((e) => e.nombre),
     ].filter(Boolean).join(" "));
   }
+  if (pin.tipo === "liceo") {
+    const l = pin.liceo;
+    return normalizar([
+      l.nombre, l.nombreCorto, l.rbd, l.id, l.direccion, l.comuna, l.ciudad, l.region,
+    ].filter(Boolean).join(" "));
+  }
   const p = pin.practica;
   return normalizar([
     p.lugarNombre, p.lugarRut, p.id, p.direccion, p.comuna, p.region,

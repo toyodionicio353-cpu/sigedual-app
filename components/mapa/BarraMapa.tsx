@@ -6,7 +6,7 @@ import {
   ESTADOS_CENTRO, ESTADOS_PRACTICA, alternar, hayFiltrosActivos,
   type FiltrosMapa, type TipoActividad,
 } from "@/lib/mapa/filtros";
-import { COLOR_CENTRO, COLOR_PRACTICA, ETIQUETA_CENTRO, ETIQUETA_PRACTICA } from "@/lib/mapa/estados";
+import { COLOR_CENTRO, COLOR_LICEO, COLOR_PRACTICA, ETIQUETA_CENTRO, ETIQUETA_PRACTICA } from "@/lib/mapa/estados";
 import type { PinMapa } from "@/lib/mapa/useDatosMapa";
 
 /** Fila de un desplegable de filtros: casilla + punto de color + texto. */
@@ -109,7 +109,8 @@ export default function BarraMapa({
               >
                 <span
                   style={{
-                    background: pin.tipo === "centro" ? COLOR_CENTRO[pin.estado] : COLOR_PRACTICA,
+                    background: pin.tipo === "centro" ? COLOR_CENTRO[pin.estado]
+                      : pin.tipo === "liceo" ? COLOR_LICEO : COLOR_PRACTICA,
                     width: 9, height: 9,
                     borderRadius: pin.tipo === "centro" ? "50%" : 2,
                     transform: pin.tipo === "practica" ? "rotate(45deg)" : undefined,
@@ -118,10 +119,13 @@ export default function BarraMapa({
                 />
                 <span className="min-w-0 flex-1">
                   <span style={{ color: "var(--text-primary)" }} className="text-sm block truncate">
-                    {pin.tipo === "centro" ? pin.centro.nombre : pin.practica.lugarNombre}
+                    {pin.tipo === "centro" ? pin.centro.nombre
+                      : pin.tipo === "liceo" ? pin.liceo.nombre : pin.practica.lugarNombre}
                   </span>
                   <span style={{ color: "var(--text-muted)" }} className="text-xs block truncate">
-                    {pin.tipo === "centro" ? "Centro Dual" : "Práctica Profesional"} · {pin.tipo === "centro" ? pin.centro.comuna : pin.practica.comuna}
+                    {pin.tipo === "centro" ? "Centro Dual" : pin.tipo === "liceo" ? "Establecimiento" : "Práctica Profesional"}
+                    {" · "}
+                    {pin.tipo === "centro" ? pin.centro.comuna : pin.tipo === "liceo" ? pin.liceo.comuna : pin.practica.comuna}
                   </span>
                 </span>
               </button>

@@ -16,6 +16,17 @@
    color de quien mira. */
 .sig-pin--practica { border-radius: 3px; transform: rotate(45deg); }
 
+/* Liceo: placa redondeada con el glifo del establecimiento. Forma propia,
+   distinta del círculo y del rombo, porque no es una actividad sino el
+   punto de referencia desde donde se coordina todo. */
+.sig-pin--liceo {
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
 /* Período de prueba: anillo morado ADEMÁS del color de estado. */
 .sig-pin--nuevo { box-shadow: 0 0 0 3px #9333EA, 0 1px 5px rgba(0, 0, 0, 0.45); }
 

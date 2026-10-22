@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { COLOR_CENTRO, COLOR_PRACTICA, ETIQUETA_CENTRO, ETIQUETA_PRACTICA } from "@/lib/mapa/estados";
+import { COLOR_CENTRO, COLOR_LICEO, COLOR_PRACTICA, ETIQUETA_CENTRO, ETIQUETA_PRACTICA } from "@/lib/mapa/estados";
 import { ESTADOS_CENTRO, ESTADOS_PRACTICA, type TipoActividad } from "@/lib/mapa/filtros";
 
-function Fila({ color, texto, rombo = false, anillo = false }: { color: string; texto: string; rombo?: boolean; anillo?: boolean }) {
+function Fila({ color, texto, rombo = false, anillo = false, placa = false }: { color: string; texto: string; rombo?: boolean; anillo?: boolean; placa?: boolean }) {
   return (
     <li className="flex items-center gap-2">
       <span
@@ -12,7 +12,7 @@ function Fila({ color, texto, rombo = false, anillo = false }: { color: string; 
           background: anillo ? "transparent" : color,
           border: anillo ? `2px solid ${color}` : "1.5px solid rgba(255,255,255,.85)",
           width: 10, height: 10,
-          borderRadius: rombo ? 2 : "50%",
+          borderRadius: placa ? 3 : rombo ? 2 : "50%",
           transform: rombo ? "rotate(45deg)" : undefined,
         }}
         className="flex-shrink-0"
@@ -48,6 +48,14 @@ export default function LeyendaMapa({ tipo }: { tipo: TipoActividad }) {
 
       {abierta && (
         <div style={{ borderTop: "1px solid var(--border)" }} className="px-3 py-2.5 flex flex-col sm:flex-row gap-4">
+          <div className="min-w-0">
+            <p style={{ color: "var(--text-muted)" }} className="text-[10px] font-semibold uppercase tracking-wider mb-1.5">
+              Referencia
+            </p>
+            <ul className="flex flex-col gap-1">
+              <Fila color={COLOR_LICEO} texto="Establecimiento (liceo)" placa />
+            </ul>
+          </div>
           {tipo !== "practicas" && (
             <div className="min-w-0">
               <p style={{ color: "var(--text-muted)" }} className="text-[10px] font-semibold uppercase tracking-wider mb-1.5">

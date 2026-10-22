@@ -91,6 +91,12 @@ export interface Liceo {
   email?: string;
   sitioWeb?: string;
   dominioCorreo?: string;
+  /** Ubicación del establecimiento en el Mapa Dual. Opcional: un liceo sin
+   * coordenadas sigue funcionando entero, solo no se dibuja. Nunca se
+   * deduce de la dirección — se registra a mano desde la ficha. */
+  latitud?: number;
+  longitud?: number;
+  ubicacionActualizadaEn?: string;
   responsableNombre?: string;
   responsableCargo?: string;
   responsableRun?: string;

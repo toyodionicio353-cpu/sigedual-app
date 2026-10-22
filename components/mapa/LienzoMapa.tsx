@@ -2,8 +2,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { Map as MapaLeaflet, Marker } from "leaflet";
 import { encuadreDe, CENTRO_POR_DEFECTO, ZOOM_POR_DEFECTO, type Punto } from "@/lib/mapa/geo";
-import { htmlPinCentro, htmlPinPractica, TAMANO_PIN, TAMANO_PIN_SELECCIONADO } from "@/lib/mapa/iconos";
-import type { PinCentro, PinMapa, PinPractica } from "@/lib/mapa/useDatosMapa";
+import {
+  htmlPinCentro, htmlPinLiceo, htmlPinPractica,
+  TAMANO_PIN, TAMANO_PIN_LICEO, TAMANO_PIN_SELECCIONADO,
+} from "@/lib/mapa/iconos";
+import type { PinCentro, PinLiceo, PinMapa, PinPractica } from "@/lib/mapa/useDatosMapa";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "./mapa.css";
@@ -17,11 +20,14 @@ import "./mapa.css";
  * `window` y revienta si se intenta prerenderizar.
  */
 export default function LienzoMapa({
-  centros, practicas, seleccionadoId, onSeleccionar, onLimpiarSeleccion,
+  centros, practicas, liceos, seleccionadoId, onSeleccionar, onLimpiarSeleccion,
   irA, alturaMinima = 300,
 }: {
   centros: PinCentro[];
   practicas: PinPractica[];
+  /** Puntos de referencia. No se filtran ni se agrupan: el
+   * establecimiento tiene que estar siempre visible. */
+  liceos: PinLiceo[];
   seleccionadoId: string | null;
   onSeleccionar: (pin: PinMapa) => void;
   onLimpiarSeleccion: () => void;
@@ -33,6 +39,10 @@ export default function LienzoMapa({
   const contenedor = useRef<HTMLDivElement | null>(null);
   const mapaRef = useRef<MapaLeaflet | null>(null);
   const capaRef = useRef<import("leaflet").LayerGroup | null>(null);
+  // Capa aparte, sin clustering: si el liceo entrara al grupo, al alejar
+  // el zoom desaparecería dentro de un número y dejaría de servir como
+  // punto de referencia, que es justamente para lo que está.
+  const capaLiceosRef = useRef<import("leaflet").LayerGroup | null>(null);
   const marcadoresRef = useRef<Record<string, Marker>>({});
   const yaEncuadrado = useRef(false);
   // Estado, no ref: el mapa se crea de forma asíncrona (importar Leaflet).
@@ -86,8 +96,11 @@ export default function LienzoMapa({
       });
       grupo.addTo(mapa);
 
+      const capaLiceos = L.layerGroup().addTo(mapa);
+
       mapaRef.current = mapa;
       capaRef.current = grupo;
+      capaLiceosRef.current = capaLiceos;
       setListo(true);
       setTimeout(() => mapa.invalidateSize(), 0);
     })();
@@ -98,6 +111,7 @@ export default function LienzoMapa({
       mapaRef.current?.remove();
       mapaRef.current = null;
       capaRef.current = null;
+      capaLiceosRef.current = null;
       marcadoresRef.current = {};
     };
   }, []);
@@ -108,51 +122,72 @@ export default function LienzoMapa({
     (async () => {
       const L = (await import("leaflet")).default;
       const grupo = capaRef.current;
+      const capaLiceos = capaLiceosRef.current;
       const mapa = mapaRef.current;
-      if (cancelado || !grupo || !mapa) return;
+      if (cancelado || !grupo || !capaLiceos || !mapa) return;
 
       grupo.clearLayers();
+      capaLiceos.clearLayers();
       marcadoresRef.current = {};
 
       const agregar = (pin: PinMapa) => {
         const esSeleccionado = pin.id === seleccionadoId;
+        const esLiceo = pin.tipo === "liceo";
         const html = pin.tipo === "centro"
           ? htmlPinCentro(pin.estado, pin.esNuevo, esSeleccionado)
-          : htmlPinPractica(pin.estado, esSeleccionado);
-        const tamano = esSeleccionado ? TAMANO_PIN_SELECCIONADO : TAMANO_PIN;
-        const nombre = pin.tipo === "centro" ? pin.centro.nombre : pin.practica.lugarNombre;
+          : esLiceo
+            ? htmlPinLiceo(esSeleccionado)
+            : htmlPinPractica(pin.estado, esSeleccionado);
+        const tamano = esLiceo
+          ? (esSeleccionado ? TAMANO_PIN_LICEO + 6 : TAMANO_PIN_LICEO)
+          : (esSeleccionado ? TAMANO_PIN_SELECCIONADO : TAMANO_PIN);
+        const nombre = pin.tipo === "centro" ? pin.centro.nombre
+          : esLiceo ? pin.liceo.nombre : pin.practica.lugarNombre;
         const marcador = L.marker([pin.punto.lat, pin.punto.lng], {
           icon: L.divIcon({ html, className: "", iconSize: [tamano, tamano], iconAnchor: [tamano / 2, tamano / 2] }),
           title: nombre,
-          alt: `${pin.tipo === "centro" ? "Centro Dual" : "Práctica Profesional"}: ${nombre}`,
+          alt: `${pin.tipo === "centro" ? "Centro Dual" : esLiceo ? "Establecimiento" : "Práctica Profesional"}: ${nombre}`,
           keyboard: true,
           riseOnHover: true,
         });
         marcador.on("click", () => onSeleccionarRef.current(pin));
         marcadoresRef.current[pin.id] = marcador;
-        grupo.addLayer(marcador);
+        (esLiceo ? capaLiceos : grupo).addLayer(marcador);
       };
 
       centros.forEach(agregar);
       practicas.forEach(agregar);
+      liceos.forEach(agregar);
 
-      // Encuadre inicial: SOLO con los Centros Duales. Una práctica en
-      // Santiago no debe reencuadrar el mapa de un liceo que opera entre
-      // Retiro y Parral — la zona de trabajo la definen los centros.
-      // Se hace una única vez; después manda la navegación del usuario.
-      if (!yaEncuadrado.current && centros.length > 0) {
-        const caja = encuadreDe(centros.map((c) => c.punto));
-        if (caja) {
-          mapa.fitBounds(
-            [[caja.suroeste.lat, caja.suroeste.lng], [caja.noreste.lat, caja.noreste.lng]],
-            { padding: [40, 40], maxZoom: 15 }
-          );
+      // Encuadre inicial, una única vez; después manda la navegación del
+      // usuario. El orden de preferencia es deliberado:
+      //
+      //   1. El liceo propio. Es el lugar central de quien mira: su
+      //      establecimiento, no el promedio de sus empresas.
+      //   2. Todos los liceos visibles (modo global del desarrollador).
+      //   3. Los Centros Duales. Nunca las prácticas: una práctica en
+      //      Santiago no debe reencuadrar el mapa de un liceo que opera
+      //      entre Retiro y Parral.
+      if (!yaEncuadrado.current) {
+        const propio = liceos.find((l) => l.esPropio);
+        if (propio) {
+          mapa.setView([propio.punto.lat, propio.punto.lng], 13);
           yaEncuadrado.current = true;
+        } else {
+          const referencia = liceos.length > 0 ? liceos : centros;
+          const caja = referencia.length > 0 ? encuadreDe(referencia.map((p) => p.punto)) : null;
+          if (caja) {
+            mapa.fitBounds(
+              [[caja.suroeste.lat, caja.suroeste.lng], [caja.noreste.lat, caja.noreste.lng]],
+              { padding: [40, 40], maxZoom: 15 }
+            );
+            yaEncuadrado.current = true;
+          }
         }
       }
     })();
     return () => { cancelado = true; };
-  }, [centros, practicas, seleccionadoId, listo]);
+  }, [centros, practicas, liceos, seleccionadoId, listo]);
 
   // Desplazamiento a un resultado de búsqueda.
   useEffect(() => {

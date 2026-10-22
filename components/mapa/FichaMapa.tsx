@@ -1,6 +1,6 @@
 "use client";
-import { X, MapPin, Users, Calendar, Briefcase, GraduationCap, AlertTriangle } from "lucide-react";
-import { COLOR_CENTRO, COLOR_PRACTICA, ETIQUETA_CENTRO, ETIQUETA_PRACTICA } from "@/lib/mapa/estados";
+import { X, MapPin, Users, Calendar, Briefcase, GraduationCap, AlertTriangle, School } from "lucide-react";
+import { COLOR_CENTRO, COLOR_LICEO, COLOR_PRACTICA, ETIQUETA_CENTRO, ETIQUETA_PRACTICA } from "@/lib/mapa/estados";
 import type { PinMapa } from "@/lib/mapa/useDatosMapa";
 
 /** Fecha legible; devuelve "—" si no hay dato utilizable, en vez de una
@@ -29,6 +29,44 @@ function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
  * Es de consulta: desde acá no se edita, asigna ni da de baja nada.
  */
 export default function FichaMapa({ pin, onCerrar }: { pin: PinMapa; onCerrar: () => void }) {
+  // El liceo no tiene estado ni cupos: su ficha es más corta a propósito,
+  // porque es un punto de referencia y no una actividad que seguir.
+  if (pin.tipo === "liceo") {
+    return (
+      <div
+        style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderLeft: `4px solid ${COLOR_LICEO}` }}
+        className="rounded-xl p-4 shadow-xl flex flex-col gap-3"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p style={{ color: "var(--text-muted)" }} className="text-[10px] font-semibold uppercase tracking-wider">
+              {pin.esPropio ? "Tu establecimiento" : "Establecimiento"}
+            </p>
+            <h3 style={{ color: "var(--text-primary)" }} className="text-sm font-bold leading-snug">{pin.liceo.nombre}</h3>
+          </div>
+          <button onClick={onCerrar} aria-label="Cerrar ficha" style={{ color: "var(--text-muted)" }} className="p-1 flex-shrink-0">
+            <X size={16} />
+          </button>
+        </div>
+
+        <p style={{ color: "var(--text-secondary)" }} className="text-xs flex items-start gap-1.5">
+          <MapPin size={13} className="flex-shrink-0 mt-0.5" />
+          <span>{[pin.liceo.direccion, pin.liceo.comuna, pin.liceo.region].filter(Boolean).join(", ")}</span>
+        </p>
+
+        <div style={{ borderTop: "1px solid var(--border)" }} className="pt-3 flex flex-col gap-1.5">
+          {pin.liceo.rbd && <Dato etiqueta="RBD" valor={pin.liceo.rbd} />}
+          <Dato etiqueta="Coordenadas" valor={`${pin.punto.lat.toFixed(5)}, ${pin.punto.lng.toFixed(5)}`} />
+        </div>
+
+        <p style={{ color: "var(--text-muted)" }} className="text-[10px] flex items-center gap-1.5">
+          <School size={10} />
+          Los datos se editan desde su ficha, no desde el mapa.
+        </p>
+      </div>
+    );
+  }
+
   const color = pin.tipo === "centro" ? COLOR_CENTRO[pin.estado] : COLOR_PRACTICA;
 
   return (

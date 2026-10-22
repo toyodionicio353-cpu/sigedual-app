@@ -36,7 +36,7 @@ function EsqueletoMapa() {
  * se modifican en los módulos correspondientes y el mapa los refleja solo.
  */
 export default function MapaDualCard() {
-  const { centros, practicas, sinUbicacion, cargando, error } = useDatosMapa();
+  const { centros, practicas, liceos, sinUbicacion, cargando, error } = useDatosMapa();
   const [filtros, setFiltros] = useState<FiltrosMapa>(FILTROS_INICIALES);
   const [seleccionado, setSeleccionado] = useState<PinMapa | null>(null);
   const [irA, setIrA] = useState<{ punto: Punto; contador: number } | null>(null);
@@ -50,8 +50,8 @@ export default function MapaDualCard() {
   // buscar algo filtrado devolvería "sin resultados" sin explicar por qué.
   const resultadosBusqueda = useMemo(() => {
     if (!filtros.texto.trim()) return [];
-    return [...centros, ...practicas].filter((p) => coincideTexto(p, filtros.texto));
-  }, [centros, practicas, filtros.texto]);
+    return [...liceos, ...centros, ...practicas].filter((p) => coincideTexto(p, filtros.texto));
+  }, [liceos, centros, practicas, filtros.texto]);
 
   function elegir(pin: PinMapa) {
     setSeleccionado(pin);
@@ -59,7 +59,9 @@ export default function MapaDualCard() {
   }
 
   const total = centrosVisibles.length + practicasVisibles.length;
-  const vacio = !cargando && total === 0;
+  // El liceo es referencia, no actividad: si está dibujado, el mapa ya
+  // muestra algo útil y taparlo con un cartel sería peor que no decir nada.
+  const vacio = !cargando && total === 0 && liceos.length === 0;
 
   const contenido = (
     <div className="flex flex-col gap-2.5 h-full min-h-0">
@@ -74,6 +76,7 @@ export default function MapaDualCard() {
         <LienzoMapa
           centros={centrosVisibles}
           practicas={practicasVisibles}
+          liceos={liceos}
           seleccionadoId={seleccionado?.id ?? null}
           onSeleccionar={setSeleccionado}
           onLimpiarSeleccion={() => setSeleccionado(null)}
