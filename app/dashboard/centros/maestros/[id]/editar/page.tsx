@@ -5,6 +5,7 @@ import Link from "next/link";
 import { doc, getDoc, updateDoc, deleteField, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { useFeedback } from "@/lib/preferencias/useFeedback";
 import { normalizarRut } from "@/lib/rut";
 import MaestroGuiaForm, { type MaestroGuiaFormValues } from "../../_components/MaestroGuiaForm";
 import type { CentroDual, Especialidad, MaestroGuia } from "@/types";
@@ -15,6 +16,7 @@ export default function EditarMaestroGuiaPage() {
   const { id } = useParams<{ id: string }>();
   const { usuario } = useAuth();
   const router = useRouter();
+  const avisar = useFeedback();
 
   const [mgOriginal, setMgOriginal] = useState<MaestroGuia | null>(null);
   const [centro, setCentro] = useState<CentroDual | null>(null);
@@ -27,7 +29,6 @@ export default function EditarMaestroGuiaPage() {
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [errorSistema, setErrorSistema] = useState("");
-  const [mensaje, setMensaje] = useState("");
 
   const puedeEditar = usuario?.rol === "desarrollador" || usuario?.rol === "profesor";
 
@@ -78,7 +79,6 @@ export default function EditarMaestroGuiaPage() {
     if (!usuario || !id || !mgOriginal || guardando) return;
     setGuardando(true);
     setErrorSistema("");
-    setMensaje("");
     try {
       const cambios: Record<string, unknown> = {
         nombres: form.nombres.trim(),
@@ -98,7 +98,11 @@ export default function EditarMaestroGuiaPage() {
         capacidad: form.capacidad.trim() ? Number(form.capacidad) : deleteField(),
       };
       await updateDoc(doc(db, "maestros_guia", id), cambios);
-      setMensaje("Cambios guardados correctamente.");
+      // Guardar cierra la edición: se vuelve a la ficha, que es donde
+      // se comprueba el cambio. El aviso va por el toast global porque
+      // un mensaje dentro de esta página moriría con la navegación.
+      avisar("Cambios guardados correctamente.");
+      router.push(`/dashboard/centros/maestros/${id}`);
     } catch (err) {
       const detalle = err instanceof Error ? err.message : String(err);
       setErrorSistema(`No se pudieron guardar los cambios. Intenta nuevamente. (${detalle})`);
@@ -144,11 +148,6 @@ export default function EditarMaestroGuiaPage() {
         <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">Actualiza los datos de {mgOriginal?.nombres} {mgOriginal?.apellidoPaterno}.</p>
       </div>
 
-      {mensaje && (
-        <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-3 mb-6">
-          <p style={{ color: "var(--success)" }} className="text-sm font-medium">{mensaje}</p>
-        </div>
-      )}
       {errorSistema && (
         <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-4 py-3 mb-6">
           <p style={{ color: "var(--danger)" }} className="text-sm font-medium">{errorSistema}</p>
