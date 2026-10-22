@@ -453,7 +453,7 @@ export default function FichaMaestroGuiaPage() {
               <div>
                 <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Contraseña inicial</label>
                 <input
-                  type="password" value={passwordAcceso} onChange={(e) => setPasswordAcceso(e.target.value)}
+                  type="password" value={passwordAcceso} onChange={(e) => setPasswordAcceso(e.target.value)} autoComplete="new-password"
                   placeholder="Mínimo 6 caracteres"
                   style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
                   className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors"

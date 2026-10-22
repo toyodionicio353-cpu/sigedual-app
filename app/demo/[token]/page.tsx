@@ -222,7 +222,7 @@ export default function DemoPage() {
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">Contraseña</label>
               <input
-                type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
+                type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password"
                 style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
                 className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
               />
@@ -230,7 +230,7 @@ export default function DemoPage() {
             <div>
               <label style={{ color: "var(--text-secondary)" }} className="block text-sm mb-2">Confirmar</label>
               <input
-                type="password" value={confirmarPassword} onChange={(e) => setConfirmarPassword(e.target.value)} required
+                type="password" value={confirmarPassword} onChange={(e) => setConfirmarPassword(e.target.value)} required autoComplete="new-password"
                 style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
                 className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
               />

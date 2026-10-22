@@ -110,7 +110,7 @@ export default function AgregarProfesorPage() {
         </div>
         <div>
           <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Contraseña temporal *</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres"
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" autoComplete="new-password"
             style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
             className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:[border-color:var(--accent)] transition-colors" />
         </div>
