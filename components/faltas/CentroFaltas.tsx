@@ -99,6 +99,16 @@ export default function CentroFaltas({
         )}
       </div>
 
+      {/* Sin esto, un Centro Dual que avisó tres ausencias ve "0 días
+          perdidos" y cree que no se registró nada. Los días que avisó
+          están ahí, esperando al liceo. */}
+      {esCentroDual && resumen.porConfirmar > 0 && (
+        <p style={{ color: "var(--text-muted)" }} className="text-xs">
+          {resumen.porConfirmar === 1 ? "Avisaste de 1 ausencia que" : `Avisaste de ${resumen.porConfirmar} ausencias que`}
+          {" "}el liceo todavía no confirma. Hasta que las confirme no suman días perdidos ni días por recuperar.
+        </p>
+      )}
+
       {!contexto && (
         <p style={{ color: "var(--text-muted)" }} className="text-xs">
           Este estudiante no tiene una asignación vigente a un Centro Dual, así que todavía no se le pueden registrar faltas.
