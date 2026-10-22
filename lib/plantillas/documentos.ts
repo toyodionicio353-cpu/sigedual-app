@@ -7,6 +7,9 @@ function p(texto: string): SegmentoDocumento {
 function e(texto: string): SegmentoDocumento {
   return { tipo: "editable", texto };
 }
+function c(clave: string): SegmentoDocumento {
+  return { tipo: "campo", texto: "", clave };
+}
 
 // Se calcula una sola vez al cargar el módulo (en el navegador de quien usa
 // la plantilla), solo para sugerir un valor inicial de "Nro." y "Fecha" —
@@ -41,8 +44,54 @@ const CIRCULAR: PlantillaDocumento = {
 };
 
 /**
+ * Solicitud de Permiso para ausentarse del Centro de Aprendizaje en
+ * Alternancia Dual — calcada del formulario en papel que firma el Jefe de
+ * Especialidad y del que toma conocimiento el Centro Dual.
+ *
+ * Los datos del estudiante se rellenan solos desde su ficha; lo que varía
+ * en cada permiso (número, motivo, días, jornada, retiro) queda editable.
+ *
+ * La jornada va como texto marcable en vez de casillas porque el documento
+ * se entrega en papel: quien lo imprime marca la que corresponde, igual
+ * que en el talonario.
+ */
+const SOLICITUD_PERMISO: PlantillaDocumento = {
+  id: "solicitud-permiso-dual",
+  tipoModulo: "documento",
+  nombre: "Solicitud de Permiso",
+  descripcion: "Permiso para que un estudiante se ausente de su Centro de Aprendizaje en Alternancia Dual.",
+  previewLineas: [
+    `SOLICITUD DE PERMISO NRO. 01/${ANIO_ACTUAL}`,
+    "Se solicita permiso para ausentarse del Centro de Aprendizaje.",
+  ],
+  requiereEstudiante: true,
+  camposRequeridos: ["estudiante.nombreCompleto"],
+  parrafos: [
+    [p("SOLICITUD DE PERMISO NRO. "), e(`01/${ANIO_ACTUAL}`)],
+    [p("Se solicita permiso para ausentarse del Centro de Aprendizaje en Alternancia Dual.")],
+    [p("Nombre Estudiante: "), c("estudiante.nombreCompleto")],
+    [p("Especialidad: "), c("especialidad.nombre")],
+    [p("Curso: "), c("estudiante.nivel")],
+    [p("Centro de Aprendizaje: "), c("centro.nombre")],
+    [p("Motivo: "), e("")],
+    [p("Día(s): "), e("")],
+    [p("Marque lo que corresponda — Día Completo: ____  Media Jornada: ____  A.M.: ____  P.M.: ____")],
+    [p("RETIRO: "), e("")],
+    [e("")],
+    [e("_______________________________")],
+    [e("Nombre del Jefe de Especialidad")],
+    [p("JEFE ESPECIALIDAD")],
+    [e("")],
+    [p("Toma de conocimiento Centro de Aprendizaje")],
+    [e("")],
+    [e("_______________________________")],
+    [p("Nombre y Firma Centro Dual")],
+  ],
+};
+
+/**
  * Plantillas de Documentos. "Circular" es la primera plantilla real de este
  * módulo; nuevas plantillas se agregan acá como entradas nuevas, sin tocar
  * el resto del sistema.
  */
-export const PLANTILLAS_DOCUMENTOS: PlantillaDocumento[] = [CIRCULAR];
+export const PLANTILLAS_DOCUMENTOS: PlantillaDocumento[] = [CIRCULAR, SOLICITUD_PERMISO];

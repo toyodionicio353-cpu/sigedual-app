@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { CalendarX, Check, Plus, Undo2, X, ShieldCheck, Clock } from "lucide-react";
+import Link from "next/link";
+import { CalendarX, Check, Plus, Undo2, X, ShieldCheck, Clock, FileText } from "lucide-react";
 import Select from "@/components/ui/Select";
 import { useAuth } from "@/lib/auth-context";
 import { useFaltasEstudiante, type NuevaFalta } from "@/lib/faltas/useFaltas";
@@ -106,15 +107,28 @@ export default function CentroFaltas({
 
       {error && <p style={{ color: "var(--danger)" }} className="text-xs">{error}</p>}
 
-      {puedeRegistrar && !abierto && (
-        <button
-          onClick={() => setAbierto(true)}
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium self-start hover:[border-color:var(--accent)] transition-colors"
-        >
-          <Plus size={15} /> {esCentroDual ? "Avisar de una ausencia" : "Registrar falta"}
-        </button>
-      )}
+      <div className="flex items-center gap-2 flex-wrap">
+        {puedeRegistrar && !abierto && (
+          <button
+            onClick={() => setAbierto(true)}
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors"
+          >
+            <Plus size={15} /> {esCentroDual ? "Avisar de una ausencia" : "Registrar falta"}
+          </button>
+        )}
+        {/* El certificado sale de acá mismo: los números son los que se
+            están viendo arriba, no unos escritos aparte. */}
+        {esLiceo && resumen.cantidadFaltas > 0 && (
+          <Link
+            href={`/dashboard/estudiantes/${estudianteId}/certificado-faltas`}
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium hover:[border-color:var(--accent)] transition-colors"
+          >
+            <FileText size={15} /> Certificado de faltas
+          </Link>
+        )}
+      </div>
 
       {abierto && (
         <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="rounded-xl p-4 flex flex-col gap-3">
