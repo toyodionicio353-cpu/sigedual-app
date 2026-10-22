@@ -88,6 +88,11 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="correo@liceo.cl"
                   required
+                  // SIGEDUAL se usa en equipos compartidos del liceo: el
+                  // formulario no pide al navegador la credencial guardada,
+                  // para que el siguiente en sentarse no encuentre a la
+                  // vista el correo de quien entró antes.
+                  autoComplete="off"
                   style={{
                     background: "var(--bg-base)",
                     border: "1px solid var(--border-light)",
@@ -116,6 +121,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
+                  autoComplete="off"
                   style={{
                     background: "var(--bg-base)",
                     border: "1px solid var(--border-light)",

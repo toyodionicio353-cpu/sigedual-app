@@ -363,6 +363,10 @@ export default function CrearCuentaPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder={esExterno ? "nombre@correo.cl" : "nombre@tuliceo.cl"}
               required
+              // Acá se CREA una cuenta nueva. Sin esta indicación el
+              // navegador rellena la credencial guardada de quien usó el
+              // equipo antes y deja a la vista el correo de otra persona.
+              autoComplete="off"
               style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
               className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
             />
@@ -438,6 +442,9 @@ export default function CrearCuentaPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
+              // "new-password" le dice al navegador que esto es un alta y
+              // no un ingreso: deja de ofrecer la contraseña guardada.
+              autoComplete="new-password"
               style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
               className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
             />
@@ -453,6 +460,7 @@ export default function CrearCuentaPage() {
               onChange={(e) => setConfirmarPassword(e.target.value)}
               placeholder="••••••••"
               required
+              autoComplete="new-password"
               style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
               className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:[border-color:var(--accent)] transition-colors"
             />
