@@ -5,7 +5,7 @@ import {
   ArrowLeft, ArrowRight, UserRound,
 } from "lucide-react";
 import { formatearRut, normalizarRut, validarRut, validarEmail, validarTelefonoChileno } from "@/lib/rut";
-import { AMBIENTES_CENTRO, HABILIDADES, areasParaEspecialidades } from "@/lib/caracteristicas";
+import { AMBIENTES_CENTRO, areasParaEspecialidades, habilidadesParaEspecialidades } from "@/lib/caracteristicas";
 import { REGIONES } from "@/app/dashboard/liceos/_components/LiceoForm";
 import Select from "@/components/ui/Select";
 import SelectorUbicacion from "@/components/mapa/SelectorUbicacion";
@@ -219,6 +219,13 @@ export default function CentroDualForm({
     [especialidadesSel, areasSel, especialidadesDisponibles]
   );
 
+  // Las habilidades solo se amplían: las generales sirven en cualquier centro.
+  const habilidadesDisponibles = useMemo(
+    () => habilidadesParaEspecialidades(especialidadesSel.map(especialidadNombreDe), habilidadesSel),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [especialidadesSel, habilidadesSel, especialidadesDisponibles]
+  );
+
   function especialidadNombreDe(id: string): string {
     return especialidadesDisponibles.find((e) => e.id === id)?.nombre ?? "";
   }
@@ -417,8 +424,11 @@ export default function CentroDualForm({
         <Pills opciones={AMBIENTES_CENTRO} seleccionadas={caracteristicasSel} onToggle={toggleCaracteristica} />
       </div>
       <div className="sm:col-span-2 mt-4">
-        <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium mb-3">Habilidades valoradas</p>
-        <Pills opciones={HABILIDADES} seleccionadas={habilidadesSel} onToggle={toggleHabilidad} />
+        <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium mb-1">Habilidades valoradas</p>
+        <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">
+          Habilidades generales y, si elegiste especialidades, las propias de cada una.
+        </p>
+        <Pills opciones={habilidadesDisponibles} seleccionadas={habilidadesSel} onToggle={toggleHabilidad} />
       </div>
     </Seccion>
   );

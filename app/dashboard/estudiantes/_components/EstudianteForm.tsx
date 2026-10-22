@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BadgeCheck, Phone, GraduationCap, HeartPulse, Users, Sparkles, CheckCircle2,
   ArrowLeft, ArrowRight, Plus, X,
 } from "lucide-react";
 import { formatearRut, normalizarRut, validarRut, validarEmail, validarTelefonoChileno } from "@/lib/rut";
-import { RASGOS_ESTUDIANTE, HABILIDADES } from "@/lib/caracteristicas";
+import { RASGOS_ESTUDIANTE, habilidadesParaEspecialidades } from "@/lib/caracteristicas";
 import Select from "@/components/ui/Select";
 import type { Estudiante, Especialidad } from "@/types";
 
@@ -176,6 +176,17 @@ export default function EstudianteForm({
     if (form.telefono.trim() && !validarTelefonoChileno(form.telefono)) errs.telefono = "Teléfono inválido. Usa formato chileno, ej: +56 9 1234 5678.";
     return errs;
   }
+
+  // Las habilidades generales sirven para cualquier estudiante; las de la
+  // especialidad se suman. Las ya guardadas se mantienen aunque cambie la
+  // especialidad, para que editar no las borre sin aviso.
+  const habilidadesDisponibles = useMemo(
+    () => habilidadesParaEspecialidades(
+      [especialidades.find((e) => e.id === form.especialidadId)?.nombre ?? ""],
+      habilidades
+    ),
+    [form.especialidadId, especialidades, habilidades]
+  );
 
   function validarPaso3(): Errores {
     const errs: Errores = {};
@@ -424,9 +435,11 @@ export default function EstudianteForm({
 
       <div className="sm:col-span-2 mt-4">
         <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium mb-1">Habilidades</p>
-        <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">Habilidades que el estudiante ya domina o está desarrollando.</p>
+        <p style={{ color: "var(--text-muted)" }} className="text-xs mb-3">
+          Habilidades que el estudiante ya domina o está desarrollando. Se suman las propias de su especialidad.
+        </p>
         <div className="flex flex-wrap gap-2">
-          {HABILIDADES.map((h) => {
+          {habilidadesDisponibles.map((h) => {
             const activo = habilidades.includes(h);
             return (
               <button

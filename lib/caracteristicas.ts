@@ -61,6 +61,10 @@ interface GrupoAreas {
    * Administración"). */
   claves: string[];
   areas: string[];
+  /** Habilidades técnicas propias de la especialidad. Comparten vocabulario
+   * con las del estudiante: la compatibilidad compara los textos tal cual,
+   * así que una habilidad solo sirve si ambos formularios la ofrecen. */
+  habilidades: string[];
 }
 
 /**
@@ -78,6 +82,14 @@ const AREAS_POR_ESPECIALIDAD: GrupoAreas[] = [
       "Contabilidad", "Tesorería", "Remuneraciones", "Facturación y cobranza",
       "Recursos Humanos", "Oficina de partes", "Ventas", "Informática y ofimática",
     ],
+    habilidades: [
+      "Manejo de libros contables",
+      "Facturación electrónica",
+      "Uso de planillas de cálculo",
+      "Atención de proveedores",
+      "Archivo y documentación",
+      "Cálculo de remuneraciones",
+    ],
   },
   {
     claves: ["mecanica", "automotriz", "metalmecanica", "matriceria"],
@@ -85,6 +97,14 @@ const AREAS_POR_ESPECIALIDAD: GrupoAreas[] = [
       "Mantenimiento mecánico", "Motor y transmisión", "Frenos y suspensión",
       "Sistema eléctrico automotriz", "Soldadura", "Torno y fresado",
       "Diagnóstico y escáner", "Bodega de repuestos",
+    ],
+    habilidades: [
+      "Lectura de manuales técnicos",
+      "Diagnóstico de fallas",
+      "Soldadura",
+      "Mantenimiento preventivo",
+      "Manejo de instrumentos de medición",
+      "Orden y limpieza del taller",
     ],
   },
   {
@@ -94,6 +114,14 @@ const AREAS_POR_ESPECIALIDAD: GrupoAreas[] = [
       "Riego", "Maquinaria agrícola", "Invernadero y vivero", "Sanidad animal",
       "Registros de producción",
     ],
+    habilidades: [
+      "Manejo de animales",
+      "Labores de cultivo",
+      "Aplicación de sanidad vegetal y animal",
+      "Registro de producción",
+      "Trabajo a la intemperie",
+      "Manejo de riego",
+    ],
   },
   {
     claves: ["parvulo", "parvularia", "educacion inicial"],
@@ -101,6 +129,14 @@ const AREAS_POR_ESPECIALIDAD: GrupoAreas[] = [
       "Sala cuna", "Nivel medio", "Nivel de transición", "Apoyo pedagógico",
       "Material didáctico", "Alimentación y mudas", "Recreación y juego",
       "Registro de asistencia",
+    ],
+    habilidades: [
+      "Trato con niños y niñas",
+      "Preparación de material didáctico",
+      "Apoyo en rutinas de higiene",
+      "Animación y juego",
+      "Observación y registro",
+      "Comunicación con familias",
     ],
   },
   {
@@ -110,12 +146,26 @@ const AREAS_POR_ESPECIALIDAD: GrupoAreas[] = [
       "Apoyo en procedimientos", "Registro clínico", "Higiene y confort",
       "Admisión y recepción", "Botiquín y farmacia",
     ],
+    habilidades: [
+      "Toma de signos vitales",
+      "Apoyo en procedimientos clínicos",
+      "Manejo de insumos estériles",
+      "Registro clínico",
+      "Trato con pacientes",
+      "Higiene y confort del paciente",
+    ],
   },
   {
     claves: ["electricidad", "electronica", "electrico"],
     areas: [
       "Instalaciones eléctricas", "Mantenimiento eléctrico", "Tableros y automatización",
       "Lectura de planos", "Montaje de equipos",
+    ],
+    habilidades: [
+      "Lectura de planos eléctricos",
+      "Instalación de circuitos",
+      "Medición con instrumentos",
+      "Normas de seguridad eléctrica",
     ],
   },
   {
@@ -125,12 +175,26 @@ const AREAS_POR_ESPECIALIDAD: GrupoAreas[] = [
       "Servicio de comedor", "Higiene y manipulación de alimentos",
       "Bodega de alimentos",
     ],
+    habilidades: [
+      "Manipulación de alimentos",
+      "Técnicas de cocina",
+      "Pastelería y panadería",
+      "Servicio de comedor",
+      "Control de inventario de insumos",
+      "Trabajo bajo presión en cocina",
+    ],
   },
   {
     claves: ["construccion", "edificacion", "obras"],
     areas: [
       "Obra gruesa", "Terminaciones", "Instalaciones sanitarias",
       "Lectura de planos", "Bodega de materiales",
+    ],
+    habilidades: [
+      "Lectura de planos",
+      "Trazado y nivelación",
+      "Terminaciones",
+      "Manejo de materiales de obra",
     ],
   },
   {
@@ -139,6 +203,13 @@ const AREAS_POR_ESPECIALIDAD: GrupoAreas[] = [
       "Soporte técnico", "Redes y conectividad", "Mantenimiento de equipos",
       "Instalación de software", "Mesa de ayuda", "Desarrollo y sitios web",
     ],
+    habilidades: [
+      "Soporte a usuarios",
+      "Instalación y configuración de equipos",
+      "Redes y conectividad",
+      "Programación básica",
+      "Respaldo de información",
+    ],
   },
   {
     claves: ["turismo", "hoteleria"],
@@ -146,10 +217,22 @@ const AREAS_POR_ESPECIALIDAD: GrupoAreas[] = [
       "Recepción", "Reservas", "Housekeeping", "Guía y atención de visitantes",
       "Eventos",
     ],
+    habilidades: [
+      "Manejo de reservas",
+      "Orientación a visitantes",
+      "Organización de eventos",
+    ],
   },
   {
     claves: ["vestuario", "textil", "confeccion"],
     areas: ["Corte", "Confección", "Diseño y patronaje", "Control de calidad", "Terminaciones"],
+    habilidades: [
+      "Uso de máquinas de costura",
+      "Corte y confección",
+      "Patronaje",
+      "Control de calidad",
+      "Terminaciones de prendas",
+    ],
   },
 ];
 
@@ -186,6 +269,30 @@ export function areasParaEspecialidades(
 
   // Set para quitar duplicados: dos especialidades pueden compartir un área.
   return Array.from(new Set([...base, ...yaElegidas]));
+}
+
+/**
+ * Habilidades a ofrecer según la especialidad.
+ *
+ * A diferencia de las áreas, acá la lista general nunca se reemplaza: solo
+ * se amplía. Comunicación, Organización o Trabajo en equipo sirven en
+ * cualquier centro, sea de Mecánica o de Párvulo.
+ *
+ * `yaElegidas` se agrega siempre: si cambia la especialidad, una habilidad
+ * ya guardada no puede desaparecer de la lista, o editar el registro la
+ * borraría sin que nadie se entere.
+ */
+export function habilidadesParaEspecialidades(
+  nombresEspecialidad: string[],
+  yaElegidas: string[] = []
+): string[] {
+  const nombres = nombresEspecialidad.map(normalizar).filter(Boolean);
+
+  const propias = AREAS_POR_ESPECIALIDAD
+    .filter((grupo) => grupo.claves.some((clave) => nombres.some((n) => n.includes(clave))))
+    .flatMap((grupo) => grupo.habilidades);
+
+  return Array.from(new Set([...HABILIDADES, ...propias, ...yaElegidas]));
 }
 
 // Vocabulario compartido entre estudiante (habilidades) y centro (habilidades
