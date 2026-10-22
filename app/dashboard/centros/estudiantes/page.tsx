@@ -1,14 +1,17 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { GraduationCap, ChevronRight, Users } from "lucide-react";
+import { GraduationCap, ChevronRight, Users, CalendarX, Clock } from "lucide-react";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useAmbitoMaestroGuia } from "@/lib/permisos/useAmbitoMaestroGuia";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { formatearFecha } from "@/lib/fecha";
+import { formatearDias, resumirFaltas } from "@/lib/faltas/calculo";
 import { nombreCompleto } from "@/lib/estudiantes/nombre";
 import TituloPagina from "@/components/TituloPagina";
-import type { Asignacion, Estudiante } from "@/types";
+import type { Asignacion, Estudiante, FaltaDual } from "@/types";
 
 /** Asignaciones que representan a alguien que hoy está en el centro. Una
  * finalizada o cancelada es historial, no "mi estudiante". */
@@ -28,6 +31,7 @@ export default function MisEstudiantesPage() {
 
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [faltas, setFaltas] = useState<FaltaDual[]>([]);
 
   const vigentes = useMemo(
     () => asignaciones.filter((a) => VIGENTES.includes(a.estado)),
@@ -50,6 +54,34 @@ export default function MisEstudiantesPage() {
       .finally(() => { if (!cancelado) setCargando(false); });
     return () => { cancelado = true; };
   }, [ids, cargandoAmbito]);
+
+  /**
+   * Faltas de todo el centro, en una sola consulta por `centroDualId`
+   * (un campo de igualdad: sin índice compuesto, y las reglas la aceptan
+   * porque el Centro Dual ve las de su empresa). Así la lista responde
+   * "cuántos días faltó" sin entrar a cada ficha.
+   */
+  const centroDualId = usuario?.centroDualId;
+  useEffect(() => {
+    if (!centroDualId) { setFaltas([]); return; }
+    let cancelado = false;
+    getDocs(query(collection(db, "faltas_dual"), where("centroDualId", "==", centroDualId)))
+      .then((snap) => {
+        if (!cancelado) setFaltas(snap.docs.map((d) => ({ id: d.id, ...d.data() } as FaltaDual)));
+      })
+      // Sin faltas visibles la lista sigue sirviendo: simplemente no
+      // muestra el contador, en vez de romperse entera.
+      .catch(() => { if (!cancelado) setFaltas([]); });
+    return () => { cancelado = true; };
+  }, [centroDualId]);
+
+  const resumenPorEstudiante = useMemo(() => {
+    const porId: Record<string, FaltaDual[]> = {};
+    for (const f of faltas) (porId[f.estudianteId] ??= []).push(f);
+    return Object.fromEntries(
+      Object.entries(porId).map(([id, lista]) => [id, resumirFaltas(lista)])
+    );
+  }, [faltas]);
 
   if (usuario && usuario.rol !== "centro_dual") {
     return (
@@ -90,6 +122,7 @@ export default function MisEstudiantesPage() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {estudiantes.map((e) => {
           const asignacion = vigentes.find((a) => a.estudianteId === e.id);
+          const resumen = resumenPorEstudiante[e.id];
           return (
             <Link
               key={e.id}
@@ -113,6 +146,29 @@ export default function MisEstudiantesPage() {
                 {asignacion?.fechaInicio && (
                   <span style={{ color: "var(--text-muted)" }} className="text-[11px] block truncate">
                     Desde el {formatearFecha(asignacion.fechaInicio)}
+                  </span>
+                )}
+                {resumen && (resumen.diasTotales > 0 || resumen.porConfirmar > 0) && (
+                  <span className="flex items-center gap-2 flex-wrap mt-1.5">
+                    {resumen.diasTotales > 0 && (
+                      <span
+                        style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--text-secondary)" }}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px]"
+                      >
+                        <CalendarX size={11} /> {formatearDias(resumen.diasTotales)}
+                      </span>
+                    )}
+                    {/* Lo que este centro avisó y el liceo todavía no
+                        valida. Se muestra aparte porque no suma: decir
+                        que son días perdidos sería adelantarse. */}
+                    {resumen.porConfirmar > 0 && (
+                      <span
+                        style={{ background: "var(--bg-base)", border: "1px solid var(--border-light)", color: "var(--accent-light)" }}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px]"
+                      >
+                        <Clock size={11} /> {resumen.porConfirmar} por confirmar
+                      </span>
+                    )}
                   </span>
                 )}
               </span>
