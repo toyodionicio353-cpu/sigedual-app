@@ -41,6 +41,7 @@ export default function CentroFaltas({
     especialidadId: string;
     liceoId: string;
     profesorSupervisorId?: string;
+    estudianteNombre?: string;
   };
 }) {
   const { usuario } = useAuth();

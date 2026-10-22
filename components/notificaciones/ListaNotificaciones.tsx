@@ -19,6 +19,8 @@ const TIPO_LABEL: Record<TipoNotificacion, string> = {
   recordatorio: "Recordatorio",
   ticket: "Ticket",
   formulario_recibido: "Formulario recibido",
+  falta_reportada: "Ausencia por confirmar",
+  observacion_dual: "Observación del Centro Dual",
 };
 
 function formatearFechaHora(iso: string): string {

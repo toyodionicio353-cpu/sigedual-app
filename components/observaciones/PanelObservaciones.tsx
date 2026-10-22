@@ -51,6 +51,8 @@ export default function PanelObservaciones({
     especialidadId: string;
     liceoId: string;
     asignacionId?: string;
+    profesorSupervisorId?: string;
+    estudianteNombre?: string;
   };
 }) {
   const { usuario } = useAuth();

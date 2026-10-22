@@ -6,6 +6,9 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
+import { avisarAlProfesor } from "@/lib/notificaciones/avisarAlProfesor";
+import { marcarNotificacionesDeRecurso } from "@/lib/notificaciones/marcarPorRecurso";
+import { formatearFecha } from "@/lib/fecha";
 import { porFechaDescendente, resumirFaltas, type ResumenFaltas } from "./calculo";
 import type { FaltaDual, JornadaFalta } from "@/types";
 
@@ -46,6 +49,9 @@ export function useFaltasEstudiante(
     especialidadId: string;
     liceoId: string;
     profesorSupervisorId?: string;
+    /** Solo para redactar el aviso al profesor: la notificación tiene que
+     * decir de quién se trata sin obligar a abrirla. */
+    estudianteNombre?: string;
   }
 ): DatosFaltas {
   const { usuario } = useAuth();
@@ -112,6 +118,26 @@ export function useFaltasEstudiante(
     }
 
     const ref = await addDoc(collection(db, "faltas_dual"), nueva);
+
+    // El Centro Dual avisa; el liceo confirma. Sin esta notificación el
+    // aviso se quedaría esperando en una pantalla que el profesor no
+    // tiene por qué visitar.
+    if (esCentroDual) {
+      const quien = contexto.estudianteNombre ?? "Un estudiante";
+      await avisarAlProfesor({
+        profesorSupervisorId: contexto.profesorSupervisorId,
+        liceoId: contexto.liceoId,
+        tipo: "falta_reportada",
+        titulo: `Ausencia por confirmar · ${quien}`,
+        descripcion: `${usuario.nombre} avisó que faltó el ${formatearFecha(datos.fecha)}. No cuenta como día perdido hasta que la confirmes.`,
+        prioridad: "media",
+        accionHref: `/dashboard/estudiantes/${estudianteId}#faltas`,
+        accionLabel: "Revisar y confirmar",
+        recurso: "faltas_dual",
+        recursoId: ref.id,
+      });
+    }
+
     registrarEvento({
       uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
       accion: esCentroDual ? "reportar_falta_dual" : "registrar_falta_dual",
@@ -134,6 +160,8 @@ export function useFaltasEstudiante(
       accion: "confirmar_falta_dual", recurso: "faltas_dual", recursoId: falta.id,
       resultado: "permitido", detalle: falta.fecha,
     });
+    // Atendida: el aviso en la bandeja ya no es un pendiente.
+    marcarNotificacionesDeRecurso(usuario.uid, "faltas_dual", falta.id).catch(() => {});
     await cargar();
   }, [usuario, cargar]);
 
@@ -148,6 +176,8 @@ export function useFaltasEstudiante(
       accion: "anular_falta_dual", recurso: "faltas_dual", recursoId: falta.id,
       resultado: "permitido", detalle: falta.fecha,
     });
+    // Atendida: el aviso en la bandeja ya no es un pendiente.
+    marcarNotificacionesDeRecurso(usuario.uid, "faltas_dual", falta.id).catch(() => {});
     await cargar();
   }, [usuario, cargar]);
 

@@ -4,6 +4,8 @@ import { collection, query, where, getDocs, addDoc, updateDoc, doc } from "fireb
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
+import { avisarAlProfesor } from "@/lib/notificaciones/avisarAlProfesor";
+import { marcarNotificacionesDeRecurso } from "@/lib/notificaciones/marcarPorRecurso";
 import type { EstadoObservacionDual, ObservacionDual, TipoObservacionDual } from "@/types";
 
 export interface NuevaObservacion {
@@ -42,6 +44,9 @@ export function useObservacionesEstudiante(
     especialidadId: string;
     liceoId: string;
     asignacionId?: string;
+    profesorSupervisorId?: string;
+    /** Solo para redactar el aviso al profesor. */
+    estudianteNombre?: string;
   }
 ): DatosObservaciones {
   const { usuario } = useAuth();
@@ -98,6 +103,29 @@ export function useObservacionesEstudiante(
     if (contexto.asignacionId) nueva.asignacionId = contexto.asignacionId;
 
     const ref = await addDoc(collection(db, "observaciones_dual"), nueva);
+
+    // Solo cuando la levanta el centro: si la escribe el propio liceo no
+    // tiene sentido avisarse a sí mismo. Un reclamo va con prioridad alta;
+    // un reconocimiento no es una urgencia.
+    if (usuario.rol === "centro_dual") {
+      const quien = contexto.estudianteNombre ?? "un estudiante";
+      const etiqueta = datos.tipo === "reclamo"
+        ? "Reclamo"
+        : datos.tipo === "felicitacion" ? "Reconocimiento" : "Observación";
+      await avisarAlProfesor({
+        profesorSupervisorId: contexto.profesorSupervisorId,
+        liceoId: contexto.liceoId,
+        tipo: "observacion_dual",
+        titulo: `${etiqueta} del Centro Dual · ${quien}`,
+        descripcion: `${usuario.nombre} registró ${datos.tipo === "reclamo" ? "un reclamo" : etiqueta.toLowerCase()} sobre ${quien}. Está esperando tu respuesta.`,
+        prioridad: datos.tipo === "reclamo" ? "alta" : "baja",
+        accionHref: `/dashboard/estudiantes/${estudianteId}#observaciones`,
+        accionLabel: "Leer y responder",
+        recurso: "observaciones_dual",
+        recursoId: ref.id,
+      });
+    }
+
     registrarEvento({
       uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
       accion: "crear_observacion_dual", recurso: "observaciones_dual", recursoId: ref.id,
@@ -121,6 +149,8 @@ export function useObservacionesEstudiante(
       accion: "responder_observacion_dual", recurso: "observaciones_dual", recursoId: obs.id,
       resultado: "permitido", detalle: estado,
     });
+    // Respondida: el aviso en la bandeja ya no es un pendiente.
+    marcarNotificacionesDeRecurso(usuario.uid, "observaciones_dual", obs.id).catch(() => {});
     await cargar();
   }, [usuario, cargar]);
 

@@ -972,7 +972,11 @@ export type TipoNotificacion =
   | "incidencia"
   | "recordatorio"
   | "ticket"
-  | "formulario_recibido";
+  | "formulario_recibido"
+  /** Ausencia que avisó el Centro Dual y el liceo todavía no confirma. */
+  | "falta_reportada"
+  /** Observación, reclamo o reconocimiento levantado por el Centro Dual. */
+  | "observacion_dual";
 
 export interface Notificacion {
   id: string;

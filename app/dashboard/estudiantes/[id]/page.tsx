@@ -29,9 +29,13 @@ function iniciales(nombres: string, apellidos: string): string {
   return `${(nombres[0] || "").toUpperCase()}${(apellidos[0] || "").toUpperCase()}`;
 }
 
-function Seccion({ icon, titulo, children }: { icon: React.ReactNode; titulo: string; children: React.ReactNode }) {
+/** `ancla` existe para que una notificación pueda enlazar al punto exacto
+ * donde se atiende ("#faltas", "#observaciones"), en vez de dejar al
+ * profesor buscando en una ficha larga. `scroll-mt` deja aire arriba para
+ * que el título no quede tapado por la barra. */
+function Seccion({ icon, titulo, children, ancla }: { icon: React.ReactNode; titulo: string; children: React.ReactNode; ancla?: string }) {
   return (
-    <div className="mb-7 last:mb-0">
+    <div id={ancla} className="mb-7 last:mb-0 scroll-mt-24">
       <div className="flex items-center gap-2 mb-4">
         <span style={{ color: "var(--accent-light)" }}>{icon}</span>
         <h3 style={{ color: "var(--text-primary)" }} className="text-sm font-semibold">{titulo}</h3>
@@ -273,7 +277,7 @@ export default function FichaEstudiantePage() {
           <Dato label="Centro dual asignado" valor={estudiante.centroDualId ? "Asignado" : "Sin empresa asignada"} />
         </Seccion>
 
-        <Seccion icon={<CalendarX size={16} />} titulo="Faltas a la Formación Dual">
+        <Seccion icon={<CalendarX size={16} />} titulo="Faltas a la Formación Dual" ancla="faltas">
           <div className="sm:col-span-2">
             <CentroFaltas
               estudianteId={id}
@@ -292,7 +296,7 @@ export default function FichaEstudiantePage() {
             ficha del liceo porque acá es donde se responde y se cierra:
             si viviera solo del lado del centro, un reclamo no tendría a
             nadie a cargo. */}
-        <Seccion icon={<MessageSquareWarning size={16} />} titulo="Observaciones del Centro Dual">
+        <Seccion icon={<MessageSquareWarning size={16} />} titulo="Observaciones del Centro Dual" ancla="observaciones">
           <div className="sm:col-span-2">
             <PanelObservaciones
               estudianteId={id}
@@ -301,6 +305,7 @@ export default function FichaEstudiantePage() {
                 especialidadId: estudiante.especialidadId,
                 liceoId: estudiante.liceoId,
                 asignacionId: asignacion.id,
+                profesorSupervisorId: asignacion.profesorSupervisorId,
               } : undefined}
             />
           </div>
