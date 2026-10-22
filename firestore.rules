@@ -58,7 +58,8 @@ service cloud.firestore {
         'respuestas_campania', 'respuestas_campania_estudiante', 'demos',
         'planes_comerciales', 'configuracion_comercial', 'documentos_generados', 'especialidades',
         'documentos_generados_indices', 'envios_evaluacion', 'borradores_mensaje',
-        'practicas_profesionales', 'novedades', 'cupos_novedades'
+        'practicas_profesionales', 'novedades', 'cupos_novedades',
+        'faltas_dual', 'permisos_dual'
       ];
     }
 
@@ -355,6 +356,75 @@ service cloud.firestore {
       // Dar de baja una práctica es una acción administrativa: se hace
       // cambiando su estado, no borrando el registro histórico.
       allow delete: if request.auth != null && esAccesoCompletoLiceo(resource.data.liceoId);
+    }
+
+    // ── Faltas a la Formación Dual ───────────────────────────────────
+    //
+    // El registro es del liceo. El Centro Dual ve la ausencia el mismo día
+    // y puede avisar de ella, pero lo que cuenta oficialmente lo confirma
+    // el Profesor Supervisor — por eso un Centro Dual solo puede crear
+    // faltas en estado 'reportada', y no puede confirmarlas ni cambiar los
+    // campos que deciden cuánto debe reponer el estudiante.
+    match /faltas_dual/{id} {
+      allow read: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || resource.data.profesorSupervisorId == request.auth.uid
+        // Profesor de la misma especialidad en su liceo, igual que el
+        // resto de los datos del estudiante.
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId
+            && ('especialidadId' in datosUsuario()) && datosUsuario().especialidadId == resource.data.especialidadId)
+        // El Centro Dual consulta las de SU empresa, nunca las de otra.
+        || (datosUsuario().rol == 'centro_dual' && datosUsuario().centroDualId == resource.data.centroDualId)
+        // El estudiante ve exclusivamente las suyas.
+        || (datosUsuario().rol == 'estudiante' && datosUsuario().estudianteId == resource.data.estudianteId)
+      );
+
+      allow create: if request.auth != null && (
+        // El liceo registra una falta ya confirmada.
+        ((esAccesoCompletoLiceo(request.resource.data.liceoId)
+          || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == request.resource.data.liceoId))
+         && request.resource.data.estado in ['confirmada', 'reportada'])
+        // El Centro Dual solo avisa: nace 'reportada' y no suma hasta que
+        // el liceo la confirme.
+        || (datosUsuario().rol == 'centro_dual'
+            && datosUsuario().centroDualId == request.resource.data.centroDualId
+            && request.resource.data.estado == 'reportada')
+      );
+
+      // Confirmar, justificar, anular o marcar un día como recuperado son
+      // decisiones del liceo: el Centro Dual no edita nada de lo que ya
+      // reportó, porque de ahí sale lo que el estudiante debe reponer.
+      allow update: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || resource.data.profesorSupervisorId == request.auth.uid
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId
+            && ('especialidadId' in datosUsuario()) && datosUsuario().especialidadId == resource.data.especialidadId)
+      );
+
+      // Una falta no se borra: se anula, para que el historial del
+      // estudiante no cambie sin dejar rastro. Borrar de verdad queda
+      // reservado al rol desarrollador.
+      allow delete: if request.auth != null && datosUsuario().rol == 'desarrollador';
+    }
+
+    // Solicitud de Permiso para ausentarse del Centro de Aprendizaje: el
+    // documento que autoriza y firma el liceo. El Centro Dual lo consulta
+    // ("toma de conocimiento"), nunca lo emite.
+    match /permisos_dual/{id} {
+      allow read: if request.auth != null && (
+        esAccesoCompletoLiceo(resource.data.liceoId)
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == resource.data.liceoId
+            && ('especialidadId' in datosUsuario()) && datosUsuario().especialidadId == resource.data.especialidadId)
+        || (datosUsuario().rol == 'centro_dual' && datosUsuario().centroDualId == resource.data.centroDualId)
+        || (datosUsuario().rol == 'estudiante' && datosUsuario().estudianteId == resource.data.estudianteId)
+      );
+      allow create: if request.auth != null && (
+        esAccesoCompletoLiceo(request.resource.data.liceoId)
+        || (datosUsuario().rol == 'profesor' && datosUsuario().liceoId == request.resource.data.liceoId)
+      );
+      // Un permiso emitido y firmado es un documento: no se reescribe.
+      allow update: if false;
+      allow delete: if request.auth != null && datosUsuario().rol == 'desarrollador';
     }
 
     match /asignaciones/{id} {

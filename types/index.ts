@@ -508,6 +508,102 @@ export interface PracticaProfesional {
   actualizadoEn?: string;
 }
 
+// ── Faltas a la Formación Dual ────────────────────────────────────────────
+
+/** Cuánto del día se perdió. Media jornada cuenta como medio día en el
+ * total: si contara como uno entero, el estudiante "debería" más horas de
+ * las que realmente faltó. */
+export type JornadaFalta = "completa" | "manana" | "tarde";
+
+/**
+ * "reportada": la avisó el Centro Dual. NO cuenta todavía — el Maestro
+ *   Guía ve la ausencia el mismo día, pero quien lleva el registro oficial
+ *   es el liceo.
+ * "confirmada": el Profesor Supervisor la validó. Esta sí cuenta.
+ * "anulada": se registró por error. Se conserva en vez de borrarla, para
+ *   que el historial del estudiante no cambie sin dejar rastro.
+ */
+export type EstadoFalta = "reportada" | "confirmada" | "anulada";
+
+/**
+ * Una ausencia de un estudiante a su Centro de Aprendizaje en Alternancia
+ * Dual.
+ *
+ * El registro es del liceo: lo crea y lo confirma el Profesor Supervisor.
+ * El Centro Dual puede avisar de una ausencia (queda "reportada"), pero no
+ * suma hasta que el liceo la confirma.
+ */
+export interface FaltaDual {
+  id: string;
+  liceoId: string;
+  estudianteId: string;
+  asignacionId: string;
+  centroDualId: string;
+  /** Se denormaliza del estudiante para que las reglas de Firestore puedan
+   * resolver el ámbito del profesor sin un get() adicional. */
+  especialidadId: string;
+  profesorSupervisorId?: string;
+
+  /** Día de la ausencia, en formato AAAA-MM-DD. */
+  fecha: string;
+  jornada: JornadaFalta;
+  estado: EstadoFalta;
+
+  /** Respaldada por un permiso, un certificado médico o similar. */
+  justificada: boolean;
+  motivo?: string;
+  /** Permiso que la originó, si salió de una Solicitud de Permiso. */
+  permisoId?: string;
+
+  /**
+   * Si el estudiante debe reponer ese día en el centro. Es un campo propio
+   * y no algo deducido de `justificada`: un permiso institucional puede no
+   * exigir recuperación, mientras que una licencia médica sí deja horas
+   * que reponer. Quien registra decide.
+   */
+  requiereRecuperacion: boolean;
+  recuperada: boolean;
+  fechaRecuperacion?: string;
+
+  reportadaPor?: string;
+  reportadaPorNombre?: string;
+  confirmadaPor?: string;
+  confirmadaPorNombre?: string;
+  creadoEn: string;
+  actualizadoEn?: string;
+}
+
+/**
+ * Solicitud de Permiso para ausentarse del Centro de Aprendizaje — el
+ * documento en papel que firma el Jefe de Especialidad y del que toma
+ * conocimiento el Centro Dual.
+ *
+ * Se numera por año y liceo (NRO. 03/2026), como el talonario físico.
+ */
+export interface PermisoDual {
+  id: string;
+  /** Correlativo dentro del año y del liceo. */
+  numero: number;
+  anio: number;
+  liceoId: string;
+  estudianteId: string;
+  asignacionId: string;
+  centroDualId: string;
+  especialidadId: string;
+
+  motivo: string;
+  /** Uno o varios días, en formato AAAA-MM-DD. */
+  fechas: string[];
+  jornada: JornadaFalta;
+  /** Fecha de retiro desde el liceo, si corresponde. */
+  fechaRetiro?: string;
+
+  autorizadoPor: string;
+  autorizadoPorNombre: string;
+  autorizadoPorCargo: string;
+  creadoEn: string;
+}
+
 export type EstadoMaestroGuia = "activo" | "inactivo";
 
 export interface MaestroGuia {
