@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Map as MapaLeaflet, Marker } from "leaflet";
 import { encuadreDe, CENTRO_POR_DEFECTO, ZOOM_POR_DEFECTO, type Punto } from "@/lib/mapa/geo";
 import { htmlPinCentro, htmlPinPractica, TAMANO_PIN, TAMANO_PIN_SELECCIONADO } from "@/lib/mapa/iconos";
@@ -35,7 +35,12 @@ export default function LienzoMapa({
   const capaRef = useRef<import("leaflet").LayerGroup | null>(null);
   const marcadoresRef = useRef<Record<string, Marker>>({});
   const yaEncuadrado = useRef(false);
-  const listoRef = useRef(false);
+  // Estado, no ref: el mapa se crea de forma asíncrona (importar Leaflet).
+  // Si los datos llegan antes de que termine esa importación, el efecto que
+  // dibuja los marcadores sale sin hacer nada; con un ref nada lo volvería
+  // a ejecutar y el mapa quedaría vacío para siempre. Al ser estado,
+  // volverse `true` vuelve a disparar el dibujado.
+  const [listo, setListo] = useState(false);
 
   // Refs para que los callbacks vivos no obliguen a recrear el mapa.
   const onSeleccionarRef = useRef(onSeleccionar);
@@ -83,13 +88,13 @@ export default function LienzoMapa({
 
       mapaRef.current = mapa;
       capaRef.current = grupo;
-      listoRef.current = true;
+      setListo(true);
       setTimeout(() => mapa.invalidateSize(), 0);
     })();
 
     return () => {
       cancelado = true;
-      listoRef.current = false;
+      setListo(false);
       mapaRef.current?.remove();
       mapaRef.current = null;
       capaRef.current = null;
@@ -147,7 +152,7 @@ export default function LienzoMapa({
       }
     })();
     return () => { cancelado = true; };
-  }, [centros, practicas, seleccionadoId]);
+  }, [centros, practicas, seleccionadoId, listo]);
 
   // Desplazamiento a un resultado de búsqueda.
   useEffect(() => {
