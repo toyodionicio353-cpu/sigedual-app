@@ -32,6 +32,7 @@ export function useDocumentosCreados(tipoModulo: TipoModuloDocumento) {
   const ambitoMaestroGuia = useAmbitoMaestroGuia();
   const [documentos, setDocumentos] = useState<DocumentoGenerado[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (usuario && !(usuario.rol === "centro_dual" && ambitoMaestroGuia.cargando)) cargar();
@@ -48,6 +49,26 @@ export function useDocumentosCreados(tipoModulo: TipoModuloDocumento) {
   async function cargar() {
     if (!usuario) return;
     setCargando(true);
+    setError(null);
+    try {
+      await cargarSegunRol();
+    } catch (e) {
+      // Nunca dejar la pantalla en "Cargando..." para siempre: una
+      // consulta rechazada tiene que decirlo, no colgarse.
+      const codigo = (e as { code?: string })?.code ?? "";
+      setError(
+        codigo === "permission-denied"
+          ? "No tienes permiso para ver los documentos creados de tu liceo."
+          : "No se pudieron cargar los documentos creados."
+      );
+      setDocumentos([]);
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  async function cargarSegunRol() {
+    if (!usuario) return;
     // Un estudiante o Centro Dual nunca crean/editan un documento — solo
     // pueden VER el que esté a su nombre, así que la única consulta que
     // firestore.rules les permite es por `estudianteId` (nunca por
@@ -57,7 +78,6 @@ export function useDocumentosCreados(tipoModulo: TipoModuloDocumento) {
         ? await getDocs(query(collection(db, "documentos_generados"), where("tipoModulo", "==", tipoModulo), where("estudianteId", "==", usuario.estudianteId)))
         : null;
       setDocumentos(snap ? convertir(snap.docs) : []);
-      setCargando(false);
       return;
     }
     if (usuario.rol === "centro_dual") {
@@ -68,7 +88,6 @@ export function useDocumentosCreados(tipoModulo: TipoModuloDocumento) {
       const porId = new Map<string, DocumentoGenerado>();
       snaps.forEach((snap) => convertir(snap.docs).forEach((d) => porId.set(d.id, d)));
       setDocumentos(Array.from(porId.values()));
-      setCargando(false);
       return;
     }
     const snap = await getDocs(query(
@@ -77,7 +96,6 @@ export function useDocumentosCreados(tipoModulo: TipoModuloDocumento) {
       where("tipoModulo", "==", tipoModulo)
     ));
     setDocumentos(convertir(snap.docs));
-    setCargando(false);
   }
 
   const plantillasDefinidas = plantillasParaModulo(tipoModulo);
@@ -92,5 +110,5 @@ export function useDocumentosCreados(tipoModulo: TipoModuloDocumento) {
     previewLineas: textoParaPreview(d),
   }));
 
-  return { documentos, items, cargando, recargar: cargar };
+  return { documentos, items, cargando, error, recargar: cargar };
 }

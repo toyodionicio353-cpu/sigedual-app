@@ -29,8 +29,8 @@ export default function DocumentosPage() {
   const puedeEliminar = usuario?.rol === "desarrollador";
 
   const plantillasDefinidas = plantillasParaModulo(TIPO_MODULO);
-  const { contexto, cargando: cargandoContexto } = useContextoDocumentos();
-  const { documentos, items: itemsCreados, cargando: cargandoCreados, recargar } = useDocumentosCreados(TIPO_MODULO);
+  const { contexto, cargando: cargandoContexto, error: errorContexto } = useContextoDocumentos();
+  const { documentos, items: itemsCreados, cargando: cargandoCreados, error: errorCreados, recargar } = useDocumentosCreados(TIPO_MODULO);
 
   const plantillas: ItemBiblioteca[] = plantillasDefinidas.map((p) => ({
     id: p.id,
@@ -113,6 +113,11 @@ export default function DocumentosPage() {
           <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="rounded-xl px-4 py-2.5 text-xs" >
             <span style={{ color: "var(--text-secondary)" }}>{aviso}</span>
           </div>
+        </div>
+      )}
+      {(errorContexto || errorCreados) && (
+        <div className="px-4 md:px-8 pt-4">
+          <p style={{ color: "var(--danger)" }} className="text-xs">{errorCreados || errorContexto}</p>
         </div>
       )}
       <BibliotecaDocumental

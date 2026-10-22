@@ -41,10 +41,12 @@ export default function EvaluacionesPage() {
   const [asignacionesAdmin, setAsignacionesAdmin] = useState<Asignacion[]>([]);
   useEffect(() => {
     if (!usuario || !esAdmin || tab !== "plantillas") return;
-    getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario.liceoId))).then((snap) => {
-      const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion));
-      setAsignacionesAdmin(todas.filter((a) => a.estado === "asignada" || a.estado === "activa"));
-    });
+    getDocs(query(collection(db, "asignaciones"), where("liceoId", "==", usuario.liceoId)))
+      .then((snap) => {
+        const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion));
+        setAsignacionesAdmin(todas.filter((a) => a.estado === "asignada" || a.estado === "activa"));
+      })
+      .catch(() => setAsignacionesAdmin([]));
   }, [usuario, esAdmin, tab]);
 
   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
@@ -85,6 +87,18 @@ export default function EvaluacionesPage() {
     if (!usuario || tab !== "realizadas" || cargandoAmbito) return;
     async function cargar() {
       setCargandoHistorial(true);
+      try {
+        await cargarHistorial();
+      } catch {
+        // Que una consulta falle no puede dejar la pestaña en
+        // "Cargando..." para siempre.
+        setEvaluaciones([]);
+        setEstudiantes([]);
+      } finally {
+        setCargandoHistorial(false);
+      }
+    }
+    async function cargarHistorial() {
       if (esProfesor || esCentroDual) {
         const idsEstudiantes = esProfesor ? ambitoProfesor.idsEstudiantes : ambitoMaestroGuia.idsEstudiantes;
         const lotes: string[][] = [];
@@ -110,7 +124,6 @@ export default function EvaluacionesPage() {
         setEvaluaciones(snapEval.docs.map((d) => ({ id: d.id, ...d.data() } as Evaluacion)));
         setEstudiantes(snapEst.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)));
       }
-      setCargandoHistorial(false);
     }
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
