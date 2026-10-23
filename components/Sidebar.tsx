@@ -231,7 +231,6 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
       <aside
         style={{
           background: "var(--sidebar-bg)",
-          borderRight: "1px solid var(--border)",
           flexShrink: 0,
         }}
         className={`h-dvh md:h-screen flex flex-col fixed md:static inset-y-0 left-0 z-40 overflow-hidden transition-all duration-200 ease-in-out w-64 ${
@@ -297,10 +296,12 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 title={collapsed ? etiquetaGrupo(menu) : undefined}
                 style={{
                   background: isActive ? "var(--accent)" : "transparent",
-                  borderRadius: 9,
+                  borderRadius: collapsed ? 12 : 9,
                   color: isActive ? "var(--text-on-accent)" : "var(--text-secondary)",
                 }}
-                className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:[background:var(--hover-overlay)] transition-all"
+                className={`flex items-center text-base font-medium hover:[background:var(--hover-overlay)] transition-all ${
+                  collapsed ? "justify-center h-11" : "gap-2.5 px-2.5 py-3"
+                }`}
               >
                 <span style={{ color: isActive ? "var(--text-on-accent)" : "var(--accent)", flexShrink: 0, position: "relative" }}>
                   {menu.icon}
@@ -336,15 +337,27 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
           return (
             <div key={menu.id}>
               <button
-                onClick={() => !collapsed && toggleMenu(menu.id)}
+                onClick={() => {
+                  // Colapsada, un grupo no puede desplegarse hacia ningún
+                  // lado: la expande y abre ese grupo, en vez de no hacer
+                  // nada y dejar sus páginas fuera de alcance.
+                  if (collapsed) {
+                    setCollapsed(false);
+                    setOpenMenu(menu.id);
+                    return;
+                  }
+                  toggleMenu(menu.id);
+                }}
                 title={collapsed ? etiquetaGrupo(menu) : undefined}
                 style={{
                   background: isActive ? "var(--accent)" : "transparent",
-                  borderRadius: 9,
+                  borderRadius: collapsed ? 12 : 9,
                   width: "100%",
                   color: isActive ? "var(--text-on-accent)" : "var(--text-secondary)",
                 }}
-                className="flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:[background:var(--hover-overlay)] transition-all text-left"
+                className={`flex items-center text-base font-medium hover:[background:var(--hover-overlay)] transition-all text-left ${
+                  collapsed ? "justify-center h-11" : "gap-2.5 px-2.5 py-3"
+                }`}
               >
                 {/* Icono coloreado */}
                 <span style={{ color: isActive ? "var(--text-on-accent)" : "var(--accent)", flexShrink: 0 }}>{menu.icon}</span>
@@ -418,8 +431,10 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
         <button
           onClick={handleLogout}
           title={t("nav.cerrarSesion")}
-          style={{ borderRadius: 9, color: "var(--text-muted)", width: "100%" }}
-          className={`flex items-center gap-2.5 px-2.5 py-3 text-base font-medium hover:bg-red-500/10 hover:text-red-400 transition-all ${collapsed ? "justify-center" : ""}`}
+          style={{ borderRadius: collapsed ? 12 : 9, color: "var(--text-muted)", width: "100%" }}
+          className={`flex items-center text-base font-medium hover:bg-red-500/10 hover:text-red-400 transition-all ${
+            collapsed ? "justify-center h-11" : "gap-2.5 px-2.5 py-3"
+          }`}
         >
           <LogOut size={20} strokeWidth={2.25} />
           {!collapsed && <span className="whitespace-nowrap">{t("nav.cerrarSesion")}</span>}
