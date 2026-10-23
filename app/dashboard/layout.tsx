@@ -89,7 +89,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { t } = usePreferencias();
   const router = useRouter();
   const pathname = usePathname();
+  /**
+   * Barra colapsada (solo iconos). Se recuerda entre sesiones: si alguien
+   * prefiere el riel angosto, no tiene por qué volver a colapsarlo cada
+   * vez que entra. Arranca expandida mientras no haya una preferencia
+   * guardada, y el acceso a localStorage va protegido porque en modo
+   * privado puede lanzar.
+   */
   const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("sigedual.sidebar.colapsada") === "1") setCollapsed(true);
+    } catch { /* sin almacenamiento: queda expandida */ }
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("sigedual.sidebar.colapsada", collapsed ? "1" : "0");
+    } catch { /* no poder recordarlo no debe romper nada */ }
+  }, [collapsed]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [panelNotifAbierto, setPanelNotifAbierto] = useState(false);
   const panelNotifRef = useRef<HTMLDivElement>(null);
@@ -146,7 +163,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div style={{ background: "var(--bg-base)" }} className="flex h-screen overflow-hidden">
+    /**
+     * El marco. El fondo exterior es el MISMO color de la barra lateral,
+     * así que la barra no necesita un borde que la separe: se funde con el
+     * marco y el contenido queda encastrado dentro, como una pantalla
+     * dentro del aparato.
+     *
+     * Solo en escritorio: en un teléfono la pantalla ya es el aparato, y
+     * un marco alrededor solo le quitaría espacio al contenido.
+     */
+    <div style={{ background: "var(--sidebar-bg)" }} className="flex h-screen overflow-hidden">
       <CommandPalette />
       <ShortcutsProvider />
       <Sidebar
@@ -155,7 +181,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
       />
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+      <div
+        style={{ background: "var(--bg-base)" }}
+        className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden md:my-2 md:mr-2 md:rounded-2xl md:border md:[border-color:var(--border)] md:shadow-2xl"
+      >
         {/* Topbar */}
         <header
           style={{ background: "var(--bg-card)", height: 56 }}
