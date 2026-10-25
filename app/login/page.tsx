@@ -58,7 +58,7 @@ export default function LoginPage() {
               className="w-12 h-12 object-contain flex-shrink-0"
             />
             <div>
-              <h1 className="text-4xl font-bold tracking-tight leading-none">
+              <h1 className="marca text-4xl font-bold tracking-tight leading-none">
                 <span style={{ color: "var(--text-primary)" }}>SIG</span>
                 <span style={{ color: "#C8102E" }}>e</span>
                 <span style={{ color: "var(--text-primary)" }}>DUAL</span>

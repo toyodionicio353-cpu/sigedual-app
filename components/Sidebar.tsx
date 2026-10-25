@@ -247,7 +247,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
         >
           <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={32} height={32} className="object-contain flex-shrink-0" style={{ minWidth: 32 }} />
           {!collapsed && (
-            <h2 className="ml-3 text-left text-3xl font-bold tracking-wider leading-none whitespace-nowrap overflow-hidden">
+            <h2 className="marca ml-3 text-left text-3xl font-bold tracking-wider leading-none whitespace-nowrap overflow-hidden">
               <span style={{ color: "var(--text-primary)" }}>SIG</span>
               <span style={{ color: "#C8102E" }}>e</span>
               <span style={{ color: "var(--text-primary)" }}>DUAL</span>

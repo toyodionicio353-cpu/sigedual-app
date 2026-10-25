@@ -214,7 +214,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )}
 
             {/* Título */}
-            <h2 style={{ color: "var(--text-primary)", fontFamily: "var(--font-display), sans-serif" }} className="text-xl font-bold tracking-tight truncate">{titulo}</h2>
+            <h2 style={{ color: "var(--text-primary)", fontFamily: "var(--font-titulo)" }} className="text-xl font-bold tracking-tight truncate">{titulo}</h2>
           </div>
 
           <div className="flex items-center gap-2">

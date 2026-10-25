@@ -156,7 +156,7 @@ export default function DocumentoLegal() {
               <p style={{ color: "var(--accent-light)" }} className="text-xs font-bold uppercase tracking-wide mb-1">
                 Parte {parte.numero} de {TOTAL_PARTES_PLANEADAS}
               </p>
-              <h2 style={{ color: "var(--text-primary)", fontFamily: "var(--font-display), sans-serif" }} className="text-lg sm:text-xl font-bold leading-snug">
+              <h2 style={{ color: "var(--text-primary)", fontFamily: "var(--font-titulo)" }} className="text-lg sm:text-xl font-bold leading-snug">
                 {parte.titulo}
               </h2>
               {!parte.completo && (
