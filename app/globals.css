@@ -36,7 +36,7 @@
    * misma tipografía que se usaba antes. La pila es completa a propósito,
    * para que la aplicación se vea bien igual aunque falte el archivo.
    */
-  --font-titulo: "PW Filament", var(--font-display), sans-serif;
+  --font-titulo: "PW Filament", var(--font-manuscrita), var(--font-display), sans-serif;
 
   /* Oscuro (Premium Dark) — valores por defecto */
   --bg-base: #0f1117;
@@ -103,10 +103,19 @@
   }
 
   /*
-   * Títulos de pantalla. La marca SIGeDUAL NO entra acá: lleva la clase
-   * `.marca`, que la devuelve a la tipografía de siempre (más abajo).
+   * h1/h2 siguen con la geométrica de siempre; el título de cada pantalla
+   * (h1) lleva la manuscrita. Los encabezados de sección dentro de las
+   * tarjetas quedan fuera a propósito: son textos chicos y una manuscrita
+   * ahí se lee peor de lo que decora.
+   *
+   * La marca SIGeDUAL tampoco entra: lleva la clase `.marca`, que gana por
+   * especificidad sobre la regla de elemento, esté donde esté.
    */
   h1, h2 {
+    font-family: var(--font-display), sans-serif;
+  }
+
+  h1 {
     font-family: var(--font-titulo);
   }
 

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk, Oswald } from "next/font/google";
+import { Inter, Space_Grotesk, Oswald, Caveat } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { PreferenciasProvider } from "@/lib/preferencias/context";
@@ -14,6 +14,22 @@ const inter = Inter({
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-display",
+  display: "swap",
+});
+
+/**
+ * Caveat: manuscrita, para el título de cada pantalla. SIGEDUAL es una
+ * aplicación sobre educación y el trazo a mano lo dice sin tener que
+ * explicarlo.
+ *
+ * Es el respaldo libre de PW Filament, que no se puede usar acá por
+ * licencia (ver public/fonts/LEEME.md). Si algún día se licencia y el
+ * archivo aparece, toma el mando sola: va primero en --font-titulo.
+ */
+const caveat = Caveat({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-manuscrita",
   display: "swap",
 });
 
@@ -39,7 +55,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`h-full ${inter.variable} ${spaceGrotesk.variable} ${oswald.variable}`}>
+    <html lang="es" className={`h-full ${inter.variable} ${spaceGrotesk.variable} ${oswald.variable} ${caveat.variable}`}>
       <head>
         <script
           dangerouslySetInnerHTML={{
