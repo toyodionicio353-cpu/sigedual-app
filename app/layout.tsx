@@ -22,9 +22,8 @@ const spaceGrotesk = Space_Grotesk({
  * aplicación sobre educación y el trazo a mano lo dice sin tener que
  * explicarlo.
  *
- * Es el respaldo libre de PW Filament, que no se puede usar acá por
- * licencia (ver public/fonts/LEEME.md). Si algún día se licencia y el
- * archivo aparece, toma el mando sola: va primero en --font-titulo.
+ * Licencia OFL: se puede usar comercialmente y viaja con el proyecto, así
+ * que no hay nada que instalar aparte.
  */
 const caveat = Caveat({
   subsets: ["latin"],
