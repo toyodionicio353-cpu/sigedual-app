@@ -1,6 +1,29 @@
 @import "tailwindcss";
 
 /*
+ * PW Filament — tipografía de los títulos de pantalla.
+ *
+ * No está en Google Fonts, así que se sirve desde el propio proyecto. El
+ * archivo va en public/fonts/ y NO está en el repositorio: es una fuente
+ * de terceros con licencia propia (gratuita solo para uso personal; para
+ * uso comercial hay que licenciarla con Peax Webdesign). Subirla acá sería
+ * redistribuirla.
+ *
+ * Si el archivo no está, no se rompe nada: el navegador cae en la lista de
+ * respaldo y los títulos se ven como antes. Por eso `font-display: swap`
+ * y una pila de respaldo completa en --font-titulo.
+ */
+@font-face {
+  font-family: "PW Filament";
+  src: url("/fonts/pw-filament.woff2") format("woff2"),
+       url("/fonts/pw-filament.woff") format("woff"),
+       url("/fonts/pw-filament.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
  * Sistema de temas SIGEDUAL (claro / oscuro).
  * Por defecto (sin atributo, o data-theme="dark") se usa el tema oscuro.
  * data-theme="light" en <html> activa el tema claro.
@@ -8,6 +31,13 @@
  * son iguales en ambos temas: solo cambian fondos, bordes y textos.
  */
 :root {
+  /*
+   * Títulos de pantalla: PW Filament, y si no está disponible se cae en la
+   * misma tipografía que se usaba antes. La pila es completa a propósito,
+   * para que la aplicación se vea bien igual aunque falte el archivo.
+   */
+  --font-titulo: "PW Filament", var(--font-display), sans-serif;
+
   /* Oscuro (Premium Dark) — valores por defecto */
   --bg-base: #0f1117;
   --bg-card: #1c1f2b;
@@ -72,8 +102,16 @@
     min-height: 100vh;
   }
 
-  /* Marca y títulos grandes: geométrica en negrita, estilo cartel */
+  /*
+   * Títulos de pantalla. La marca SIGeDUAL NO entra acá: lleva la clase
+   * `.marca`, que la devuelve a la tipografía de siempre (más abajo).
+   */
   h1, h2 {
+    font-family: var(--font-titulo);
+  }
+
+  /* La marca se escribe siempre igual, cambie lo que cambie alrededor. */
+  .marca {
     font-family: var(--font-display), sans-serif;
   }
 }

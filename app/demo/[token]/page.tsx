@@ -155,7 +155,7 @@ export default function DemoPage() {
       <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="w-full max-w-md rounded-2xl p-6 sm:p-10 shadow-2xl">
         <div className="flex items-center gap-3 mb-4">
           <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={40} height={40} className="w-10 h-10 object-contain flex-shrink-0" />
-          <span className="text-lg font-bold tracking-tight">
+          <span className="marca text-lg font-bold tracking-tight">
             <span style={{ color: "var(--text-primary)" }}>SIG</span>
             <span style={{ color: "#C8102E" }}>e</span>
             <span style={{ color: "var(--text-primary)" }}>DUAL</span>

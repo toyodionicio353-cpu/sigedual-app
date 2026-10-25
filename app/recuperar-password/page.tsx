@@ -74,7 +74,7 @@ export default function RecuperarPasswordPage() {
             height={40}
             className="w-10 h-10 object-contain flex-shrink-0"
           />
-          <span className="text-lg font-bold tracking-tight">
+          <span className="marca text-lg font-bold tracking-tight">
             <span style={{ color: "var(--text-primary)" }}>SIG</span>
             <span style={{ color: "#C8102E" }}>e</span>
             <span style={{ color: "var(--text-primary)" }}>DUAL</span>

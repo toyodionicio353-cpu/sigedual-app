@@ -68,7 +68,7 @@ export default function PlanesPage() {
       <header className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={36} height={36} className="w-9 h-9 object-contain flex-shrink-0" />
-          <span className="text-base font-bold tracking-tight">
+          <span className="marca text-base font-bold tracking-tight">
             <span style={{ color: "var(--text-primary)" }}>SIG</span>
             <span style={{ color: "#C8102E" }}>e</span>
             <span style={{ color: "var(--text-primary)" }}>DUAL</span>

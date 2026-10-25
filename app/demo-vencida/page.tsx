@@ -47,7 +47,7 @@ export default function DemoVencidaPage() {
       <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="w-full max-w-lg rounded-2xl p-6 sm:p-10 shadow-2xl">
         <div className="flex items-center gap-3 mb-6">
           <Image src="/logo-icon.png" alt="Logo SIGEDUAL" width={36} height={36} className="w-9 h-9 object-contain flex-shrink-0" />
-          <span className="text-base font-bold tracking-tight">
+          <span className="marca text-base font-bold tracking-tight">
             <span style={{ color: "var(--text-primary)" }}>SIG</span>
             <span style={{ color: "#C8102E" }}>e</span>
             <span style={{ color: "var(--text-primary)" }}>DUAL</span>
