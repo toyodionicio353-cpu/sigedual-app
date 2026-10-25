@@ -1,6 +1,24 @@
 @import "tailwindcss";
 
 /*
+ * PW Filament — tipografía de los títulos de pantalla.
+ *
+ * No está en Google Fonts, así que se sirve desde el propio proyecto. El
+ * archivo que hay en public/fonts/ NO es el original: al original le
+ * faltaban por completo las vocales acentuadas, la ñ y los signos de
+ * apertura, así que un título como "Formación" salía con un cuadro vacío
+ * en medio. Los caracteres que faltaban se compusieron a partir de los
+ * trazos de la propia fuente — ver public/fonts/componer-acentos.py.
+ */
+@font-face {
+  font-family: "PW Filament";
+  src: url("/fonts/pw-filament-es.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
  * Sistema de temas SIGEDUAL (claro / oscuro).
  * Por defecto (sin atributo, o data-theme="dark") se usa el tema oscuro.
  * data-theme="light" en <html> activa el tema claro.
@@ -9,11 +27,11 @@
  */
 :root {
   /*
-   * Título de cada pantalla: manuscrita. El respaldo es la geométrica que
-   * usa el resto de los encabezados, para que un fallo al cargar la
-   * tipografía no deje el título en la de sistema.
+   * Título de cada pantalla. Si PW Filament no carga, el respaldo es la
+   * manuscrita (Caveat) y luego la geométrica: el título nunca cae en la
+   * tipografía del sistema.
    */
-  --font-titulo: var(--font-manuscrita), var(--font-display), sans-serif;
+  --font-titulo: "PW Filament", var(--font-manuscrita), var(--font-display), sans-serif;
 
   /* Oscuro (Premium Dark) — valores por defecto */
   --bg-base: #0f1117;
