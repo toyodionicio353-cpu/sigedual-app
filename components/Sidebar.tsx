@@ -261,9 +261,14 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
           // aparte y no comparte region de repintado con el menu.
           isolation: "isolate",
         }}
-        className={`h-dvh md:h-screen flex flex-col fixed md:static inset-y-0 left-0 z-40 overflow-hidden transition-[width,transform] duration-200 ease-in-out w-64 ${
+        /* El desplazamiento fuera de pantalla es SOLO de móvil (max-md):
+           en escritorio la barra no lleva translate ninguno, para que no
+           se pinte en una capa compositada aparte. Ojo: en Tailwind 4
+           `-translate-x-full` usa la propiedad `translate`, que
+           `transform: none` NO cancela. */
+        className={`h-dvh md:h-screen flex flex-col fixed md:static inset-y-0 left-0 z-40 overflow-hidden transition-[width,translate] duration-200 ease-in-out w-64 ${
           collapsed ? "md:w-16" : "md:w-64"
-        } ${mobileOpen ? "translate-x-0" : "-translate-x-full"} md:transform-none`}
+        } ${mobileOpen ? "" : "max-md:-translate-x-full"}`}
       >
       {/* Logo (funciona como botón para colapsar/expandir o cerrar en móvil) */}
       <div className="relative flex-shrink-0">
