@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { GraduationCap, ChevronRight, Users, CalendarX, Clock } from "lucide-react";
+import { GraduationCap, Users, CalendarX, Clock } from "lucide-react";
+import VerFicha from "@/components/ui/VerFicha";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -172,7 +173,7 @@ export default function MisEstudiantesPage() {
                   </span>
                 )}
               </span>
-              <ChevronRight size={16} style={{ color: "var(--text-muted)" }} className="flex-shrink-0" />
+              <VerFicha />
             </Link>
           );
         })}

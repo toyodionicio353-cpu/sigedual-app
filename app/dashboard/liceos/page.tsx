@@ -384,7 +384,7 @@ export default function LiceosPage() {
                     className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium hover:[border-color:var(--accent)] transition-colors"
                   >
                     <Eye size={13} />
-                    Ver
+                    Ver ficha
                   </Link>
                   <Link
                     href={`/dashboard/liceos/${liceo.id}/editar`}

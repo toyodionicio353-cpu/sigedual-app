@@ -19,7 +19,8 @@ import EstadoVacio from "@/components/listado/EstadoVacio";
 import ContadorResultados from "@/components/listado/ContadorResultados";
 import PaginacionListado from "@/components/listado/PaginacionListado";
 import type { Asignacion, CentroDual, EstadoCentroDual, Especialidad } from "@/types";
-import { Search, ChevronRight, AlertCircle, Building, School, Users2, BadgeCheck, DoorOpen, Handshake } from "lucide-react";
+import { Search, AlertCircle, Building, School, Users2, BadgeCheck, DoorOpen, Handshake } from "lucide-react";
+import VerFicha from "@/components/ui/VerFicha";
 import Select from "@/components/ui/Select";
 
 const PAGE_SIZE = 20;
@@ -328,7 +329,7 @@ export default function CentrosPage() {
           <>
           {/* Tabla — escritorio */}
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden mb-4 hidden md:block">
-            <div style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }} className="grid grid-cols-[2fr_1.2fr_1.6fr_0.8fr_1.4fr_1fr_0.6fr] gap-3 px-5 py-3 text-[11px] font-semibold tracking-wide uppercase">
+            <div style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }} className="grid grid-cols-[2fr_1.2fr_1.6fr_0.8fr_1.4fr_1fr_6.5rem] gap-3 px-5 py-3 text-[11px] font-semibold tracking-wide uppercase">
               <span>Centro</span>
               <span>Ubicación</span>
               <span>Especialidades</span>
@@ -347,7 +348,7 @@ export default function CentrosPage() {
                   key={c.id}
                   href={`/dashboard/centros/${c.id}`}
                   style={{ borderBottom: i < paginaCentros.length - 1 ? "1px solid var(--border)" : "none" }}
-                  className="grid grid-cols-[2fr_1.2fr_1.6fr_0.8fr_1.4fr_1fr_0.6fr] gap-3 px-5 py-4 items-center hover:[background:var(--hover-overlay)] transition-colors"
+                  className="grid grid-cols-[2fr_1.2fr_1.6fr_0.8fr_1.4fr_1fr_6.5rem] gap-3 px-5 py-4 items-center hover:[background:var(--hover-overlay)] transition-colors"
                 >
                   <div className="min-w-0">
                     <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{c.nombre}</p>
@@ -378,7 +379,7 @@ export default function CentrosPage() {
                   <span style={{ color: ESTADO_COLOR[estado], background: ESTADO_COLOR[estado] + "22" }} className="text-xs px-2 py-1 rounded-full text-center w-fit">
                     {ESTADO_LABEL[estado]}
                   </span>
-                  <ChevronRight size={16} style={{ color: "var(--text-muted)" }} className="justify-self-end" />
+                  <VerFicha className="justify-self-end" />
                 </Link>
               );
             })}
@@ -427,7 +428,7 @@ export default function CentrosPage() {
                       </p>
                     )}
                   </div>
-                  <ChevronRight size={18} style={{ color: "var(--text-muted)" }} className="flex-shrink-0" />
+                  <VerFicha />
                 </Link>
               );
             })}
@@ -470,9 +471,7 @@ export default function CentrosPage() {
                           : `${especialidadesNombres.slice(0, 2).join(" · ")} +${especialidadesNombres.length - 2} más`}
                       </p>
                     </div>
-                    <span style={{ color: "var(--accent-light)" }} className="flex items-center gap-1 text-xs font-semibold mt-1">
-                      Ver <ChevronRight size={13} />
-                    </span>
+                    <VerFicha variante="enlace" className="mt-1" />
                   </Link>
                 );
               })}
