@@ -18,7 +18,8 @@ import EstadoVacio from "@/components/listado/EstadoVacio";
 import EstadoError from "@/components/listado/EstadoError";
 import ContadorResultados from "@/components/listado/ContadorResultados";
 import type { Asignacion, CentroDual, Especialidad, MaestroGuia } from "@/types";
-import { AlertCircle, ChevronRight, Search, UsersRound, School, BadgeCheck, Handshake, Building2 } from "lucide-react";
+import { AlertCircle, Search, UsersRound, School, BadgeCheck, Handshake, Building2 } from "lucide-react";
+import VerFicha from "@/components/ui/VerFicha";
 import Select from "@/components/ui/Select";
 
 const ESTADO_LABEL: Record<string, string> = { activo: "Activo", inactivo: "Inactivo" };
@@ -335,7 +336,7 @@ export default function ListaMaestrosGuiaPage() {
           <>
           {/* Tabla — escritorio */}
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden mb-4 hidden md:block">
-            <div style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }} className="grid grid-cols-[1.8fr_1.4fr_1.3fr_1.4fr_1fr_1.1fr_0.9fr_0.6fr] gap-3 px-5 py-3 text-[11px] font-semibold tracking-wide uppercase">
+            <div style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }} className="grid grid-cols-[1.8fr_1.4fr_1.3fr_1.4fr_1fr_1.1fr_0.9fr_6.5rem] gap-3 px-5 py-3 text-[11px] font-semibold tracking-wide uppercase">
               <span>Maestro guía</span>
               <span>Centro dual</span>
               <span>Cargo</span>
@@ -356,7 +357,7 @@ export default function ListaMaestrosGuiaPage() {
                   key={m.id}
                   href={`/dashboard/centros/maestros/${m.id}`}
                   style={{ borderBottom: i < ordenados.length - 1 ? "1px solid var(--border)" : "none" }}
-                  className="grid grid-cols-[1.8fr_1.4fr_1.3fr_1.4fr_1fr_1.1fr_0.9fr_0.6fr] gap-3 px-5 py-4 items-center hover:[background:var(--hover-overlay)] transition-colors"
+                  className="grid grid-cols-[1.8fr_1.4fr_1.3fr_1.4fr_1fr_1.1fr_0.9fr_6.5rem] gap-3 px-5 py-4 items-center hover:[background:var(--hover-overlay)] transition-colors"
                 >
                   <div className="min-w-0">
                     <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{m.nombres} {m.apellidoPaterno} {m.apellidoMaterno}</p>
@@ -386,7 +387,7 @@ export default function ListaMaestrosGuiaPage() {
                   <span style={{ color: ESTADO_COLOR[m.estado], background: ESTADO_COLOR[m.estado] + "22" }} className="text-xs px-2 py-1 rounded-full text-center w-fit">
                     {ESTADO_LABEL[m.estado]}
                   </span>
-                  <ChevronRight size={16} style={{ color: "var(--text-muted)" }} className="justify-self-end" />
+                  <VerFicha className="justify-self-end" />
                 </Link>
               );
             })}
@@ -433,7 +434,7 @@ export default function ListaMaestrosGuiaPage() {
                       </p>
                     )}
                   </div>
-                  <ChevronRight size={18} style={{ color: "var(--text-muted)" }} className="flex-shrink-0" />
+                  <VerFicha />
                 </Link>
               );
             })}
@@ -480,9 +481,7 @@ export default function ListaMaestrosGuiaPage() {
                           : `${especialidadesNombres.slice(0, 2).join(" · ")} +${especialidadesNombres.length - 2}`}
                       </p>
                     </div>
-                    <span style={{ color: "var(--accent-light)" }} className="flex items-center gap-1 text-xs font-semibold mt-1">
-                      Ver <ChevronRight size={13} />
-                    </span>
+                    <VerFicha variante="enlace" className="mt-1" />
                   </Link>
                 );
               })}

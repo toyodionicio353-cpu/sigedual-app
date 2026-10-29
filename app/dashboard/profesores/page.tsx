@@ -18,7 +18,7 @@ import PaginacionListado from "@/components/listado/PaginacionListado";
 import Select from "@/components/ui/Select";
 import type { Asignacion, Usuario } from "@/types";
 import {
-  Search, ChevronRight, MoreVertical,
+  Search, MoreVertical,
   Eye, Pencil, Users, ClipboardCheck, MapPin, Power, ClipboardList, School,
   BadgeCheck, Handshake, GraduationCap,
 } from "lucide-react";
@@ -436,7 +436,7 @@ export default function ProfesoresPage() {
                     <p style={{ color: "var(--text-secondary)" }} className="text-xs">{estudiantesAsignadosDe(p.uid, asignaciones)} estudiante(s) asignado(s)</p>
                   </div>
                   <Link href={`/dashboard/profesores/${p.uid}`} style={{ color: "var(--accent-light)" }} className="flex items-center gap-1 text-xs font-semibold mt-1">
-                    Ver ficha <ChevronRight size={13} />
+                    Ver ficha
                   </Link>
                 </div>
               ))}
