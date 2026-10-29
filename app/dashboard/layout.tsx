@@ -24,65 +24,52 @@ const RUTAS_PERMITIDAS_DEMO_VENCIDA = [
   "/dashboard/administracion/usuario",
 ];
 
-const TITULOS: Record<string, string> = {
-  "/dashboard": "Inicio",
-  "/dashboard/estudiantes": "Estudiantes",
-  "/dashboard/estudiantes/nuevo": "Agregar Estudiante",
-  "/dashboard/estudiantes/asignaciones": "Asignaciones",
-  "/dashboard/estudiantes/asignaciones/nueva": "Nueva asignación",
-  "/dashboard/estudiantes/historial": "Historial",
-  "/dashboard/centros": "Centros Duales",
-  "/dashboard/centros/nuevo": "Agregar Centro",
-  "/dashboard/centros/maestros": "Maestros Guía",
-  "/dashboard/centros/maestros/nuevo": "Agregar maestro guía",
-  "/dashboard/profesores": "Profesores",
-  "/dashboard/profesores/nuevo": "Agregar profesor",
-  "/dashboard/profesores/asignaciones": "Listado de asignaciones",
-  "/dashboard/especialidades": "Especialidades",
-  "/dashboard/especialidades/cursos": "Cursos",
-  "/dashboard/documentos/convenios": "Convenios",
-  "/dashboard/documentos/evaluaciones": "Evaluaciones",
-  "/dashboard/documentos/documentos": "Documentos",
-  "/dashboard/mensajes": "Canal General",
-  "/dashboard/mensajes/directos": "Mensajes Directos",
-  "/dashboard/mensajes/grupos": "Grupos",
-  "/dashboard/usuarios": "Usuarios",
-  "/dashboard/liceos": "Liceos",
-  "/dashboard/administracion/datos-liceo": "Datos del liceo",
-  "/dashboard/administracion/seguridad": "Seguridad",
-  "/dashboard/administracion/usuario": "Usuario",
-  "/dashboard/administracion/configuracion": "Configuración",
-  "/dashboard/administracion/privacidad": "Políticas",
-  "/dashboard/administracion/aviso-legal": "Aviso legal",
-  "/dashboard/administracion/tickets": "Tickets",
-  "/dashboard/administracion/plan": "Plan SIGEDUAL",
-  "/dashboard/soporte": "Soporte",
-  "/dashboard/soporte/tickets": "Mis tickets",
-  "/dashboard/soporte/tickets/nuevo": "Crear ticket",
-  "/dashboard/visitas": "Visitas",
-  "/dashboard/visitas/nueva": "Registrar visita",
-  "/dashboard/notificaciones": "Notificaciones",
-  "/dashboard/calendario": "Calendario",
+const TITULOS: Record<string, ClaveTraduccion> = {
+  "/dashboard": "titulo.inicio",
+  "/dashboard/estudiantes": "titulo.estudiantes",
+  "/dashboard/estudiantes/nuevo": "titulo.estudianteNuevo",
+  "/dashboard/estudiantes/asignaciones": "titulo.asignaciones",
+  "/dashboard/estudiantes/asignaciones/nueva": "titulo.asignacionNueva",
+  "/dashboard/estudiantes/historial": "titulo.historial",
+  "/dashboard/centros": "titulo.centros",
+  "/dashboard/centros/nuevo": "titulo.centroNuevo",
+  "/dashboard/centros/estudiantes": "titulo.misEstudiantes",
+  "/dashboard/centros/maestros": "titulo.maestros",
+  "/dashboard/centros/maestros/nuevo": "titulo.maestroNuevo",
+  "/dashboard/profesores": "titulo.profesores",
+  "/dashboard/profesores/nuevo": "titulo.profesorNuevo",
+  "/dashboard/profesores/asignaciones": "titulo.profesorAsignaciones",
+  "/dashboard/especialidades": "titulo.especialidades",
+  "/dashboard/especialidades/cursos": "titulo.cursos",
+  "/dashboard/documentos/convenios": "titulo.convenios",
+  "/dashboard/documentos/evaluaciones": "titulo.evaluaciones",
+  "/dashboard/documentos/documentos": "titulo.documentos",
+  "/dashboard/mensajes": "titulo.mensajes",
+  "/dashboard/mensajes/directos": "titulo.mensajesDirectos",
+  "/dashboard/mensajes/grupos": "titulo.grupos",
+  "/dashboard/usuarios": "titulo.usuarios",
+  "/dashboard/liceos": "titulo.liceos",
+  "/dashboard/administracion/datos-liceo": "titulo.datosLiceo",
+  "/dashboard/administracion/seguridad": "titulo.seguridad",
+  "/dashboard/administracion/usuario": "titulo.usuario",
+  "/dashboard/administracion/configuracion": "titulo.configuracion",
+  "/dashboard/administracion/privacidad": "titulo.privacidad",
+  "/dashboard/administracion/aviso-legal": "titulo.avisoLegal",
+  "/dashboard/administracion/tickets": "titulo.tickets",
+  "/dashboard/administracion/plan": "titulo.plan",
+  "/dashboard/administracion/novedades": "titulo.novedades",
+  "/dashboard/soporte": "titulo.soporte",
+  "/dashboard/soporte/tickets": "titulo.misTickets",
+  "/dashboard/soporte/tickets/nuevo": "titulo.ticketNuevo",
+  "/dashboard/visitas": "titulo.visitas",
+  "/dashboard/visitas/nueva": "titulo.visitaNueva",
+  "/dashboard/notificaciones": "titulo.notificaciones",
+  "/dashboard/calendario": "titulo.calendario",
+  "/dashboard/estudiantes/promocion": "titulo.promocion",
+  "/dashboard/especialidades/nueva": "titulo.especialidadNueva",
+  "/dashboard/liceos/nuevo": "titulo.liceoNuevo",
 };
 
-// Solo se traduce el título del encabezado para las rutas que ya tienen una
-// clave en el diccionario de i18n (ver lib/preferencias/i18n.ts). El resto
-// de las páginas conserva su título en español hasta que se traduzcan.
-const TITULOS_CLAVE: Record<string, ClaveTraduccion> = {
-  "/dashboard": "nav.inicio",
-  "/dashboard/estudiantes": "nav.estudiantes",
-  "/dashboard/centros": "nav.centros",
-  "/dashboard/profesores": "nav.profesores",
-  "/dashboard/especialidades": "nav.especialidades",
-  "/dashboard/mensajes": "nav.mensajes",
-  "/dashboard/usuarios": "nav.usuarios",
-  "/dashboard/liceos": "nav.liceos",
-  "/dashboard/administracion/datos-liceo": "nav.datosLiceo",
-  "/dashboard/administracion/seguridad": "nav.seguridad",
-  "/dashboard/administracion/usuario": "nav.usuario",
-  "/dashboard/administracion/configuracion": "nav.configuracion",
-  "/dashboard/administracion/privacidad": "nav.privacidad",
-};
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, liceoActivo, salirDelLiceo } = useAuth();
@@ -154,8 +141,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  const claveTitulo = TITULOS_CLAVE[pathname];
-  const titulo = claveTitulo ? t(claveTitulo) : (TITULOS[pathname] ?? "Panel");
+  // Toda ruta del mapa tiene clave; las que no estén (fichas con id) caen
+  // en "Panel" / "Dashboard", igual que antes.
+  const clave = TITULOS[pathname];
+  const titulo = clave ? t(clave) : t("titulo.panel");
 
   function salir() {
     salirDelLiceo();
