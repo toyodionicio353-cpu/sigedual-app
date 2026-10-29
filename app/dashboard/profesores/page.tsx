@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAdmin";
@@ -18,8 +18,7 @@ import PaginacionListado from "@/components/listado/PaginacionListado";
 import Select from "@/components/ui/Select";
 import type { Asignacion, Usuario } from "@/types";
 import {
-  Search, MoreVertical,
-  Eye, Pencil, Users, ClipboardCheck, MapPin, Power, ClipboardList, School,
+  Search, ClipboardList, School,
   BadgeCheck, Handshake, GraduationCap,
 } from "lucide-react";
 import VerFicha from "@/components/ui/VerFicha";
@@ -65,8 +64,6 @@ export default function ProfesoresPage() {
   const [orden, setOrden] = useState("recomendado");
   const [vista, setVista] = useVistaListado("profesores");
   const [pagina, setPagina] = useState(1);
-  const [menuAbierto, setMenuAbierto] = useState<string | null>(null);
-  const [actualizandoUid, setActualizandoUid] = useState<string | null>(null);
 
   const tieneAccesoGlobal = usuario?.rol === "desarrollador" || usuario?.rol === "coordinador" || usuario?.rol === "director";
   const puedeGestionar = usuario?.rol === "desarrollador";
@@ -175,74 +172,10 @@ export default function ProfesoresPage() {
     };
   }, [profesores, asignaciones, especialidadesDisponibles]);
 
-  async function toggleActivo(p: Usuario) {
-    if (actualizandoUid) return;
-    setActualizandoUid(p.uid);
-    setMenuAbierto(null);
-    try {
-      await updateDoc(doc(db, "usuarios", p.uid), { activo: !p.activo });
-      setProfesores((prev) => prev.map((x) => (x.uid === p.uid ? { ...x, activo: !x.activo } : x)));
-    } finally {
-      setActualizandoUid(null);
-    }
-  }
-
   if (usuario && !tieneAccesoGlobal) {
     return (
       <div className="p-4 md:p-8">
         <p style={{ color: "var(--danger)" }} className="text-sm">Acceso denegado.</p>
-      </div>
-    );
-  }
-
-  function MenuAcciones({ p }: { p: Usuario }) {
-    const abierto = menuAbierto === p.uid;
-    return (
-      <div className="relative justify-self-end" onClick={(e) => e.stopPropagation()}>
-        <button
-          onClick={() => setMenuAbierto(abierto ? null : p.uid)}
-          style={{ color: "var(--text-muted)" }}
-          className="p-1.5 rounded-lg hover:[background:var(--hover-overlay)] transition-colors"
-        >
-          <MoreVertical size={16} />
-        </button>
-        {abierto && (
-          <>
-            <div className="fixed inset-0 z-30" onClick={() => setMenuAbierto(null)} />
-            <div
-              style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }}
-              className="absolute right-0 top-full mt-1 w-56 rounded-xl shadow-2xl overflow-hidden z-40 py-1"
-            >
-              <Link href={`/dashboard/profesores/${p.uid}`} onClick={() => setMenuAbierto(null)} style={{ color: "var(--text-primary)" }} className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:[background:var(--hover-overlay)] transition-colors">
-                <Eye size={14} /> Ver ficha
-              </Link>
-              {puedeGestionar && (
-                <Link href={`/dashboard/profesores/${p.uid}/editar`} onClick={() => setMenuAbierto(null)} style={{ color: "var(--text-primary)" }} className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:[background:var(--hover-overlay)] transition-colors">
-                  <Pencil size={14} /> Editar
-                </Link>
-              )}
-              <Link href={`/dashboard/profesores/${p.uid}#estudiantes`} onClick={() => setMenuAbierto(null)} style={{ color: "var(--text-primary)" }} className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:[background:var(--hover-overlay)] transition-colors">
-                <Users size={14} /> Ver estudiantes asignados
-              </Link>
-              <Link href={`/dashboard/profesores/${p.uid}#visitas`} onClick={() => setMenuAbierto(null)} style={{ color: "var(--text-primary)" }} className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:[background:var(--hover-overlay)] transition-colors">
-                <MapPin size={14} /> Ver visitas
-              </Link>
-              <Link href={`/dashboard/profesores/${p.uid}#evaluaciones`} onClick={() => setMenuAbierto(null)} style={{ color: "var(--text-primary)" }} className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:[background:var(--hover-overlay)] transition-colors">
-                <ClipboardCheck size={14} /> Ver evaluaciones
-              </Link>
-              {puedeGestionar && (
-                <button
-                  onClick={() => toggleActivo(p)}
-                  disabled={actualizandoUid === p.uid}
-                  style={{ color: p.activo ? "var(--danger)" : "var(--success)", borderTop: "1px solid var(--border)" }}
-                  className="flex items-center gap-2.5 px-4 py-2.5 text-sm w-full text-left hover:[background:var(--hover-overlay)] transition-colors disabled:opacity-50"
-                >
-                  <Power size={14} /> {p.activo ? "Desactivar" : "Activar"}
-                </button>
-              )}
-            </div>
-          </>
-        )}
       </div>
     );
   }
@@ -352,7 +285,7 @@ export default function ProfesoresPage() {
           <>
           {/* Tabla — escritorio */}
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden mb-4 hidden md:block overflow-x-auto">
-            <div style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }} className="grid grid-cols-[1.8fr_1fr_1.2fr_1.6fr_1fr_0.9fr_9rem] gap-3 px-5 py-3 text-[11px] font-semibold tracking-wide uppercase min-w-[980px]">
+            <div style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }} className="grid grid-cols-[1.8fr_1fr_1.2fr_1.6fr_1fr_0.9fr_6.5rem] gap-3 px-5 py-3 text-[11px] font-semibold tracking-wide uppercase min-w-[920px]">
               <span>Profesor supervisor</span>
               <span>RUT</span>
               <span>Especialidad</span>
@@ -365,7 +298,7 @@ export default function ProfesoresPage() {
               <div
                 key={p.uid}
                 style={{ borderBottom: i < paginaProfesores.length - 1 ? "1px solid var(--border)" : "none" }}
-                className="grid grid-cols-[1.8fr_1fr_1.2fr_1.6fr_1fr_0.9fr_9rem] gap-3 px-5 py-4 items-center hover:[background:var(--hover-overlay)] transition-colors min-w-[980px]"
+                className="grid grid-cols-[1.8fr_1fr_1.2fr_1.6fr_1fr_0.9fr_6.5rem] gap-3 px-5 py-4 items-center hover:[background:var(--hover-overlay)] transition-colors min-w-[920px]"
               >
                 <Link href={`/dashboard/profesores/${p.uid}`} className="min-w-0">
                   <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{p.nombre}</p>
@@ -385,10 +318,7 @@ export default function ProfesoresPage() {
                 {/* El boton y el menu conviven: "Ver ficha" es lo que se
                     hace casi siempre, pero editar y desactivar siguen
                     estando a un clic. */}
-                <div className="flex items-center gap-1.5 justify-end">
-                  <VerFicha href={`/dashboard/profesores/${p.uid}`} />
-                  <MenuAcciones p={p} />
-                </div>
+                <VerFicha href={`/dashboard/profesores/${p.uid}`} className="justify-self-end" />
               </div>
             ))}
           </div>
@@ -402,12 +332,9 @@ export default function ProfesoresPage() {
                     <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{p.nombre}</p>
                     <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5 truncate">{p.especialidad || "Sin especialidad"}</p>
                   </Link>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <span style={{ color: ESTADO_COLOR[p.activo ? "activo" : "inactivo"], background: ESTADO_COLOR[p.activo ? "activo" : "inactivo"] + "22" }} className="text-xs px-2 py-0.5 rounded-full">
-                      {ESTADO_LABEL[p.activo ? "activo" : "inactivo"]}
-                    </span>
-                    <MenuAcciones p={p} />
-                  </div>
+                  <span style={{ color: ESTADO_COLOR[p.activo ? "activo" : "inactivo"], background: ESTADO_COLOR[p.activo ? "activo" : "inactivo"] + "22" }} className="text-xs px-2 py-0.5 rounded-full flex-shrink-0">
+                    {ESTADO_LABEL[p.activo ? "activo" : "inactivo"]}
+                  </span>
                 </div>
                 <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-2 truncate">{p.email}</p>
                 <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-1">
@@ -431,12 +358,9 @@ export default function ProfesoresPage() {
                         </p>
                       )}
                     </Link>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <span style={{ color: ESTADO_COLOR[p.activo ? "activo" : "inactivo"], background: ESTADO_COLOR[p.activo ? "activo" : "inactivo"] + "22" }} className="px-3 py-1 rounded-full text-xs font-medium">
-                        {ESTADO_LABEL[p.activo ? "activo" : "inactivo"]}
-                      </span>
-                      <MenuAcciones p={p} />
-                    </div>
+                    <span style={{ color: ESTADO_COLOR[p.activo ? "activo" : "inactivo"], background: ESTADO_COLOR[p.activo ? "activo" : "inactivo"] + "22" }} className="px-3 py-1 rounded-full text-xs font-medium flex-shrink-0">
+                      {ESTADO_LABEL[p.activo ? "activo" : "inactivo"]}
+                    </span>
                   </div>
                   <div style={{ borderTop: "1px solid var(--border)" }} className="pt-3 flex flex-col gap-1">
                     <p style={{ color: "var(--text-secondary)" }} className="text-xs truncate">{p.especialidad || "Sin especialidad"}</p>
