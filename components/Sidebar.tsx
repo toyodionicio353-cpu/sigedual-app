@@ -169,6 +169,18 @@ const CLAVE_SUB: Record<string, ClaveTraduccion> = {
   "/dashboard/administracion/privacidad": "nav.privacidad",
 };
 
+/**
+ * ¿Esta ruta pertenece a este grupo? Se compara por prefijo para que una
+ * subpágina (la ficha de un estudiante, por ejemplo) siga marcando su
+ * sección, no solo la página exacta del menú.
+ */
+function grupoDeLaRuta(menu: NavGroup, pathname: string): boolean {
+  if (menu.href) return pathname === menu.href;
+  return menu.sub.some(
+    (s) => s.href === pathname || (s.href !== "/dashboard" && pathname.startsWith(s.href))
+  );
+}
+
 interface SidebarProps {
   collapsed: boolean;
   setCollapsed: (v: boolean | ((prev: boolean) => boolean)) => void;
@@ -182,6 +194,19 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
   const pathname = usePathname();
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState<string | null>("inicio");
+
+  /**
+   * El grupo desplegado sigue a la página. Antes era estado suelto: al
+   * entrar a Profesores desde Estudiantes, el submenú de Estudiantes se
+   * quedaba abierto, y el menú mostraba dónde habías estado en vez de
+   * dónde estás. Si la ruta no pertenece a ningún grupo (Notificaciones,
+   * Calendario) no se toca nada, para no cerrar lo que el usuario abrió a
+   * mano.
+   */
+  useEffect(() => {
+    const grupo = MENUS.find((m) => !m.href && grupoDeLaRuta(m, pathname));
+    if (grupo) setOpenMenu(grupo.id);
+  }, [pathname]);
   const { noLeidos: mensajesNoLeidos } = useConversaciones();
 
   function etiquetaGrupo(menu: NavGroup): string {
@@ -238,7 +263,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
         }}
         className={`h-dvh md:h-screen flex flex-col fixed md:static inset-y-0 left-0 z-40 overflow-hidden transition-[width,transform] duration-200 ease-in-out w-64 ${
           collapsed ? "md:w-16" : "md:w-64"
-        } ${mobileOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+        } ${mobileOpen ? "translate-x-0" : "-translate-x-full"} md:transform-none`}
       >
       {/* Logo (funciona como botón para colapsar/expandir o cerrar en móvil) */}
       <div className="relative flex-shrink-0">
@@ -282,9 +307,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
         {visibleMenus.map((menu) => {
           const isOpen = openMenu === menu.id && !collapsed;
           const visibleSub = menu.sub.filter((s) => usuario && s.roles.includes(usuario.rol));
-          const isActive = menu.href
-            ? pathname === menu.href
-            : visibleSub.some((s) => s.href === pathname || (s.href !== "/dashboard" && pathname.startsWith(s.href)));
+          const isActive = grupoDeLaRuta(menu, pathname);
 
           if (menu.href) {
             // Mensajes lleva la cuenta de hilos sin leer, en vivo (ver
@@ -298,7 +321,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 onClick={onCloseMobile}
                 title={collapsed ? etiquetaGrupo(menu) : undefined}
                 style={{
-                  background: isActive ? "var(--accent)" : "transparent",
+                  background: isActive ? "var(--accent)" : undefined,
                   borderRadius: collapsed ? 12 : 9,
                   color: isActive ? "var(--text-on-accent)" : "var(--text-secondary)",
                 }}
@@ -353,7 +376,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 }}
                 title={collapsed ? etiquetaGrupo(menu) : undefined}
                 style={{
-                  background: isActive ? "var(--accent)" : "transparent",
+                  background: isActive ? "var(--accent)" : undefined,
                   borderRadius: collapsed ? 12 : 9,
                   width: "100%",
                   color: isActive ? "var(--text-on-accent)" : "var(--text-secondary)",
@@ -410,7 +433,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                           href={sub.href}
                           onClick={onCloseMobile}
                           style={{
-                            background: subActive ? "var(--accent)" : "transparent",
+                            background: subActive ? "var(--accent)" : undefined,
                             color: subActive ? "var(--text-on-accent)" : "var(--text-secondary)",
                             borderRadius: 7,
                           }}
