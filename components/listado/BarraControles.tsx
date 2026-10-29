@@ -1,4 +1,6 @@
+"use client";
 import { Search, SlidersHorizontal, LayoutList, LayoutGrid } from "lucide-react";
+import { usePreferencias } from "@/lib/preferencias/context";
 import Select, { type OpcionSelect } from "@/components/ui/Select";
 import type { VistaListado } from "@/lib/preferencias/useVistaListado";
 
@@ -23,6 +25,7 @@ export default function BarraControles({
   vista: VistaListado;
   onVista: (v: VistaListado) => void;
 }) {
+  const { t } = usePreferencias();
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-3">
       <div className="relative flex-1">
@@ -46,7 +49,7 @@ export default function BarraControles({
         className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors flex-shrink-0"
       >
         <SlidersHorizontal size={16} />
-        Filtros
+        {t("lista.filtros")}
         {cantidadFiltrosActivos > 0 && (
           <span style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="w-5 h-5 rounded-full text-white text-xs flex items-center justify-center">
             {cantidadFiltrosActivos}
@@ -55,13 +58,13 @@ export default function BarraControles({
       </button>
 
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        <Select value={orden} onChange={onOrden} ariaLabel="Ordenar" className="w-44" opciones={opcionesOrden} />
+        <Select value={orden} onChange={onOrden} ariaLabel={t("lista.ordenar")} className="w-44" opciones={opcionesOrden} />
       </div>
 
       <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }} className="flex items-center gap-1 p-1 rounded-xl flex-shrink-0">
         <button
           onClick={() => onVista("lista")}
-          title="Vista de lista"
+          title={t("lista.vistaLista")}
           style={{ background: vista === "lista" ? "var(--accent)" : "transparent", color: vista === "lista" ? "#fff" : "var(--text-muted)" }}
           className="p-2 rounded-lg transition-colors"
         >
@@ -69,7 +72,7 @@ export default function BarraControles({
         </button>
         <button
           onClick={() => onVista("tarjetas")}
-          title="Vista de tarjetas"
+          title={t("lista.vistaTarjetas")}
           style={{ background: vista === "tarjetas" ? "var(--accent)" : "transparent", color: vista === "tarjetas" ? "#fff" : "var(--text-muted)" }}
           className="p-2 rounded-lg transition-colors"
         >

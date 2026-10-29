@@ -1,4 +1,6 @@
+"use client";
 import { X } from "lucide-react";
+import { usePreferencias } from "@/lib/preferencias/context";
 
 export interface ChipFiltro {
   key: string;
@@ -17,6 +19,7 @@ export default function ChipsFiltros({
   chips: ChipFiltro[];
   onLimpiarTodo: () => void;
 }) {
+  const { t } = usePreferencias();
   const hayFiltrosActivos = chips.length > 0 || busqueda.trim().length > 0;
   if (!hayFiltrosActivos) return <div className="mb-6" />;
 
@@ -35,7 +38,7 @@ export default function ChipsFiltros({
         </span>
       ))}
       <button onClick={onLimpiarTodo} style={{ color: "var(--accent-light)" }} className="text-xs font-semibold hover:underline">
-        Limpiar filtros
+        {t("lista.limpiarFiltros")}
       </button>
     </div>
   );
