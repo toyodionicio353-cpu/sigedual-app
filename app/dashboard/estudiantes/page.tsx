@@ -19,9 +19,10 @@ import ContadorResultados from "@/components/listado/ContadorResultados";
 import PaginacionListado from "@/components/listado/PaginacionListado";
 import type { Estudiante, Especialidad } from "@/types";
 import {
-  Search, Eye, UserPlus, Users2, BadgeCheck, Handshake,
+  Search, UserPlus, Users2, BadgeCheck, Handshake,
   AlertTriangle, GraduationCap, ClipboardList, School,
 } from "lucide-react";
+import VerFicha from "@/components/ui/VerFicha";
 
 const NIVELES = ["1° Medio", "2° Medio", "3° Medio", "4° Medio"];
 const ESTADOS: Estudiante["estado"][] = ["activo", "inactivo", "egresado", "retirado"];
@@ -479,14 +480,7 @@ export default function EstudiantesPage() {
                       {e.estado}
                     </span>
                     <span style={{ color: "var(--text-secondary)" }} className="text-xs hidden md:block w-12">{anioDe(e)}</span>
-                    <Link
-                      href={`/dashboard/estudiantes/${e.id}`}
-                      style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--accent-light)" }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--accent)] transition-colors flex-shrink-0"
-                    >
-                      <Eye size={13} />
-                      Ver ficha
-                    </Link>
+                    <VerFicha href={`/dashboard/estudiantes/${e.id}`} />
                   </div>
                 </div>
               ))}
@@ -517,14 +511,7 @@ export default function EstudiantesPage() {
                     <span style={{ color: ESTADO_COLOR[e.estado], background: ESTADO_COLOR[e.estado] + "22" }} className="px-3 py-1 rounded-full text-xs font-medium capitalize">
                       {e.estado}
                     </span>
-                    <Link
-                      href={`/dashboard/estudiantes/${e.id}`}
-                      style={{ color: "var(--accent-light)" }}
-                      className="flex items-center gap-1 text-xs font-semibold hover:underline"
-                    >
-                      <Eye size={13} />
-                      Ver ficha
-                    </Link>
+                    <VerFicha href={`/dashboard/estudiantes/${e.id}`} variante="enlace" />
                   </div>
                 </div>
               ))}

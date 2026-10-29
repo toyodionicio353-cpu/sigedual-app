@@ -8,7 +8,8 @@ import { useModoGlobalAdmin, useCatalogoLiceos } from "@/lib/liceos/modoGlobalAd
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import type { Asignacion, CentroDual, EstadoAsignacion, Estudiante } from "@/types";
-import { CalendarCheck, Search, Eye, Handshake, CheckCircle2, Clock, School } from "lucide-react";
+import { CalendarCheck, Search, Handshake, CheckCircle2, Clock, School } from "lucide-react";
+import VerFicha from "@/components/ui/VerFicha";
 import TituloPagina from "@/components/TituloPagina";
 import Select from "@/components/ui/Select";
 
@@ -238,14 +239,7 @@ export default function AsignacionesPage() {
                   <span style={{ color: ESTADO_COLOR[a.estado], background: ESTADO_COLOR[a.estado] + "22" }} className="px-3 py-1 rounded-full text-xs font-medium">
                     {ESTADO_LABEL[a.estado]}
                   </span>
-                  <Link
-                    href={`/dashboard/estudiantes/asignaciones/${a.id}`}
-                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--accent-light)" }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--accent)] transition-colors flex-shrink-0"
-                  >
-                    <Eye size={13} />
-                    Ver ficha
-                  </Link>
+                  <VerFicha href={`/dashboard/estudiantes/asignaciones/${a.id}`} />
                 </div>
               </div>
             );
