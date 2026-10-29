@@ -22,6 +22,7 @@ import {
   Eye, Pencil, Users, ClipboardCheck, MapPin, Power, ClipboardList, School,
   BadgeCheck, Handshake, GraduationCap,
 } from "lucide-react";
+import VerFicha from "@/components/ui/VerFicha";
 
 const PAGE_SIZE = 20;
 
@@ -351,7 +352,7 @@ export default function ProfesoresPage() {
           <>
           {/* Tabla — escritorio */}
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl overflow-hidden mb-4 hidden md:block overflow-x-auto">
-            <div style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }} className="grid grid-cols-[1.8fr_1fr_1.2fr_1.6fr_1fr_0.9fr_0.5fr] gap-3 px-5 py-3 text-[11px] font-semibold tracking-wide uppercase min-w-[860px]">
+            <div style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }} className="grid grid-cols-[1.8fr_1fr_1.2fr_1.6fr_1fr_0.9fr_9rem] gap-3 px-5 py-3 text-[11px] font-semibold tracking-wide uppercase min-w-[980px]">
               <span>Profesor supervisor</span>
               <span>RUT</span>
               <span>Especialidad</span>
@@ -364,7 +365,7 @@ export default function ProfesoresPage() {
               <div
                 key={p.uid}
                 style={{ borderBottom: i < paginaProfesores.length - 1 ? "1px solid var(--border)" : "none" }}
-                className="grid grid-cols-[1.8fr_1fr_1.2fr_1.6fr_1fr_0.9fr_0.5fr] gap-3 px-5 py-4 items-center hover:[background:var(--hover-overlay)] transition-colors min-w-[860px]"
+                className="grid grid-cols-[1.8fr_1fr_1.2fr_1.6fr_1fr_0.9fr_9rem] gap-3 px-5 py-4 items-center hover:[background:var(--hover-overlay)] transition-colors min-w-[980px]"
               >
                 <Link href={`/dashboard/profesores/${p.uid}`} className="min-w-0">
                   <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate">{p.nombre}</p>
@@ -381,7 +382,13 @@ export default function ProfesoresPage() {
                 <span style={{ color: ESTADO_COLOR[p.activo ? "activo" : "inactivo"], background: ESTADO_COLOR[p.activo ? "activo" : "inactivo"] + "22" }} className="text-xs px-2 py-1 rounded-full text-center w-fit">
                   {ESTADO_LABEL[p.activo ? "activo" : "inactivo"]}
                 </span>
-                <MenuAcciones p={p} />
+                {/* El boton y el menu conviven: "Ver ficha" es lo que se
+                    hace casi siempre, pero editar y desactivar siguen
+                    estando a un clic. */}
+                <div className="flex items-center gap-1.5 justify-end">
+                  <VerFicha href={`/dashboard/profesores/${p.uid}`} />
+                  <MenuAcciones p={p} />
+                </div>
               </div>
             ))}
           </div>
@@ -406,6 +413,7 @@ export default function ProfesoresPage() {
                 <p style={{ color: "var(--text-secondary)" }} className="text-xs mt-1">
                   {p.run ? `RUT ${p.run} · ` : ""}{estudiantesAsignadosDe(p.uid, asignaciones)} estudiante(s) asignado(s)
                 </p>
+                <VerFicha href={`/dashboard/profesores/${p.uid}`} className="mt-3" />
               </div>
             ))}
           </div>
@@ -435,9 +443,7 @@ export default function ProfesoresPage() {
                     <p style={{ color: "var(--text-secondary)" }} className="text-xs truncate">{p.email}</p>
                     <p style={{ color: "var(--text-secondary)" }} className="text-xs">{estudiantesAsignadosDe(p.uid, asignaciones)} estudiante(s) asignado(s)</p>
                   </div>
-                  <Link href={`/dashboard/profesores/${p.uid}`} style={{ color: "var(--accent-light)" }} className="flex items-center gap-1 text-xs font-semibold mt-1">
-                    Ver ficha
-                  </Link>
+                  <VerFicha href={`/dashboard/profesores/${p.uid}`} variante="enlace" className="mt-1" />
                 </div>
               ))}
             </div>
