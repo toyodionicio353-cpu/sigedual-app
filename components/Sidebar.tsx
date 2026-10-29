@@ -232,8 +232,11 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
         style={{
           background: "var(--sidebar-bg)",
           flexShrink: 0,
+          // Contexto de apilado propio: el panel de contenido se pinta
+          // aparte y no comparte region de repintado con el menu.
+          isolation: "isolate",
         }}
-        className={`h-dvh md:h-screen flex flex-col fixed md:static inset-y-0 left-0 z-40 overflow-hidden transition-all duration-200 ease-in-out w-64 ${
+        className={`h-dvh md:h-screen flex flex-col fixed md:static inset-y-0 left-0 z-40 overflow-hidden transition-[width,transform] duration-200 ease-in-out w-64 ${
           collapsed ? "md:w-16" : "md:w-64"
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
@@ -299,7 +302,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                   borderRadius: collapsed ? 12 : 9,
                   color: isActive ? "var(--text-on-accent)" : "var(--text-secondary)",
                 }}
-                className={`flex items-center text-base font-medium hover:[background:var(--hover-overlay)] transition-all ${
+                className={`flex items-center text-base font-medium hover:[background:var(--hover-overlay)] transition-colors ${
                   collapsed ? "justify-center h-11" : "gap-2.5 px-2.5 py-3"
                 }`}
               >
@@ -355,7 +358,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                   width: "100%",
                   color: isActive ? "var(--text-on-accent)" : "var(--text-secondary)",
                 }}
-                className={`flex items-center text-base font-medium hover:[background:var(--hover-overlay)] transition-all text-left ${
+                className={`flex items-center text-base font-medium hover:[background:var(--hover-overlay)] transition-colors text-left ${
                   collapsed ? "justify-center h-11" : "gap-2.5 px-2.5 py-3"
                 }`}
               >
@@ -411,7 +414,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                             color: subActive ? "var(--text-on-accent)" : "var(--text-secondary)",
                             borderRadius: 7,
                           }}
-                          className="flex items-center gap-2 px-2.5 py-2 text-sm font-medium hover:[background:var(--hover-overlay)] transition-all"
+                          className="flex items-center gap-2 px-2.5 py-2 text-sm font-medium hover:[background:var(--hover-overlay)] transition-colors"
                         >
                           <span style={{ color: subActive ? "var(--text-on-accent)" : "var(--accent)", opacity: subActive ? 1 : 0.85, flexShrink: 0 }}>{sub.icon}</span>
                           <span className="truncate">{etiquetaSub(sub)}</span>
@@ -432,7 +435,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
           onClick={handleLogout}
           title={t("nav.cerrarSesion")}
           style={{ borderRadius: collapsed ? 12 : 9, color: "var(--text-muted)", width: "100%" }}
-          className={`flex items-center text-base font-medium hover:bg-red-500/10 hover:text-red-400 transition-all ${
+          className={`flex items-center text-base font-medium hover:bg-red-500/10 hover:text-red-400 transition-colors ${
             collapsed ? "justify-center h-11" : "gap-2.5 px-2.5 py-3"
           }`}
         >
