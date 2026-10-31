@@ -634,13 +634,19 @@ export interface ObservacionDual {
   actualizadoEn?: string;
 }
 
-
 /**
  * Solicitud de Permiso para ausentarse del Centro de Aprendizaje — el
  * documento en papel que firma el Jefe de Especialidad y del que toma
  * conocimiento el Centro Dual.
  *
  * Se numera por año y liceo (NRO. 03/2026), como el talonario físico.
+ *
+ * PENDIENTE: hoy el permiso solo existe en papel, como plantilla de
+ * documento (SOLICITUD_PERMISO en lib/plantillas/documentos.ts). Nada
+ * escribe ni lee la colección `permisos_dual`, aunque firestore.rules ya
+ * la contempla. Este tipo describe cómo quedaría el registro digital
+ * cuando se construya; si se decide no construirlo, hay que quitar
+ * también su bloque en firestore.rules.
  */
 export interface PermisoDual {
   id: string;
