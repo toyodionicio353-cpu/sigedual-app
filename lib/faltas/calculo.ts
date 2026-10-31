@@ -1,12 +1,7 @@
 import type { FaltaDual, JornadaFalta } from "@/types";
 
-export const ETIQUETA_JORNADA: Record<JornadaFalta, string> = {
-  completa: "Día completo",
-  manana: "Media jornada (A.M.)",
-  tarde: "Media jornada (P.M.)",
-};
-
-/** Versión corta, para listados y tablas donde no cabe la larga. */
+/** Etiqueta de la jornada, en versión corta: es la única que se usa, en
+ * listados y tablas. */
 export const ETIQUETA_JORNADA_CORTA: Record<JornadaFalta, string> = {
   completa: "Día completo",
   manana: "Media jornada A.M.",
@@ -20,7 +15,7 @@ export const ETIQUETA_JORNADA_CORTA: Record<JornadaFalta, string> = {
  * reponer lo que realmente faltó, y redondear hacia arriba le cobraría
  * horas que sí estuvo.
  */
-export function diasDe(jornada: JornadaFalta): number {
+function diasDe(jornada: JornadaFalta): number {
   return jornada === "completa" ? 1 : 0.5;
 }
 

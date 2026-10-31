@@ -1,6 +1,6 @@
 "use client";
 import { X, MapPin, Users, Calendar, Briefcase, GraduationCap, AlertTriangle, School } from "lucide-react";
-import { COLOR_CENTRO, COLOR_LICEO, COLOR_PRACTICA, ETIQUETA_CENTRO, ETIQUETA_PRACTICA } from "@/lib/mapa/estados";
+import { COLOR_CENTRO, COLOR_LICEO, COLOR_PRACTICA, ETIQUETA_CENTRO, ETIQUETA_PRACTICA, COLOR_ANILLO_NUEVO } from "@/lib/mapa/estados";
 import type { PinMapa } from "@/lib/mapa/useDatosMapa";
 
 /** Fecha legible; devuelve "—" si no hay dato utilizable, en vez de una
@@ -98,7 +98,7 @@ export default function FichaMapa({ pin, onCerrar }: { pin: PinMapa; onCerrar: (
         </span>
         {pin.tipo === "centro" && pin.esNuevo && (
           <span
-            style={{ border: "1.5px solid #9333EA", color: "#9333EA" }}
+            style={{ border: `1.5px solid ${COLOR_ANILLO_NUEVO}`, color: COLOR_ANILLO_NUEVO }}
             className="px-2 py-0.5 rounded-full text-[11px] font-semibold"
           >
             Centro nuevo · período de prueba

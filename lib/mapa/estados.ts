@@ -12,11 +12,11 @@ import type {
  */
 
 /** Días que dura el período de prueba de un Centro Dual nuevo. */
-export const DIAS_PERIODO_PRUEBA = 60;
+const DIAS_PERIODO_PRUEBA = 60;
 
 /** Con cuánta anticipación una asignación o práctica se considera
  * "próxima a finalizar". */
-export const DIAS_PARA_AVISO_TERMINO = 30;
+const DIAS_PARA_AVISO_TERMINO = 30;
 
 export type EstadoPinCentro =
   /** Activo y sin estudiantes asignados. */

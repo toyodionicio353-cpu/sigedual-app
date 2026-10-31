@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { COLOR_CENTRO, COLOR_LICEO, COLOR_PRACTICA, ETIQUETA_CENTRO, ETIQUETA_PRACTICA } from "@/lib/mapa/estados";
+import { COLOR_CENTRO, COLOR_LICEO, COLOR_PRACTICA, ETIQUETA_CENTRO, ETIQUETA_PRACTICA, COLOR_ANILLO_NUEVO } from "@/lib/mapa/estados";
 import { ESTADOS_CENTRO, ESTADOS_PRACTICA, type TipoActividad } from "@/lib/mapa/filtros";
 
 function Fila({ color, texto, rombo = false, anillo = false, placa = false }: { color: string; texto: string; rombo?: boolean; anillo?: boolean; placa?: boolean }) {
@@ -65,7 +65,7 @@ export default function LeyendaMapa({ tipo }: { tipo: TipoActividad }) {
                 {ESTADOS_CENTRO.map((e) => (
                   <Fila key={e} color={COLOR_CENTRO[e]} texto={ETIQUETA_CENTRO[e]} />
                 ))}
-                <Fila color="#9333EA" texto="Centro nuevo, menos de 60 días" anillo />
+                <Fila color={COLOR_ANILLO_NUEVO} texto="Centro nuevo, menos de 60 días" anillo />
               </ul>
             </div>
           )}
