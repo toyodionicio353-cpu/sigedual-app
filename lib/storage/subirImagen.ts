@@ -12,7 +12,7 @@ import { storage } from "@/lib/firebase";
  * no dice nada y no se puede arreglar a ciegas.
  */
 
-export interface ResultadoSubida {
+interface ResultadoSubida {
   url: string;
   ruta: string;
 }
@@ -88,7 +88,7 @@ function traducir(err: unknown): ErrorSubida {
   }
 }
 
-export interface OpcionesSubida {
+interface OpcionesSubida {
   /** 0 a 100. Permite mostrar el avance real en vez de un "Subiendo...". */
   onProgreso?: (porcentaje: number) => void;
   /** Reintentos ante fallos de red. No se reintenta lo que no tiene

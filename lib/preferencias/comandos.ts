@@ -1,6 +1,6 @@
 import type { Rol } from "@/types";
 
-export interface Comando {
+interface Comando {
   id: string;
   etiqueta: string;
   href?: string;

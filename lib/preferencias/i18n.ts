@@ -11,7 +11,7 @@ import type { Idioma } from "@/types/preferencias";
 // la página de Configuración. El CONTENIDO de las páginas sigue en
 // español: son unas 1.700 cadenas repartidas en 74 páginas, y se van
 // agregando una clave a la vez sin tocar esta arquitectura.
-export const DICCIONARIO = {
+const DICCIONARIO = {
   es: {
     "nav.inicio": "Inicio",
     "nav.estudiantes": "Estudiantes",

@@ -51,4 +51,3 @@ export function limpiarPreferencias(): void {
   }
 }
 
-export const CLAVE_PREFERENCIAS = CLAVE;

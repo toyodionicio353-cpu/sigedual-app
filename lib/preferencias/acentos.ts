@@ -4,7 +4,7 @@ import type { AcentoId } from "@/types/preferencias";
 // contra "--text-on-accent" (negro, fijo en app/globals.css) con contraste
 // WCAG AA o superior, para que el selector nunca produzca texto ilegible
 // sobre el color elegido.
-export interface OpcionAcento {
+interface OpcionAcento {
   id: AcentoId;
   nombre: string;
   accent: string;

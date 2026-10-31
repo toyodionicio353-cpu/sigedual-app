@@ -2,7 +2,7 @@ import { addDoc, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Rol } from "@/types";
 
-export type ResultadoAuditoria = "permitido" | "denegado";
+type ResultadoAuditoria = "permitido" | "denegado";
 
 interface EventoAuditoria {
   uid: string;

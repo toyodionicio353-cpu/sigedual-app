@@ -2,7 +2,7 @@ import { collection, doc, getDocs, query, where, writeBatch } from "firebase/fir
 import { db } from "@/lib/firebase";
 import type { Asignacion } from "@/types";
 
-export type TipoAutorizacion = "estudiante" | "centro" | "maestro";
+type TipoAutorizacion = "estudiante" | "centro" | "maestro";
 
 interface DocAutorizacion {
   id: string;

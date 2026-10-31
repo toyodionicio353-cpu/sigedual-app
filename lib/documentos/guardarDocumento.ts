@@ -11,7 +11,7 @@ export const NOMBRE_DUPLICADO = "NOMBRE_DUPLICADO";
  * párrafos, cada uno un array de segmentos, es justo eso), así que
  * `contenido` se guarda como JSON y se reconstruye al leerlo.
  */
-export function serializarContenido(contenido: SegmentoDocumento[][]): string {
+function serializarContenido(contenido: SegmentoDocumento[][]): string {
   return JSON.stringify(contenido);
 }
 
