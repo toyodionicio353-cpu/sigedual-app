@@ -24,8 +24,6 @@ const ROLES: { value: Rol; label: string }[] = [
 // que ya tienen registrado en su propia ficha (Estudiante.email /
 // CentroDual.email), el servidor confirma que existen y deriva su nombre —
 // así ninguna cuenta puede "inventarse" sin tener una ficha real.
-const ROLES_STAFF: Rol[] = ["profesor", "coordinador"];
-
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface LiceoOpcion {

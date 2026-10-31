@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
@@ -14,7 +14,6 @@ import type {
   Visita, Estudiante, CentroDual, MaestroGuia, Usuario, Especialidad,
   RespuestaPreguntaVisita, ElementoPersonalizadoVisita, AcuerdoVisita, TipoElementoPersonalizado, FuenteInformacionVisita,
 } from "@/types";
-import Select from "@/components/ui/Select";
 import TituloPagina from "@/components/TituloPagina";
 import {
   ArrowLeft, MapPin, AlertCircle, PlayCircle, CheckCircle2, Plus, Trash2, Ban, RotateCcw, Lock,

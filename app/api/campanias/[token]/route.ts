@@ -10,7 +10,7 @@ interface RespuestaPublica {
   profesorNombre: string;
 }
 
-export async function GET(request: Request, { params }: { params: Promise<{ token: string }> }) {
+export async function GET(_request: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   try {
     const campania = await getDocument(`campanias_invitacion/${token}`);

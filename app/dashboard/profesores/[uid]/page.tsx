@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { formatearFecha } from "@/lib/fecha";
 import { estadoCanonico, fechaProgramadaDe, ESTADO_VISITA_LABEL, ESTADO_VISITA_COLOR } from "@/lib/visitas/normalizar";
 import type { Asignacion, EstadoAsignacion, Estudiante, CentroDual, Visita, Usuario, Evaluacion, Liceo } from "@/types";
-import { ArrowLeft, Pencil, Power, MapPin, ClipboardCheck, Users, Building2, CalendarCheck, Mail, Phone, IdCard, Home, School } from "lucide-react";
+import { ArrowLeft, Pencil, Power, MapPin, ClipboardCheck, Users, Building2 } from "lucide-react";
 
 const ESTADO_ASIGNACION_LABEL: Record<EstadoAsignacion, string> = {
   pendiente: "Pendiente", en_proceso: "En proceso", asignada: "Asignada",

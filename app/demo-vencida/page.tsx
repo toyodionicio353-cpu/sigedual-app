@@ -1,17 +1,13 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
-import { useDemoDeLiceo } from "@/lib/demo/useDemoDeLiceo";
 import { auth } from "@/lib/firebase";
 import { Clock, Trash2 } from "lucide-react";
 
 export default function DemoVencidaPage() {
-  const router = useRouter();
   const { usuario } = useAuth();
-  const demoLiceo = useDemoDeLiceo();
   const [confirmando, setConfirmando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
   const [error, setError] = useState("");

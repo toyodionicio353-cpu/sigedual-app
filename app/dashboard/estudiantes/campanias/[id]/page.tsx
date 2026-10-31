@@ -7,7 +7,7 @@ import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { CampaniaInvitacionEstudiante, RespuestaCampaniaEstudiante, Estudiante, Especialidad, EstadoRespuestaCampania } from "@/types";
 import {
-  ArrowLeft, ClipboardCheck, CheckCircle2, AlertTriangle, Wand2, Layers, Check, X, Eye,
+  ArrowLeft, CheckCircle2, AlertTriangle, Wand2, Layers, Check, X, Eye,
 } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import EstudianteForm, { ESTUDIANTE_FORM_VACIO, type EstudianteFormValues } from "../../_components/EstudianteForm";

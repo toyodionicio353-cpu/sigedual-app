@@ -17,7 +17,7 @@ import { formatearFecha } from "@/lib/fecha";
 import { estadoCanonico, fechaProgramadaDe, horaProgramadaDe } from "@/lib/visitas/normalizar";
 import { estadoEnvioEvaluacion, diasParaCierre } from "@/lib/evaluaciones/envios";
 import { useNotificaciones } from "@/lib/notificaciones/useNotificaciones";
-import { ESTADOS_TICKET_ABIERTOS, ESTADO_TICKET_LABEL, ESTADO_TICKET_COLOR, PRIORIDAD_TICKET_COLOR, numeroTicket } from "@/lib/tickets/constantes";
+import { ESTADOS_TICKET_ABIERTOS, ESTADO_TICKET_LABEL, ESTADO_TICKET_COLOR, numeroTicket } from "@/lib/tickets/constantes";
 import ListaNotificaciones from "@/components/notificaciones/ListaNotificaciones";
 import MapaDualCard from "./_inicio/MapaDualCard";
 import NovedadesCard from "./_inicio/NovedadesCard";
@@ -62,7 +62,6 @@ export default function DashboardPage() {
   const [visitas, setVisitas] = useState<Visita[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [enviosEvaluacion, setEnviosEvaluacion] = useState<EnvioEvaluacion[]>([]);
-  const [cargando, setCargando] = useState(true);
 
   const { pendientes, cargando: cargandoNotif, marcarLeida, eliminarNotificacion } = useNotificaciones(30);
 
@@ -97,7 +96,6 @@ export default function DashboardPage() {
         setVisitas(snapVisitas.docs.map((d) => ({ id: d.id, ...d.data() } as Visita)));
         setTickets([]);
         setEnviosEvaluacion(todosEnvios.filter((e) => estadoEnvioEvaluacion(e) === "disponible"));
-        setCargando(false);
         return;
       }
 
@@ -125,7 +123,6 @@ export default function DashboardPage() {
         setVisitas(Array.from(visitasPorId.values()));
         setTickets([]);
         setEnviosEvaluacion([]);
-        setCargando(false);
         return;
       }
 
@@ -158,11 +155,10 @@ export default function DashboardPage() {
         setVisitas(Array.from(visitasPorId.values()));
         setTickets([]);
         setEnviosEvaluacion([]);
-        setCargando(false);
         return;
       }
 
-      const alcance = <T,>(coleccion: string) =>
+      const alcance = (coleccion: string) =>
         modoGlobal ? collection(db, coleccion) : query(collection(db, coleccion), where("liceoId", "==", liceoId));
       const qProfesores = modoGlobal
         ? query(collection(db, "usuarios"), where("rol", "==", "profesor"))
@@ -189,7 +185,6 @@ export default function DashboardPage() {
       } else {
         setTickets([]);
       }
-      setCargando(false);
     }
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
