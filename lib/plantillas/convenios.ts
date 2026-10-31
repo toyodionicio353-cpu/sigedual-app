@@ -3,7 +3,7 @@ import type { SegmentoDocumento } from "@/types";
 import { estudianteTieneCentroDualAsignado } from "./resolverCampos";
 
 /** Regla de elegibilidad por defecto para plantillas de Convenios: el estudiante debe tener un centro dual asignado. */
-export const elegibilidadConvenio: PlantillaDocumento["elegibilidad"] = (ctx, estudiante) =>
+const elegibilidadConvenio: PlantillaDocumento["elegibilidad"] = (ctx, estudiante) =>
   estudianteTieneCentroDualAsignado(estudiante.id, ctx);
 
 function p(texto: string): SegmentoDocumento {

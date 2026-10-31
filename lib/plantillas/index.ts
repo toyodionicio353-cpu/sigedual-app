@@ -12,8 +12,3 @@ const REGISTROS: Record<TipoModuloDocumento, PlantillaDocumento[]> = {
 export function plantillasParaModulo(tipo: TipoModuloDocumento): PlantillaDocumento[] {
   return REGISTROS[tipo];
 }
-
-export const NOMBRE_MODULO: Record<TipoModuloDocumento, string> = {
-  convenio: "Convenio",
-  documento: "Documento",
-};

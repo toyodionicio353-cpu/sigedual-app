@@ -12,7 +12,7 @@ export type BloqueLegal =
    * en este documento: "* Nombre del concepto: explicación."). */
   | { tipo: "lista_definiciones"; items: { termino: string; descripcion: string }[] };
 
-export interface SeccionLegal {
+interface SeccionLegal {
   /** Ancla de navegación, ej. "1-1" para la sección 1.1. */
   id: string;
   /** Numeración original del documento, ej. "1.1." — nunca se reemplaza. */

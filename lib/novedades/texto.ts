@@ -5,7 +5,7 @@ export const MAX_CARACTERES = 2500;
 /** Tope del título. Acotado a propósito: un título es una línea, no un párrafo. */
 export const MAX_TITULO = 120;
 /** Cuánto se muestra en la tarjeta antes de "Ver más". */
-export const RESUMEN_CARACTERES = 200;
+const RESUMEN_CARACTERES = 200;
 export const MAX_IMAGENES = 5;
 
 /**
@@ -24,13 +24,13 @@ export const MAX_IMAGENES = 5;
  *    usuario percibe como un carácter; sin él, un texto con emojis
  *    alcanzaría el tope mucho antes de lo que la persona ve en pantalla.
  */
-export function contarCaracteres(texto: string): number {
+function contarCaracteres(texto: string): number {
   const sinEspacios = texto.replace(/\s+/gu, "");
   return grafemas(sinEspacios).length;
 }
 
 /** Divide en grafemas (lo que una persona percibe como un carácter). */
-export function grafemas(texto: string): string[] {
+function grafemas(texto: string): string[] {
   // Intl.Segmenter existe en todos los navegadores actuales y en Node 18+,
   // pero el respaldo evita romperse en un entorno que no lo traiga.
   const Segmentador = (Intl as unknown as { Segmenter?: typeof Intl.Segmenter }).Segmenter;
@@ -41,7 +41,7 @@ export function grafemas(texto: string): string[] {
 }
 
 /** Texto plano de una descripción por segmentos, sin perder los saltos. */
-export function textoPlano(descripcion: SegmentoTexto[]): string {
+function textoPlano(descripcion: SegmentoTexto[]): string {
   return descripcion.map((s) => s.texto).join("");
 }
 
