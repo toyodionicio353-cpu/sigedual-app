@@ -2,7 +2,6 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { usePreferencias } from "@/lib/preferencias/context";
 import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { useConversaciones, type CarpetaMensajes } from "@/lib/mensajes/useConversaciones";
 import { useBorradores } from "@/lib/mensajes/useBorradores";
@@ -35,7 +34,6 @@ function normalizar(texto: string): string {
 
 function MensajesContenido() {
   const { usuario } = useAuth();
-  const { preferencias } = usePreferencias();
   const router = useRouter();
   const searchParams = useSearchParams();
   const hiloDeUrl = searchParams.get("hilo");
@@ -213,7 +211,6 @@ function MensajesContenido() {
           conversacion={abierta}
           titulo={tituloDe(abierta)}
           destacada={destacada(abierta)}
-          formatoHora={preferencias.formatoHora}
           enviando={enviando}
           onVolver={() => setAbiertaId(null)}
           onDestacar={() => alternarDestacada(abierta)}
@@ -370,7 +367,6 @@ function MensajesContenido() {
                 sinLeer={noLeida(c)}
                 destacada={destacada(c)}
                 seleccionada={seleccion.includes(c.id)}
-                formatoHora={preferencias.formatoHora}
                 onAbrir={() => abrirHilo(c.id)}
                 onSeleccionar={(v) => alternarSeleccion(c.id, v)}
                 onDestacar={() => alternarDestacada(c)}

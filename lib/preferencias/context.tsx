@@ -4,7 +4,6 @@ import type { Preferencias } from "@/types/preferencias";
 import { PREFERENCIAS_DEFAULT } from "./defaults";
 import { cargarPreferencias, guardarPreferencias } from "./storage";
 import { aplicarPreferenciasAlDocumento, resolverTema } from "./aplicar";
-import { traducir, type ClaveTraduccion } from "./i18n";
 
 interface PreferenciasContextValue {
   preferencias: Preferencias;
@@ -12,7 +11,6 @@ interface PreferenciasContextValue {
   actualizar: <K extends keyof Preferencias>(clave: K, valor: Preferencias[K]) => void;
   actualizarVarias: (parcial: Partial<Preferencias>) => void;
   restablecer: () => void;
-  t: (clave: ClaveTraduccion) => string;
 }
 
 const PreferenciasContext = createContext<PreferenciasContextValue | null>(null);
@@ -66,11 +64,9 @@ export function PreferenciasProvider({ children }: { children: React.ReactNode }
     persistir({ ...PREFERENCIAS_DEFAULT });
   }, [persistir]);
 
-  const t = useCallback((clave: ClaveTraduccion) => traducir(preferencias.idioma, clave), [preferencias.idioma]);
-
   const value = useMemo(
-    () => ({ preferencias, listo, actualizar, actualizarVarias, restablecer, t }),
-    [preferencias, listo, actualizar, actualizarVarias, restablecer, t]
+    () => ({ preferencias, listo, actualizar, actualizarVarias, restablecer }),
+    [preferencias, listo, actualizar, actualizarVarias, restablecer]
   );
 
   return <PreferenciasContext.Provider value={value}>{children}</PreferenciasContext.Provider>;

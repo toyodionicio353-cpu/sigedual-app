@@ -40,5 +40,5 @@ export function aplicarPreferenciasAlDocumento(prefs: Preferencias): void {
   html.style.setProperty("--accent-light", acento.accent);
   html.style.setProperty("--accent-hover", acento.accentHover);
 
-  html.setAttribute("lang", prefs.idioma === "en" ? "en" : "es");
+  html.setAttribute("lang", "es");
 }

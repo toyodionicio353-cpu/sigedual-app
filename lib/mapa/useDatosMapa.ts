@@ -17,7 +17,7 @@ import type { Asignacion, CentroDual, Estudiante, Liceo, PracticaProfesional } f
 
 /** Datos mínimos de un estudiante para la ficha del mapa. El mapa no es
  * una vía para consultar la ficha completa de nadie. */
-export interface EstudianteEnMapa {
+interface EstudianteEnMapa {
   id: string;
   nombre: string;
   curso: string;
@@ -65,14 +65,14 @@ export type PinMapa = PinCentro | PinPractica | PinLiceo;
 /** Registro que existe y el usuario puede ver, pero que no tiene una
  * ubicación utilizable. No recibe pin: se lista aparte para que alguien
  * complete su ubicación desde el formulario correspondiente. */
-export interface RegistroSinUbicacion {
+interface RegistroSinUbicacion {
   tipo: "centro" | "practica" | "liceo";
   id: string;
   nombre: string;
   direccion: string;
 }
 
-export interface DatosMapa {
+interface DatosMapa {
   centros: PinCentro[];
   practicas: PinPractica[];
   liceos: PinLiceo[];

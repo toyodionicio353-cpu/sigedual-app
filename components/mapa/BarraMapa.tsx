@@ -6,7 +6,7 @@ import {
   ESTADOS_CENTRO, ESTADOS_PRACTICA, alternar, hayFiltrosActivos,
   type FiltrosMapa, type TipoActividad,
 } from "@/lib/mapa/filtros";
-import { COLOR_CENTRO, COLOR_LICEO, COLOR_PRACTICA, ETIQUETA_CENTRO, ETIQUETA_PRACTICA } from "@/lib/mapa/estados";
+import { COLOR_CENTRO, COLOR_LICEO, COLOR_PRACTICA, ETIQUETA_CENTRO, ETIQUETA_PRACTICA, COLOR_ANILLO_NUEVO } from "@/lib/mapa/estados";
 import type { PinMapa } from "@/lib/mapa/useDatosMapa";
 
 /** Fila de un desplegable de filtros: casilla + punto de color + texto. */
@@ -195,7 +195,7 @@ export default function BarraMapa({
               ))}
               <Opcion
                 activa={filtros.soloPeriodoPrueba}
-                color="#9333EA"
+                color={COLOR_ANILLO_NUEVO}
                 texto="Solo período de prueba"
                 onClick={() => onCambiar({ ...filtros, soloPeriodoPrueba: !filtros.soloPeriodoPrueba })}
               />

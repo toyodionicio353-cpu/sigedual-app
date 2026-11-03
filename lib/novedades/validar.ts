@@ -25,7 +25,7 @@ export const FAMILIA_FUENTE: Record<FuenteNovedad, string> = {
 /** Solo fotografías. Nada de vídeo, GIF ni animaciones: un GIF es
  * `image/gif`, así que no basta con mirar si empieza por "image/". */
 export const TIPOS_IMAGEN = ["image/jpeg", "image/png", "image/webp"] as const;
-export const EXTENSIONES_IMAGEN = [".jpg", ".jpeg", ".png", ".webp"];
+const EXTENSIONES_IMAGEN = [".jpg", ".jpeg", ".png", ".webp"];
 /** Tope por archivo. Una foto de más de 5 MB en una tarjeta de novedades
  * solo sirve para que la página tarde en cargar. */
 export const MAX_BYTES_IMAGEN = 5 * 1024 * 1024;
@@ -34,7 +34,7 @@ export function esTipoImagenPermitido(tipo: string): boolean {
   return (TIPOS_IMAGEN as readonly string[]).includes(tipo);
 }
 
-export interface DatosNovedadValidados {
+interface DatosNovedadValidados {
   titulo: string;
   descripcion: SegmentoTexto[];
   fuente: FuenteNovedad;

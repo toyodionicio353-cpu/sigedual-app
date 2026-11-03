@@ -37,9 +37,3 @@ import type { Rol } from "@/types";
 export function esRolConAccesoCompletoLiceo(rol: Rol): boolean {
   return rol === "desarrollador" || rol === "coordinador" || rol === "director";
 }
-
-/** true solo para el rol cuyo acceso debe calcularse a partir de su ámbito
- * asignado (Asignacion.profesorSupervisorId), no del liceo completo. */
-export function requiereAmbito(rol: Rol): boolean {
-  return rol === "profesor";
-}

@@ -1,9 +1,9 @@
 /** Tope de publicaciones por liceo y semestre. */
 export const MAX_POR_SEMESTRE = 20;
 /** Cuánto puede permanecer publicada una novedad, como máximo. */
-export const MESES_MAX_PUBLICACION = 2;
+const MESES_MAX_PUBLICACION = 2;
 
-export interface Periodo {
+interface Periodo {
   anio: number;
   semestre: 1 | 2;
 }
@@ -64,7 +64,7 @@ export const DURACIONES_DIAS_INDEPENDIENTE = [7, 15, 30, 45, 60, 90, 180, 365] a
 /** Tope de permanencia del editor independiente: un año. Sigue habiendo
  * un tope — una publicación sin vencimiento se queda ahí para siempre y
  * nadie se acuerda de retirarla. */
-export const DIAS_MAX_INDEPENDIENTE = 365;
+const DIAS_MAX_INDEPENDIENTE = 365;
 
 /** Fecha de término a partir de una duración en días, sin pasarse del
  * tope que corresponda a quien publica. */

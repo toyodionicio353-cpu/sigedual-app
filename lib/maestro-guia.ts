@@ -19,15 +19,7 @@ export function disponibilidadMaestroGuiaDe(mg: MaestroGuia, asignaciones: Asign
   };
 }
 
-// Un Maestro Guía es candidato a una nueva asignación si él y su centro
-// están activos y todavía tiene capacidad de acompañamiento disponible.
-export function disponibleParaAsignarMaestroGuia(mg: MaestroGuia, centro: CentroDual, asignaciones: Asignacion[]): boolean {
-  if (mg.estado !== "activo" || estadoEfectivo(centro) !== "activo") return false;
-  const { capacidad, asignados } = disponibilidadMaestroGuiaDe(mg, asignaciones);
-  return capacidad == null || asignados < capacidad;
-}
-
-export type EstadoDisponibilidadMaestroGuia = "disponible" | "sin_capacidad" | "no_disponible";
+type EstadoDisponibilidadMaestroGuia = "disponible" | "sin_capacidad" | "no_disponible";
 
 // Etiqueta de disponibilidad de tres estados para mostrar en listado/ficha:
 // distingue "no disponible" (el maestro guía o su centro están inactivos)

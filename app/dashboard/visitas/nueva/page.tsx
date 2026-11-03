@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -20,7 +19,6 @@ const inputClass = "w-full px-3 py-2 rounded-lg text-sm outline-none focus:[bord
 
 export default function AgendarVisitaPage() {
   const { usuario } = useAuth();
-  const router = useRouter();
   const { liceoPredeterminado, mostrarAdvertencia, conConfirmacion, confirmar, cancelar } = useAdvertenciaLiceoGlobal();
 
   const [centros, setCentros] = useState<CentroDual[]>([]);

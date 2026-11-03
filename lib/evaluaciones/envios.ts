@@ -1,6 +1,6 @@
 import type { EnvioEvaluacion } from "@/types";
 
-export type EstadoEnvioEvaluacion = "programado" | "disponible" | "completado" | "vencido";
+type EstadoEnvioEvaluacion = "programado" | "disponible" | "completado" | "vencido";
 
 function ahoraISO(): string {
   const d = new Date();

@@ -1,6 +1,6 @@
 import { PUNTAJE_NIVEL, type NivelLogro, type PlantillaEvaluacion } from "./tipos";
 
-export interface ResultadoEvaluacion {
+interface ResultadoEvaluacion {
   logrosPorcentaje: number;
   desarrolloPersonalPorcentaje: number;
   promedioGeneral: number;

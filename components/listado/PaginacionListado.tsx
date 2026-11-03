@@ -1,6 +1,5 @@
 "use client";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { usePreferencias } from "@/lib/preferencias/context";
 
 /** Paginación numerada compartida por los listados principales de
  * SIGEDUAL, con elipsis cuando hay muchas páginas. */
@@ -11,7 +10,6 @@ export default function PaginacionListado({
   totalPaginas: number;
   onCambiarPagina: (pagina: number) => void;
 }) {
-  const { t } = usePreferencias();
   if (totalPaginas <= 1) return null;
 
   return (
@@ -23,7 +21,7 @@ export default function PaginacionListado({
         className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-40 transition-opacity"
       >
         <ChevronLeft size={14} />
-        {t("lista.anterior")}
+        Anterior
       </button>
       {Array.from({ length: totalPaginas }, (_, i) => i + 1)
         .filter((n) => n === 1 || n === totalPaginas || Math.abs(n - paginaActual) <= 1)
@@ -49,7 +47,7 @@ export default function PaginacionListado({
         style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
         className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-40 transition-opacity"
       >
-        {t("lista.siguiente")}
+        Siguiente
         <ChevronRight size={14} />
       </button>
     </div>

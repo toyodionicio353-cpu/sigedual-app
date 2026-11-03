@@ -7,14 +7,13 @@ import { ArrowLeft, Star, Trash2, MoreVertical, Send, MailOpen, Paperclip } from
 import type { Conversacion, MensajeConversacion } from "@/types";
 
 export default function VistaConversacion({
-  conversacion, titulo, destacada, formatoHora, enviando,
+  conversacion, titulo, destacada, enviando,
   onVolver, onDestacar, onEliminar, onMarcarNoLeida, onResponder,
 }: {
   conversacion: Conversacion;
   /** Con quién es el hilo, ya resuelto por la página. */
   titulo: string;
   destacada: boolean;
-  formatoHora: "12" | "24";
   enviando: boolean;
   onVolver: () => void;
   onDestacar: () => void;
@@ -124,7 +123,7 @@ export default function VistaConversacion({
                     {inicial(m.nombre)}
                   </span>
                   <p style={{ color: "var(--text-primary)" }} className="text-sm font-semibold truncate flex-1">{m.nombre}</p>
-                  <p style={{ color: "var(--text-muted)" }} className="text-xs flex-shrink-0">{fechaMensaje(m.creadoEn, formatoHora)}</p>
+                  <p style={{ color: "var(--text-muted)" }} className="text-xs flex-shrink-0">{fechaMensaje(m.creadoEn)}</p>
                 </div>
                 <p style={{ color: "var(--text-secondary)" }} className="text-sm whitespace-pre-wrap leading-relaxed pl-9">{m.texto}</p>
                 {m.adjuntos && m.adjuntos.length > 0 && (

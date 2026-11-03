@@ -77,7 +77,6 @@ export default function RootLayout({
               html.style.setProperty("--accent", ac[0]);
               html.style.setProperty("--accent-light", ac[0]);
               html.style.setProperty("--accent-hover", ac[1]);
-              if (p.idioma === "en") html.setAttribute("lang", "en");
             } catch (e) {}`,
           }}
         />

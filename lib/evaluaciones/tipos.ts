@@ -12,12 +12,12 @@ export const NIVELES_LOGRO: { value: NivelLogro; label: string; descripcion: str
 /** Puntaje de cada nivel para calcular los porcentajes de resultado. */
 export const PUNTAJE_NIVEL: Record<NivelLogro, number> = { I: 1, R: 2, B: 3, MB: 4 };
 
-export interface CriterioEvaluacion {
+interface CriterioEvaluacion {
   id: string;
   texto: string;
 }
 
-export interface CategoriaEvaluacion {
+interface CategoriaEvaluacion {
   id: string;
   titulo: string;
   criterios: CriterioEvaluacion[];

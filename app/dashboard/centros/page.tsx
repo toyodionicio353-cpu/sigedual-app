@@ -19,7 +19,7 @@ import EstadoVacio from "@/components/listado/EstadoVacio";
 import ContadorResultados from "@/components/listado/ContadorResultados";
 import PaginacionListado from "@/components/listado/PaginacionListado";
 import type { Asignacion, CentroDual, EstadoCentroDual, Especialidad } from "@/types";
-import { Search, AlertCircle, Building, School, Users2, BadgeCheck, DoorOpen, Handshake } from "lucide-react";
+import { Search, AlertCircle, Building, School, BadgeCheck, DoorOpen, Handshake } from "lucide-react";
 import VerFicha from "@/components/ui/VerFicha";
 import Select from "@/components/ui/Select";
 

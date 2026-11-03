@@ -7,7 +7,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { BorradorMensaje } from "@/types";
 
-export interface ContenidoBorrador {
+interface ContenidoBorrador {
   destinatarios: string[];
   asunto: string;
   cuerpo: string;

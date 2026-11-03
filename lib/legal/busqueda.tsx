@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { BloqueLegal, ParteLegal } from "./tipos";
 
-export interface CoincidenciaBusqueda {
+interface CoincidenciaBusqueda {
   parteId: string;
   parteNumero: number;
   seccionId: string;

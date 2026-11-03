@@ -21,7 +21,7 @@ export interface Punto {
  * error de tipeo que manda el punto al Atlántico), no para arbitrar
  * límites internacionales, que no le corresponden a esta aplicación.
  */
-export const LIMITES_CHILE = {
+const LIMITES_CHILE = {
   latMin: -56.0,
   latMax: -17.4,
   lngMin: -110.0,
@@ -45,7 +45,7 @@ function esNumeroFinito(valor: unknown): valor is number {
 
 /** ¿El punto cae dentro de Chile? Única restricción territorial que se
  * aplica a una Práctica Profesional (puede estar en cualquier región). */
-export function estaEnChile(lat: unknown, lng: unknown): boolean {
+function estaEnChile(lat: unknown, lng: unknown): boolean {
   if (!esNumeroFinito(lat) || !esNumeroFinito(lng)) return false;
   return (
     lat >= LIMITES_CHILE.latMin && lat <= LIMITES_CHILE.latMax

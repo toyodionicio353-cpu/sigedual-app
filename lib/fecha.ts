@@ -21,10 +21,12 @@ export function formatearFecha(iso?: string): string {
   return fecha.toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" });
 }
 
-/** Formatea la hora de un ISO completo según la preferencia de formato
- * (12 o 24 horas) elegida en Configuración > Idioma y regionalización. */
-export function formatearHora(iso: string, formato: "12" | "24" = "24"): string {
+/** Formatea la hora de un ISO completo. */
+export function formatearHora(iso: string): string {
   const fecha = new Date(iso);
   if (Number.isNaN(fecha.getTime())) return "";
-  return fecha.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit", hour12: formato === "12" });
+  // Sin opción de 12/24 horas: manda el formato chileno, igual que las
+  // fechas del resto de la aplicación. La zona horaria es la del equipo,
+  // que es lo que toLocaleTimeString usa por defecto.
+  return fecha.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
 }
