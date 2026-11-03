@@ -196,3 +196,83 @@ html[data-contrast="alto"] :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* ─────────────────────────────────────────────────────────────────────
+ * Impresión
+ *
+ * SIGEDUAL se usa en pantalla, pero un documento (un convenio, una
+ * circular) sí se imprime y se firma en papel. Al imprimir, la aplicación
+ * desaparece y queda la hoja: fondo blanco, texto negro, sin menú, sin
+ * barras ni tarjetas.
+ *
+ * Dos clases hacen todo el trabajo:
+ *   .no-imprimir  → lo que es de la aplicación y no del documento
+ *   .hoja-impresa → el documento, que pasa a ocupar la hoja entera
+ * ─────────────────────────────────────────────────────────────────── */
+@media print {
+  @page {
+    size: A4;
+    margin: 2.5cm;
+  }
+
+  /* El tema (claro u oscuro) no viaja al papel: una hoja impresa en tema
+     oscuro gastaría la tinta y sería ilegible. */
+  :root,
+  :root[data-theme="dark"],
+  :root[data-theme="light"] {
+    --bg-base: #ffffff;
+    --bg-card: #ffffff;
+    --bg-surface: #ffffff;
+    --bg-card-hover: #ffffff;
+    --text-primary: #000000;
+    --text-secondary: #000000;
+    --text-muted: #333333;
+    --border: transparent;
+    --border-light: transparent;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    /* El navegador decide el tamaño del texto del papel, no la
+       preferencia de tamaño de fuente de la pantalla. */
+    font-size: 12pt !important;
+  }
+
+  .no-imprimir {
+    display: none !important;
+  }
+
+  /* El documento deja de ser una tarjeta dentro de la aplicación y pasa
+     a ser la hoja: sin marco, sin esquinas redondeadas, sin ancho máximo
+     ni relleno propio — de los márgenes se encarga @page. */
+  .hoja-impresa {
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+    background: #ffffff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    color: #000000 !important;
+  }
+
+  /* Los contenedores con scroll recortan la impresión a lo que se ve en
+     pantalla: en papel tienen que crecer hasta donde llegue el contenido,
+     o el documento sale cortado en la primera página. */
+  main,
+  .hoja-impresa {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Un párrafo no se parte dejando una línea suelta en otra página. */
+  .hoja-impresa p {
+    orphans: 3;
+    widows: 3;
+  }
+}
