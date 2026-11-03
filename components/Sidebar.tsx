@@ -237,7 +237,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
            se pinte en una capa compositada aparte. Ojo: en Tailwind 4
            `-translate-x-full` usa la propiedad `translate`, que
            `transform: none` NO cancela. */
-        className={`h-dvh md:h-screen flex flex-col fixed md:static inset-y-0 left-0 z-40 overflow-hidden transition-[width,translate] duration-200 ease-in-out w-64 ${
+        className={`no-imprimir h-dvh md:h-screen flex flex-col fixed md:static inset-y-0 left-0 z-40 overflow-hidden transition-[width,translate] duration-200 ease-in-out w-64 ${
           collapsed ? "md:w-16" : "md:w-64"
         } ${mobileOpen ? "" : "max-md:-translate-x-full"}`}
       >

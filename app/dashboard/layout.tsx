@@ -167,12 +167,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       />
       <div
         style={{ background: "var(--bg-base)" }}
-        className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden md:my-2 md:mr-2 md:rounded-2xl md:border md:[border-color:var(--border)]"
+        className="hoja-impresa flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden md:my-2 md:mr-2 md:rounded-2xl md:border md:[border-color:var(--border)]"
       >
         {/* Topbar */}
         <header
           style={{ background: "var(--bg-card)", height: 56 }}
-          className="px-3 md:px-6 flex items-center justify-between sticky top-0 z-20"
+          className="no-imprimir px-3 md:px-6 flex items-center justify-between sticky top-0 z-20"
         >
           <div className="flex items-center gap-3 h-14 min-w-0">
             {/* Logo: abre el menú en móvil (el sidebar está oculto hasta abrirlo) */}

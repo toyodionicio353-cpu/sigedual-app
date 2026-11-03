@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, Search, FileText, Eye } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Search, FileText, Eye, Printer } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import type { DocumentoGenerado, EstadoDocumentoGenerado, Estudiante, SegmentoDocumento, TipoModuloDocumento } from "@/types";
 import type { ContextoResolucion, PlantillaDocumento } from "@/types/plantillas";
@@ -231,8 +231,8 @@ export default function EditorDocumento({
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-3xl">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
+    <div className="hoja-impresa p-4 md:p-8 max-w-3xl">
+      <div className="no-imprimir flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <TituloPagina icon={<FileText size={28} />}>
@@ -264,6 +264,16 @@ export default function EditorDocumento({
               {vistaPrevia ? "Editar" : "Vista previa"}
             </button>
           )}
+          {/* Imprimir deja en el papel solo el documento: el resto de la
+              aplicación lleva la clase no-imprimir (ver app/globals.css). */}
+          <button
+            onClick={() => window.print()}
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
+          >
+            <Printer size={16} />
+            Imprimir
+          </button>
           <button
             onClick={onCancelar}
             style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
@@ -276,19 +286,19 @@ export default function EditorDocumento({
       </div>
 
       {aviso && (
-        <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="rounded-xl px-4 py-3 mb-4 flex items-center gap-2">
+        <div style={{ background: "var(--success)22", border: "1px solid var(--success)" }} className="no-imprimir rounded-xl px-4 py-3 mb-4 flex items-center gap-2">
           <CheckCircle2 size={15} style={{ color: "var(--success)" }} />
           <p style={{ color: "var(--success)" }} className="text-sm font-medium">{aviso}</p>
         </div>
       )}
       {error && (
-        <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="rounded-xl px-4 py-3 mb-4">
+        <div style={{ background: "var(--danger)22", border: "1px solid var(--danger)" }} className="no-imprimir rounded-xl px-4 py-3 mb-4">
           <p style={{ color: "var(--danger)" }} className="text-sm font-medium">{error}</p>
         </div>
       )}
 
       {/* Nombre */}
-      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6 mb-5">
+      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="no-imprimir rounded-2xl p-5 sm:p-6 mb-5">
         <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-1">Nombre</label>
         <input
           value={nombre}
@@ -303,7 +313,7 @@ export default function EditorDocumento({
 
       {/* Selector de estudiante */}
       {requiereEstudiante && (
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-6 mb-5">
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="no-imprimir rounded-2xl p-5 sm:p-6 mb-5">
           <label style={{ color: "var(--text-secondary)" }} className="block text-xs mb-2">Estudiante</label>
           {estudianteSeleccionado ? (
             <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl">
@@ -347,7 +357,13 @@ export default function EditorDocumento({
       )}
 
       {/* Documento */}
-      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-5 sm:p-8 mb-6">
+      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="hoja-impresa rounded-2xl p-5 sm:p-8 mb-6">
+        {/* En papel, el documento se encabeza con su nombre, como
+            cualquier documento impreso. En pantalla sobra: el nombre ya
+            está en el campo de arriba. */}
+        <p className="hidden print:block text-center font-bold mb-8" style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: "14pt" }}>
+          {nombre}
+        </p>
         <div className="flex flex-col gap-5">
           {contenido.map((parrafo, pi) => (
             <p
@@ -382,7 +398,7 @@ export default function EditorDocumento({
       </div>
 
       {bloqueado ? (
-        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="rounded-xl px-4 py-3 text-sm" >
+        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }} className="no-imprimir rounded-xl px-4 py-3 text-sm" >
           <p style={{ color: "var(--text-secondary)" }}>
             {soloLectura
               ? "Solo puedes ver este documento."
@@ -390,7 +406,7 @@ export default function EditorDocumento({
           </p>
         </div>
       ) : (
-        <div className="flex justify-end gap-3">
+        <div className="no-imprimir flex justify-end gap-3">
           <button
             onClick={() => guardar("borrador")}
             disabled={guardando}
