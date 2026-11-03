@@ -6,9 +6,6 @@ export type TemaPreferencia = "claro" | "oscuro" | "sistema";
 export type Densidad = "comoda" | "compacta";
 export type TamanoFuente = "pequeno" | "mediano" | "grande" | "muy-grande";
 export type AnchoContenido = "fijo" | "completo";
-export type Idioma = "es" | "en";
-export type FormatoHora = "12" | "24";
-export type ZonaHorariaModo = "dispositivo" | "manual";
 export type FrecuenciaResumenEmail = "desactivado" | "diario" | "semanal";
 export type AcentoId = "amarillo" | "teal" | "morado" | "rojo-coral" | "azul-suave";
 
@@ -56,11 +53,6 @@ export interface Preferencias {
   paletaComandos: boolean;
   atajosTeclado: boolean;
   dashboardModulos: DashboardModuloPref[]; // [] = usar orden/visibilidad predeterminada
-  // Idioma y regionalización
-  idioma: Idioma;
-  formatoHora: FormatoHora;
-  zonaHorariaModo: ZonaHorariaModo;
-  zonaHorariaManual: string;
   // Notificaciones y alertas
   notificacionesPush: boolean;
   notificacionesCategorias: NotificacionesCategorias;

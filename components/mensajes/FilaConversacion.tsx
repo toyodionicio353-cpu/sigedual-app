@@ -4,7 +4,7 @@ import { fechaBandeja, inicial, colorAvatar } from "@/lib/mensajes/formato";
 import type { Conversacion } from "@/types";
 
 export default function FilaConversacion({
-  conversacion, titulo, sinLeer, destacada, seleccionada, formatoHora,
+  conversacion, titulo, sinLeer, destacada, seleccionada,
   onAbrir, onSeleccionar, onDestacar,
 }: {
   conversacion: Conversacion;
@@ -13,7 +13,6 @@ export default function FilaConversacion({
   sinLeer: boolean;
   destacada: boolean;
   seleccionada: boolean;
-  formatoHora: "12" | "24";
   onAbrir: () => void;
   onSeleccionar: (valor: boolean) => void;
   onDestacar: () => void;
@@ -97,7 +96,7 @@ export default function FilaConversacion({
           style={{ color: sinLeer ? "var(--text-primary)" : "var(--text-muted)" }}
           className={`text-xs flex-shrink-0 tabular-nums ${sinLeer ? "font-semibold" : ""}`}
         >
-          {fechaBandeja(conversacion.ultimaActividad, formatoHora)}
+          {fechaBandeja(conversacion.ultimaActividad)}
         </span>
       </button>
     </div>

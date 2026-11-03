@@ -8,16 +8,14 @@ import Select from "@/components/ui/Select";
 import { INDICE_BUSQUEDA, type CategoriaConfig } from "./_data/indiceBusqueda";
 import AparienciaSeccion from "./_components/AparienciaSeccion";
 import InteraccionSeccion from "./_components/InteraccionSeccion";
-import IdiomaSeccion from "./_components/IdiomaSeccion";
 import NotificacionesSeccion from "./_components/NotificacionesSeccion";
 import PrivacidadSeccion from "./_components/PrivacidadSeccion";
 import AccesoDemostracionSeccion from "./_components/AccesoDemostracionSeccion";
-import { Search, SlidersHorizontal, Palette, MousePointerClick, Globe, Bell, ShieldCheck, RotateCcw, Clock } from "lucide-react";
+import { Search, SlidersHorizontal, Palette, MousePointerClick, Bell, ShieldCheck, RotateCcw, Clock } from "lucide-react";
 
 const CATEGORIAS_BASE: { id: CategoriaConfig; label: string; icon: React.ReactNode; Componente: React.ComponentType }[] = [
   { id: "apariencia", label: "Apariencia", icon: <Palette size={17} />, Componente: AparienciaSeccion },
   { id: "interaccion", label: "Interacción", icon: <MousePointerClick size={17} />, Componente: InteraccionSeccion },
-  { id: "idioma", label: "Idioma y región", icon: <Globe size={17} />, Componente: IdiomaSeccion },
   { id: "notificaciones", label: "Notificaciones", icon: <Bell size={17} />, Componente: NotificacionesSeccion },
   { id: "privacidad", label: "Privacidad y datos", icon: <ShieldCheck size={17} />, Componente: PrivacidadSeccion },
 ];

@@ -1,4 +1,4 @@
-export type CategoriaConfig = "apariencia" | "interaccion" | "idioma" | "notificaciones" | "privacidad" | "demo";
+export type CategoriaConfig = "apariencia" | "interaccion" | "notificaciones" | "privacidad" | "demo";
 
 export interface EntradaBusqueda {
   id: string; // debe coincidir con el id= del SettingRow correspondiente
@@ -20,9 +20,6 @@ export const INDICE_BUSQUEDA: EntradaBusqueda[] = [
   { id: "set-paleta", categoria: "interaccion", titulo: "Paleta de comandos", descripcion: "Acceso rápido con Ctrl/Cmd + K.", keywords: ["paleta", "comandos", "buscar", "ctrl k", "cmd k"] },
   { id: "set-atajos", categoria: "interaccion", titulo: "Atajos de teclado", descripcion: "Navegación rápida mediante el teclado.", keywords: ["atajos", "teclado", "shortcuts"] },
   { id: "set-dashboard", categoria: "interaccion", titulo: "Personalizar Dashboard", descripcion: "Reordena, oculta y fija módulos del panel principal.", keywords: ["dashboard", "personalizar", "panel", "módulos"] },
-  { id: "set-idioma", categoria: "idioma", titulo: "Idioma", descripcion: "Español o inglés.", keywords: ["idioma", "español", "inglés", "language"] },
-  { id: "set-hora", categoria: "idioma", titulo: "Formato de fecha y hora", descripcion: "12 horas o 24 horas.", keywords: ["hora", "formato", "12 horas", "24 horas"] },
-  { id: "set-zona", categoria: "idioma", titulo: "Zona horaria", descripcion: "Del dispositivo o manual.", keywords: ["zona horaria", "timezone", "santiago"] },
   { id: "set-push", categoria: "notificaciones", titulo: "Notificaciones push", descripcion: "Avisos del sistema en el navegador.", keywords: ["push", "notificaciones", "permiso", "navegador"] },
   { id: "set-categorias", categoria: "notificaciones", titulo: "Notificaciones dentro de SIGEDUAL", descripcion: "Mensajes, evaluaciones, visitas, documentos y más.", keywords: ["mensajes", "evaluaciones", "visitas", "bitácoras", "documentos", "asignaciones", "alertas"] },
   { id: "set-nomolestar", categoria: "notificaciones", titulo: "No molestar", descripcion: "Silencia notificaciones no críticas en un horario.", keywords: ["no molestar", "silencio", "horario"] },

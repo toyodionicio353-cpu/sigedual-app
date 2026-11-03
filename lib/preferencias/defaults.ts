@@ -13,10 +13,6 @@ export const PREFERENCIAS_DEFAULT: Preferencias = {
   paletaComandos: true,
   atajosTeclado: true,
   dashboardModulos: [],
-  idioma: "es",
-  formatoHora: "24",
-  zonaHorariaModo: "dispositivo",
-  zonaHorariaManual: "America/Santiago",
   notificacionesPush: false,
   notificacionesCategorias: {
     mensajes: true,
