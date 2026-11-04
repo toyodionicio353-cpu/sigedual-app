@@ -11,6 +11,9 @@ import { NIVELES_LOGRO } from "@/lib/evaluaciones/tipos";
 import type { Evaluacion, Estudiante, CentroDual, MaestroGuia, NivelLogro } from "@/types";
 import TituloPagina from "@/components/TituloPagina";
 import BotonImprimir from "@/components/BotonImprimir";
+import MenuDescargarFormato from "@/components/MenuDescargarFormato";
+import { descargarWord } from "@/lib/documentos/descargarWord";
+import type { BloqueWord } from "@/lib/documentos/tiposWord";
 import LeyendaNiveles from "@/components/evaluaciones/LeyendaNiveles";
 import { ArrowLeft, ClipboardCheck, AlertCircle, Trash2 } from "lucide-react";
 
@@ -115,6 +118,84 @@ export default function RegistroEvaluacionPage() {
 
   const plantilla = plantillaEvaluacionPorId(evaluacion.plantillaId);
 
+  /** Etiqueta legible del nivel: en papel, una "MB" suelta no dice nada. */
+  function nivelTexto(valor?: NivelLogro): string {
+    if (!valor) return "Sin responder";
+    const n = NIVELES_LOGRO.find((x) => x.value === valor);
+    return n ? `${n.label} — ${n.descripcion}` : valor;
+  }
+
+  /** La evaluación en bloques para Word: los mismos datos de la ficha. */
+  function bloquesParaWord(): BloqueWord[] {
+    // La función se declara antes de que TypeScript sepa que `evaluacion`
+    // ya está cargada: se vuelve a comprobar acá.
+    if (!evaluacion) return [];
+    const b: BloqueWord[] = [
+      { tipo: "dato", etiqueta: "Estudiante", valor: estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : "" },
+      { tipo: "dato", etiqueta: "Empresa / Centro Dual", valor: centro?.nombre ?? "" },
+      { tipo: "dato", etiqueta: "Maestro Guía", valor: maestroGuia ? `${maestroGuia.nombres} ${maestroGuia.apellidoPaterno}` : "" },
+      { tipo: "dato", etiqueta: "Fecha", valor: evaluacion.fecha },
+      { tipo: "dato", etiqueta: "Evaluado por", valor: evaluacion.evaluadorNombre },
+    ];
+
+    if (plantilla) {
+      b.push({ tipo: "titulo", texto: `Logros en las actividades — ${plantilla.porcentajeLogros}%` });
+      for (const cat of plantilla.categoriasLogros) {
+        b.push({ tipo: "titulo", texto: cat.titulo, nivel: 2 });
+        if (cat.permiteTareasDinamicas) {
+          if (evaluacion.tareasAdicionales.length === 0) {
+            b.push({ tipo: "parrafo", alineacion: "izquierda", runs: [{ texto: "Sin tareas adicionales registradas." }] });
+          }
+          for (const t of evaluacion.tareasAdicionales) {
+            b.push({ tipo: "parrafo", alineacion: "izquierda", runs: [
+              { texto: `${t.descripcion}: `, negrita: true },
+              { texto: nivelTexto(t.valor) + (t.observacion ? ` · ${t.observacion}` : "") },
+            ]});
+          }
+        } else {
+          for (const cr of cat.criterios) {
+            b.push({ tipo: "parrafo", alineacion: "izquierda", runs: [
+              { texto: `${cr.texto}: `, negrita: true },
+              { texto: nivelTexto(evaluacion.respuestasLogros[cat.id]?.[cr.id]) },
+            ]});
+          }
+        }
+      }
+
+      b.push({ tipo: "titulo", texto: `Desarrollo Personal — ${plantilla.porcentajeDesarrolloPersonal}%` });
+      for (const cr of plantilla.criteriosDesarrolloPersonal) {
+        b.push({ tipo: "parrafo", alineacion: "izquierda", runs: [
+          { texto: `${cr.texto}: `, negrita: true },
+          { texto: nivelTexto(evaluacion.respuestasDesarrolloPersonal[cr.id]) },
+        ]});
+      }
+    }
+
+    if (evaluacion.observaciones?.trim()) {
+      b.push({ tipo: "titulo", texto: "Observaciones" });
+      b.push({ tipo: "parrafo", runs: [{ texto: evaluacion.observaciones }] });
+    }
+
+    b.push({ tipo: "titulo", texto: "Resultados" });
+    b.push({ tipo: "dato", etiqueta: "Logros en actividades", valor: `${evaluacion.resultados.logrosPorcentaje}%` });
+    b.push({ tipo: "dato", etiqueta: "Desarrollo personal", valor: `${evaluacion.resultados.desarrolloPersonalPorcentaje}%` });
+    b.push({ tipo: "dato", etiqueta: "Promedio general", valor: `${evaluacion.resultados.promedioGeneral}%` });
+    return b;
+  }
+
+  /** Sin la plantilla no se puede escribir la evaluación: faltarían las
+   *  categorías y los criterios, es decir, casi todo el documento. */
+  const motivoIncompleto = plantilla ? "" : "No se encontró la plantilla de esta evaluación.";
+
+  async function descargarFormato() {
+    if (!evaluacion) return;
+    await descargarWord({
+      nombreArchivo: `Evaluacion ${estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : ""} ${evaluacion.fecha}`.trim(),
+      titulo: plantilla?.titulo ?? "Evaluación",
+      bloques: bloquesParaWord(),
+    });
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-3xl">
       <div className="mb-6 flex items-start justify-between gap-3">
@@ -131,6 +212,7 @@ export default function RegistroEvaluacionPage() {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <BotonImprimir />
+          <MenuDescargarFormato onDescargar={descargarFormato} motivoIncompleto={motivoIncompleto} />
           {usuario?.rol === "desarrollador" && (
             <button
               onClick={eliminarEvaluacion}

@@ -1,4 +1,4 @@
-import type { ParrafoWord } from "./tiposWord";
+import type { BloqueWord, ParrafoWord } from "./tiposWord";
 
 /**
  * Descarga el documento como .docx.
@@ -14,9 +14,16 @@ import type { ParrafoWord } from "./tiposWord";
 export async function descargarWord(opciones: {
   nombreArchivo: string;
   titulo?: string;
-  parrafos: ParrafoWord[];
+  /** Documentos de texto corrido (convenios, circulares). */
+  parrafos?: ParrafoWord[];
+  /** Documentos con secciones y datos (visitas, evaluaciones). */
+  bloques?: BloqueWord[];
 }): Promise<void> {
   const { Document, Packer, Paragraph, TextRun, AlignmentType } = await import("docx");
+
+  const bloques: BloqueWord[] =
+    opciones.bloques ??
+    (opciones.parrafos ?? []).map((p) => ({ tipo: "parrafo" as const, runs: p.runs, alineacion: p.alineacion }));
 
   const cuerpo = [];
 
@@ -30,32 +37,47 @@ export async function descargarWord(opciones: {
     );
   }
 
-  for (const p of opciones.parrafos) {
+  for (const b of bloques) {
+    if (b.tipo === "espacio") {
+      cuerpo.push(new Paragraph({ children: [], spacing: { after: 120 } }));
+      continue;
+    }
+    if (b.tipo === "titulo") {
+      cuerpo.push(
+        new Paragraph({
+          spacing: { before: 280, after: 160 },
+          children: [new TextRun({ text: b.texto, bold: true, size: b.nivel === 2 ? 24 : 26 })],
+        })
+      );
+      continue;
+    }
+    if (b.tipo === "dato") {
+      cuerpo.push(
+        new Paragraph({
+          spacing: { after: 100, line: 300 },
+          children: [
+            new TextRun({ text: `${b.etiqueta}: `, bold: true }),
+            new TextRun({ text: b.valor || "—" }),
+          ],
+        })
+      );
+      continue;
+    }
     cuerpo.push(
       new Paragraph({
-        alignment: p.alineacion === "izquierda" ? AlignmentType.LEFT : AlignmentType.JUSTIFIED,
+        alignment: b.alineacion === "izquierda" ? AlignmentType.LEFT : AlignmentType.JUSTIFIED,
         spacing: { after: 240, line: 360 },
-        children: p.runs.map(
-          (r) => new TextRun({ text: r.texto, bold: r.negrita })
-        ),
+        children: b.runs.map((r) => new TextRun({ text: r.texto, bold: r.negrita })),
       })
     );
   }
 
   const doc = new Document({
-    styles: {
-      default: {
-        document: {
-          run: { font: "Times New Roman", size: 24 },
-        },
-      },
-    },
+    styles: { default: { document: { run: { font: "Times New Roman", size: 24 } } } },
     sections: [
       {
-        properties: {
-          // Hoja carta con márgenes de 2,5 cm, en vigésimos de punto.
-          page: { margin: { top: 1417, right: 1417, bottom: 1417, left: 1417 } },
-        },
+        // Márgenes de 2,5 cm, en vigésimos de punto.
+        properties: { page: { margin: { top: 1417, right: 1417, bottom: 1417, left: 1417 } } },
         children: cuerpo,
       },
     ],

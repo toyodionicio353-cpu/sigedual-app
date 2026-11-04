@@ -16,6 +16,9 @@ import type {
 } from "@/types";
 import TituloPagina from "@/components/TituloPagina";
 import BotonImprimir from "@/components/BotonImprimir";
+import MenuDescargarFormato from "@/components/MenuDescargarFormato";
+import { descargarWord } from "@/lib/documentos/descargarWord";
+import type { BloqueWord } from "@/lib/documentos/tiposWord";
 import {
   ArrowLeft, MapPin, AlertCircle, PlayCircle, CheckCircle2, Plus, Trash2, Ban, RotateCcw, Lock,
 } from "lucide-react";
@@ -313,6 +316,79 @@ export default function DetalleVisitaPage() {
     preguntas: visita.preguntas.filter((p) => p.categoria === cat),
   })).filter((c) => c.preguntas.length > 0);
 
+  /**
+   * El registro de la visita en bloques para Word: los mismos datos que
+   * muestra la ficha, en el mismo orden. Si la ficha cambia, esto hay que
+   * cambiarlo con ella.
+   */
+  function bloquesParaWord(): BloqueWord[] {
+    // La función se declara antes de que TypeScript pueda saber que
+    // `visita` ya está cargada: se vuelve a comprobar acá.
+    if (!visita) return [];
+    const b: BloqueWord[] = [
+      { tipo: "dato", etiqueta: "Estudiante(s)", valor: nombresEstudiantes },
+      { tipo: "dato", etiqueta: "Centro Dual / Empresa", valor: centro?.nombre ?? "" },
+      { tipo: "dato", etiqueta: "Dirección", valor: visita.direccion ?? "" },
+      { tipo: "dato", etiqueta: "Maestro Guía", valor: maestroGuia ? `${maestroGuia.nombres} ${maestroGuia.apellidoPaterno}` : "" },
+      { tipo: "dato", etiqueta: "Profesor Supervisor", valor: profesorSupervisor?.nombre ?? "" },
+      { tipo: "dato", etiqueta: "Fecha de visita", valor: `${formatearFecha(fechaProgramadaDe(visita))}${horaProgramadaDe(visita) ? ` · ${horaProgramadaDe(visita)}` : ""}` },
+      { tipo: "dato", etiqueta: "Estado", valor: ESTADO_VISITA_LABEL[estado] },
+    ];
+    if (visita.motivo) b.push({ tipo: "dato", etiqueta: "Motivo", valor: visita.motivo });
+
+    for (const grupo of preguntasPorCategoria) {
+      b.push({ tipo: "titulo", texto: grupo.categoria, nivel: 2 });
+      for (const pr of grupo.preguntas) {
+        b.push({ tipo: "parrafo", alineacion: "izquierda", runs: [
+          { texto: `${pr.texto} `, negrita: true },
+          { texto: pr.respuesta?.trim() || "(sin responder)" },
+        ]});
+      }
+    }
+
+    if (visita.elementosPersonalizados.length > 0) {
+      b.push({ tipo: "titulo", texto: "Elementos adicionales", nivel: 2 });
+      for (const el of visita.elementosPersonalizados) {
+        b.push({ tipo: "parrafo", alineacion: "izquierda", runs: [
+          { texto: `${el.titulo?.trim() || el.tipo} `, negrita: true },
+          { texto: el.contenido || "" },
+        ]});
+      }
+    }
+
+    b.push({ tipo: "titulo", texto: "Observaciones generales", nivel: 2 });
+    b.push({ tipo: "parrafo", runs: [{ texto: visita.observacionesGenerales?.trim() || "Sin observaciones." }] });
+
+    if (visita.acuerdos.length > 0) {
+      b.push({ tipo: "titulo", texto: "Acuerdos", nivel: 2 });
+      for (const ac of visita.acuerdos) {
+        b.push({ tipo: "parrafo", alineacion: "izquierda", runs: [
+          { texto: `${ac.situacion}: `, negrita: true },
+          { texto: `${ac.accion}. Responsable: ${ac.responsable}${ac.fechaComprometida ? `. Fecha comprometida: ${formatearFecha(ac.fechaComprometida)}` : ""}${ac.observaciones ? `. ${ac.observaciones}` : ""}` },
+        ]});
+      }
+    }
+    return b;
+  }
+
+  /** Una visita sin realizar no es un documento: lo que se descargaría
+   *  sería un formulario en blanco. */
+  const motivoIncompleto =
+    estado === "agendada"
+      ? "La visita todavía no se ha realizado."
+      : visita.preguntas.every((pr) => !pr.respuesta?.trim())
+        ? "Responde las preguntas de la visita antes de descargar el formato."
+        : "";
+
+  async function descargarFormato() {
+    if (!visita) return;
+    await descargarWord({
+      nombreArchivo: `Visita ${centro?.nombre ?? ""} ${formatearFecha(fechaProgramadaDe(visita))}`.trim(),
+      titulo: "Registro de visita al Centro Dual",
+      bloques: bloquesParaWord(),
+    });
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-3xl">
       <div className="mb-6 flex items-start justify-between gap-3">
@@ -327,6 +403,7 @@ export default function DetalleVisitaPage() {
         </div>
         <div className="flex items-center gap-2 flex-wrap flex-shrink-0 justify-end">
           <BotonImprimir />
+          <MenuDescargarFormato onDescargar={descargarFormato} motivoIncompleto={motivoIncompleto} />
           <span style={{ color: ESTADO_VISITA_COLOR[estado], background: `${ESTADO_VISITA_COLOR[estado]}22` }} className="text-xs px-3 py-1.5 rounded-full font-semibold">
             {ESTADO_VISITA_LABEL[estado]}
           </span>
