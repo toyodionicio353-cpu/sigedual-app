@@ -15,7 +15,6 @@ import {
   ESTADO_VISITA_LABEL, ESTADO_VISITA_COLOR,
 } from "@/lib/visitas/normalizar";
 import TituloPagina from "@/components/TituloPagina";
-import BotonImprimir from "@/components/BotonImprimir";
 import Select from "@/components/ui/Select";
 import { VistaPreviaDocumento } from "@/components/biblioteca/BibliotecaDocumental";
 import type { CentroDual, Especialidad, Estudiante, MaestroGuia, Usuario, Visita } from "@/types";
@@ -254,14 +253,11 @@ export default function VisitasPage() {
                 : "Agenda visitas a los centros duales y registra lo ocurrido durante ellas."}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-        <BotonImprimir etiqueta="Imprimir listado" />
         {puedeAgregar && (
           <Link href="/dashboard/visitas/nueva" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity text-center flex-shrink-0">
             Agendar visita
           </Link>
         )}
-        </div>
       </div>
 
       {!loading && !error && visitas.length > 0 && (
