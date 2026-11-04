@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, Search, FileText, Eye, MoreVertical, FileDown } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Search, FileText, Eye } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import BotonImprimir from "@/components/BotonImprimir";
+import MenuDescargarFormato from "@/components/MenuDescargarFormato";
 import { descargarWord } from "@/lib/documentos/descargarWord";
 import type { ParrafoWord } from "@/lib/documentos/tiposWord";
 import type { DocumentoGenerado, EstadoDocumentoGenerado, Estudiante, SegmentoDocumento, TipoModuloDocumento } from "@/types";
@@ -113,7 +114,6 @@ export default function EditorDocumento({
   // Para corregir algo hay que "Duplicar" desde la lista, nunca editar este.
   const bloqueado = Boolean(soloLectura) || documentoExistente?.estado === "finalizado";
   const [vistaPrevia, setVistaPrevia] = useState(bloqueado);
-  const [menuAbierto, setMenuAbierto] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [aviso, setAviso] = useState("");
@@ -216,7 +216,6 @@ export default function EditorDocumento({
   }
 
   async function descargarFormato() {
-    setMenuAbierto(false);
     if (motivoIncompleto) { setError(motivoIncompleto); return; }
     setError("");
     try {
@@ -326,43 +325,7 @@ export default function EditorDocumento({
           )}
           <BotonImprimir />
 
-          {/* Tres puntos: lo que no es del día a día pero hace falta. */}
-          <div className="relative no-imprimir">
-            <button
-              type="button"
-              onClick={() => setMenuAbierto((v) => !v)}
-              aria-label="Más opciones"
-              style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-              className="flex items-center justify-center w-10 h-10 rounded-xl hover:opacity-90 transition-opacity flex-shrink-0"
-            >
-              <MoreVertical size={16} />
-            </button>
-            {menuAbierto && (
-              <>
-                <div className="fixed inset-0 z-30" onClick={() => setMenuAbierto(false)} />
-                <div
-                  style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }}
-                  className="absolute right-0 top-full mt-1 w-72 rounded-xl shadow-2xl overflow-hidden z-40 py-1"
-                >
-                  <button
-                    type="button"
-                    onClick={descargarFormato}
-                    disabled={Boolean(motivoIncompleto)}
-                    style={{ color: motivoIncompleto ? "var(--text-muted)" : "var(--text-primary)" }}
-                    className="flex items-start gap-2.5 px-4 py-3 text-sm w-full text-left hover:[background:var(--hover-overlay)] transition-colors disabled:cursor-not-allowed"
-                  >
-                    <FileDown size={15} className="flex-shrink-0 mt-0.5" />
-                    <span>
-                      Descargar formato (Word)
-                      <span style={{ color: "var(--text-muted)" }} className="block text-xs mt-0.5">
-                        {motivoIncompleto || "Para ponerle el logo y el formato de tu liceo."}
-                      </span>
-                    </span>
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+          <MenuDescargarFormato onDescargar={descargarFormato} motivoIncompleto={motivoIncompleto} />
 
           <button
             onClick={onCancelar}
