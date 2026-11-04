@@ -13,7 +13,7 @@ export default function PaginacionListado({
   if (totalPaginas <= 1) return null;
 
   return (
-    <div className="flex items-center justify-center gap-1.5 mt-6">
+    <div className="no-imprimir flex items-center justify-center gap-1.5 mt-6">
       <button
         onClick={() => onCambiarPagina(Math.max(1, paginaActual - 1))}
         disabled={paginaActual === 1}

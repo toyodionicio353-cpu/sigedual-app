@@ -15,6 +15,7 @@ import type {
   RespuestaPreguntaVisita, ElementoPersonalizadoVisita, AcuerdoVisita, TipoElementoPersonalizado, FuenteInformacionVisita,
 } from "@/types";
 import TituloPagina from "@/components/TituloPagina";
+import BotonImprimir from "@/components/BotonImprimir";
 import {
   ArrowLeft, MapPin, AlertCircle, PlayCircle, CheckCircle2, Plus, Trash2, Ban, RotateCcw, Lock,
 } from "lucide-react";
@@ -325,6 +326,7 @@ export default function DetalleVisitaPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap flex-shrink-0 justify-end">
+          <BotonImprimir />
           <span style={{ color: ESTADO_VISITA_COLOR[estado], background: `${ESTADO_VISITA_COLOR[estado]}22` }} className="text-xs px-3 py-1.5 rounded-full font-semibold">
             {ESTADO_VISITA_LABEL[estado]}
           </span>
@@ -333,7 +335,7 @@ export default function DetalleVisitaPage() {
               onClick={eliminarVisita}
               disabled={eliminando}
               style={{ background: "var(--danger)22", border: "1px solid var(--danger)", color: "var(--danger)" }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="no-imprimir flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               <Trash2 size={16} />
               {eliminando ? "Eliminando..." : "Eliminar visita"}

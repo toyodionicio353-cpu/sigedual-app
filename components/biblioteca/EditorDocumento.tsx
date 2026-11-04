@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, Search, FileText, Eye, Printer } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Search, FileText, Eye } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import BotonImprimir from "@/components/BotonImprimir";
 import type { DocumentoGenerado, EstadoDocumentoGenerado, Estudiante, SegmentoDocumento, TipoModuloDocumento } from "@/types";
 import type { ContextoResolucion, PlantillaDocumento } from "@/types/plantillas";
 import { resolverCamposEstudiante, resolverCamposDocumento, type ResultadoCampo } from "@/lib/plantillas/resolverCampos";
@@ -264,16 +265,7 @@ export default function EditorDocumento({
               {vistaPrevia ? "Editar" : "Vista previa"}
             </button>
           )}
-          {/* Imprimir deja en el papel solo el documento: el resto de la
-              aplicación lleva la clase no-imprimir (ver app/globals.css). */}
-          <button
-            onClick={() => window.print()}
-            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
-          >
-            <Printer size={16} />
-            Imprimir
-          </button>
+          <BotonImprimir />
           <button
             onClick={onCancelar}
             style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}

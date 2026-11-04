@@ -22,7 +22,7 @@ export default function ChipsFiltros({
   if (!hayFiltrosActivos) return <div className="mb-6" />;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 mb-6">
+    <div className="no-imprimir flex flex-wrap items-center gap-2 mb-6">
       {busqueda.trim() && (
         <span style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-xs font-medium">
           &quot;{busqueda.trim()}&quot;

@@ -25,7 +25,7 @@ export default function BarraControles({
   onVista: (v: VistaListado) => void;
 }) {
   return (
-    <div className="flex flex-col sm:flex-row gap-3 mb-3">
+    <div className="no-imprimir flex flex-col sm:flex-row gap-3 mb-3">
       <div className="relative flex-1">
         <Search size={16} style={{ color: "var(--text-muted)" }} className="absolute left-3.5 top-1/2 -translate-y-1/2" />
         <input

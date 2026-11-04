@@ -270,6 +270,12 @@ html[data-contrast="alto"] :focus-visible {
     max-height: none !important;
   }
 
+  /* El relleno de pantalla del contenedor de página se suma al margen de
+     @page y deja el texto hundido en la hoja. En papel manda @page. */
+  main > div {
+    padding: 0 !important;
+  }
+
   /* Un párrafo no se parte dejando una línea suelta en otra página. */
   .hoja-impresa p {
     orphans: 3;
