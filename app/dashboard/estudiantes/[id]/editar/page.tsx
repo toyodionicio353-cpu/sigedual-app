@@ -9,7 +9,6 @@ import { useFeedback } from "@/lib/preferencias/useFeedback";
 import { normalizarRut } from "@/lib/rut";
 import { sincronizarIndiceRunEstudiante } from "@/lib/estudiantes/indiceRun";
 import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
-import { obtenerDocumentosPorId } from "@/lib/permisos/obtenerDocumentosPorId";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import EstudianteForm, { type EstudianteFormValues } from "../../_components/EstudianteForm";
 import Select from "@/components/ui/Select";
@@ -62,11 +61,14 @@ export default function EditarEstudiantePage() {
       const [snapEst, snapEsp, estudiantesParaRun] = await Promise.all([
         getDoc(doc(db, "estudiantes", id)),
         getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
-        usuario!.rol === "profesor"
-          ? obtenerDocumentosPorId<Estudiante>("estudiantes", ambito.idsEstudiantes)
-          : getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId))).then(
-              (snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante))
-            ),
+        // Los RUN ya ocupados, para no duplicar uno. El profesor también lee
+        // el liceo completo: si no, podría asignar un RUN que ya existe en
+        // otro curso y el choque aparecería recién al guardar.
+        getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId)))
+          .then((snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)))
+          // Si el listado se deniega, el formulario abre igual: se pierde el
+          // aviso de RUN repetido, no la posibilidad de editar.
+          .catch(() => [] as Estudiante[]),
       ]);
       if (!snapEst.exists()) {
         setNoEncontrado(true);

@@ -11,9 +11,9 @@ interface AmbitoProfesor {
    * sigue siendo la base para crear/editar (Visitas, cambios de estado,
    * etc.), que no se comparte por especialidad. */
   asignaciones: Asignacion[];
-  /** Todos los estudiantes de SU especialidad en su liceo — compartido con
-   * cualquier otro profesor de esa misma especialidad, ya no solo los que
-   * tiene formalmente asignados (ver firestore.rules, `estudiantes`). */
+  /** Todos los estudiantes de su liceo. Un Profesor Supervisor puede ver y
+   * editar la ficha de cualquier estudiante del establecimiento, no solo la
+   * de los de su especialidad (ver firestore.rules, `estudiantes`). */
   idsEstudiantes: string[];
   idsCentros: string[];
   idsMaestros: string[];
@@ -21,12 +21,12 @@ interface AmbitoProfesor {
 }
 
 /**
- * Carga el ámbito de lectura de un Profesor Supervisor: todos los
- * estudiantes/centros duales/maestros guía de su misma especialidad en su
- * liceo (compartido entre todos los profesores de esa especialidad — ver
- * lib/permisos/ambito.ts), más sus propias Asignaciones formales (para lo
- * que sigue exigiendo asignación real: crear/editar Visitas, etc.). Un
- * profesor sin especialidad asignada no ve nada por esta vía.
+ * Carga el ámbito de un Profesor Supervisor: todos los estudiantes de su
+ * liceo (su ficha es parte de su trabajo: la ve y la edita), los centros
+ * duales y maestros guía de su misma especialidad, y sus propias
+ * Asignaciones formales (para lo que sigue exigiendo asignación real:
+ * crear/editar Visitas, etc.). Un profesor sin especialidad asignada ve
+ * igualmente a los estudiantes, pero no centros ni maestros guía.
  *
  * De paso, autosana el índice `autorizaciones` (Estudiante/Centro/Maestro
  * asignados formalmente, todavía usado para permisos de escritura).
@@ -61,20 +61,36 @@ export function useAmbitoProfesor(): AmbitoProfesor {
       // no bloquea la carga, corre en segundo plano.
       sincronizarAutorizacionesDeProfesor(usuario.uid).catch(() => {});
 
+      // Estudiantes: todo el liceo. No depende de la especialidad, porque un
+      // profesor sin especialidad asignada seguiría necesitando ver fichas.
+      //
+      // El respaldo por especialidad existe para el rato en que el código
+      // nuevo ya está publicado pero las reglas de Firestore todavía no:
+      // sin él, la consulta al liceo se deniega entera y el profesor se
+      // queda sin ver NINGÚN estudiante, que es peor que antes.
+      let docsEstudiantes;
+      try {
+        docsEstudiantes = (await getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario.liceoId)))).docs;
+      } catch {
+        docsEstudiantes = usuario.especialidadId
+          ? (await getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario.liceoId), where("especialidadId", "==", usuario.especialidadId))).catch(() => null))?.docs ?? []
+          : [];
+      }
+      if (cancelado) return;
+      setIdsEstudiantes(docsEstudiantes.map((d) => d.id));
+
+      // Centros duales y maestros guía sí siguen acotados a su especialidad.
       if (!usuario.especialidadId) {
-        setIdsEstudiantes([]);
         setIdsCentros([]);
         setIdsMaestros([]);
         setCargando(false);
         return;
       }
-      const [snapEst, snapCentros, snapMaestros] = await Promise.all([
-        getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario.liceoId), where("especialidadId", "==", usuario.especialidadId))),
+      const [snapCentros, snapMaestros] = await Promise.all([
         getDocs(query(collection(db, "centros_duales"), where("liceoId", "==", usuario.liceoId), where("especialidades", "array-contains", usuario.especialidadId))),
         getDocs(query(collection(db, "maestros_guia"), where("liceoId", "==", usuario.liceoId), where("especialidades", "array-contains", usuario.especialidadId))),
       ]);
       if (cancelado) return;
-      setIdsEstudiantes(snapEst.docs.map((d) => d.id));
       setIdsCentros(snapCentros.docs.map((d) => d.id));
       setIdsMaestros(snapMaestros.docs.map((d) => d.id));
       setCargando(false);
