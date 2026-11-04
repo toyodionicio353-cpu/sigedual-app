@@ -14,6 +14,7 @@ import ModalEnviarEvaluacion from "@/components/evaluaciones/ModalEnviarEvaluaci
 import type { Evaluacion, Estudiante, EnvioEvaluacion, Asignacion } from "@/types";
 import Select from "@/components/ui/Select";
 import TituloPagina from "@/components/TituloPagina";
+import BotonImprimir from "@/components/BotonImprimir";
 import { VistaPreviaDocumento } from "@/components/biblioteca/BibliotecaDocumental";
 import { ClipboardCheck, Wand2, Eye, ChevronRight, Send, Clock, AlertTriangle } from "lucide-react";
 
@@ -149,11 +150,14 @@ export default function EvaluacionesPage() {
 
   return (
     <div className="p-4 md:p-8">
-      <div className="mb-6">
-        <TituloPagina icon={<ClipboardCheck size={28} />}>Evaluaciones</TituloPagina>
-        <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
-          {esEstudiante ? "Tus evaluaciones de desempeño en el Centro Dual." : "Evalúa el desempeño de un estudiante en su Centro Dual."}
-        </p>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <TituloPagina icon={<ClipboardCheck size={28} />}>Evaluaciones</TituloPagina>
+          <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">
+            {esEstudiante ? "Tus evaluaciones de desempeño en el Centro Dual." : "Evalúa el desempeño de un estudiante en su Centro Dual."}
+          </p>
+        </div>
+        <BotonImprimir etiqueta="Imprimir listado" />
       </div>
 
       {!esEstudiante && (

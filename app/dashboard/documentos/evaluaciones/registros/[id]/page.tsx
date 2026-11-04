@@ -10,6 +10,7 @@ import { plantillaEvaluacionPorId } from "@/lib/evaluaciones";
 import { NIVELES_LOGRO } from "@/lib/evaluaciones/tipos";
 import type { Evaluacion, Estudiante, CentroDual, MaestroGuia, NivelLogro } from "@/types";
 import TituloPagina from "@/components/TituloPagina";
+import BotonImprimir from "@/components/BotonImprimir";
 import LeyendaNiveles from "@/components/evaluaciones/LeyendaNiveles";
 import { ArrowLeft, ClipboardCheck, AlertCircle, Trash2 } from "lucide-react";
 
@@ -128,17 +129,20 @@ export default function RegistroEvaluacionPage() {
             </p>
           </div>
         </div>
-        {usuario?.rol === "desarrollador" && (
-          <button
-            onClick={eliminarEvaluacion}
-            disabled={eliminando}
-            style={{ background: "var(--danger)22", border: "1px solid var(--danger)", color: "var(--danger)" }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex-shrink-0"
-          >
-            <Trash2 size={16} />
-            {eliminando ? "Eliminando..." : "Eliminar evaluación"}
-          </button>
-        )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <BotonImprimir />
+          {usuario?.rol === "desarrollador" && (
+            <button
+              onClick={eliminarEvaluacion}
+              disabled={eliminando}
+              style={{ background: "var(--danger)22", border: "1px solid var(--danger)", color: "var(--danger)" }}
+              className="no-imprimir flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex-shrink-0"
+            >
+              <Trash2 size={16} />
+              {eliminando ? "Eliminando..." : "Eliminar evaluación"}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-5">

@@ -30,11 +30,11 @@ export default function VerFicha({
   const estilo = variante === "boton"
     ? {
         style: { background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--accent-light)" },
-        clases: "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--accent)] transition-colors flex-shrink-0 w-fit",
+        clases: "no-imprimir flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:[border-color:var(--accent)] transition-colors flex-shrink-0 w-fit",
       }
     : {
         style: { color: "var(--accent-light)" },
-        clases: "flex items-center gap-1 text-xs font-semibold hover:underline w-fit",
+        clases: "no-imprimir flex items-center gap-1 text-xs font-semibold hover:underline w-fit",
       };
 
   const contenido = (

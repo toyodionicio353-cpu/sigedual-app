@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { Search, MoreVertical, FileStack, Inbox } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
+import BotonImprimir from "@/components/BotonImprimir";
 import Select from "@/components/ui/Select";
 import { formatearFecha } from "@/lib/fecha";
 
@@ -170,6 +171,8 @@ export default function BibliotecaDocumental({
           )}
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-1">{descripcion}</p>
         </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+        <BotonImprimir etiqueta="Imprimir listado" />
         {accionPrincipal && (
           <button
             onClick={accionPrincipal.onClick}
@@ -179,11 +182,12 @@ export default function BibliotecaDocumental({
             {accionPrincipal.label}
           </button>
         )}
+        </div>
       </div>
 
       {/* Selector de contenido */}
       {mostrarPlantillas && (
-        <div className="flex gap-2 mb-4">
+        <div className="no-imprimir flex gap-2 mb-4">
           <button
             onClick={() => setTab("plantillas")}
             style={{
