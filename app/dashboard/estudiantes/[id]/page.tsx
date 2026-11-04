@@ -112,12 +112,16 @@ export default function FichaEstudiantePage() {
           setVisitas(visitasData);
           const idsCentro = Array.from(new Set(visitasData.map((v) => v.centroDualId)));
           const idsProfesor = Array.from(new Set(visitasData.map(profesorSupervisorIdDe).filter(Boolean)));
+          // Datos de adorno: el nombre del centro y del profesor de cada
+          // visita. Si uno se deniega (un centro dual de otra especialidad,
+          // por ejemplo) la ficha se muestra igual sin ese nombre, en vez de
+          // caer entera en "Acceso denegado".
           const [snapsCentro, snapsProfesor] = await Promise.all([
-            Promise.all(idsCentro.map((cid) => getDoc(doc(db, "centros_duales", cid)))),
-            Promise.all(idsProfesor.map((pid) => getDoc(doc(db, "usuarios", pid)))),
+            Promise.all(idsCentro.map((cid) => getDoc(doc(db, "centros_duales", cid)).catch(() => null))),
+            Promise.all(idsProfesor.map((pid) => getDoc(doc(db, "usuarios", pid)).catch(() => null))),
           ]);
-          setCentros(snapsCentro.filter((s) => s.exists()).map((s) => ({ id: s!.id, ...s!.data() } as CentroDual)));
-          setProfesores(snapsProfesor.filter((s) => s.exists()).map((s) => s!.data() as Usuario));
+          setCentros(snapsCentro.filter((s) => s?.exists()).map((s) => ({ id: s!.id, ...s!.data() } as CentroDual)));
+          setProfesores(snapsProfesor.filter((s) => s?.exists()).map((s) => s!.data() as Usuario));
 
           // La asignación vigente para poder registrar faltas. Si no hay
           // ninguna en curso, el centro de faltas lo dice y no deja
