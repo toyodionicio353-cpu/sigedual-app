@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, Search, FileText, Eye } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Search, FileText, Eye, MoreVertical, FileDown } from "lucide-react";
 import TituloPagina from "@/components/TituloPagina";
 import BotonImprimir from "@/components/BotonImprimir";
+import { descargarWord } from "@/lib/documentos/descargarWord";
+import type { ParrafoWord } from "@/lib/documentos/tiposWord";
 import type { DocumentoGenerado, EstadoDocumentoGenerado, Estudiante, SegmentoDocumento, TipoModuloDocumento } from "@/types";
 import type { ContextoResolucion, PlantillaDocumento } from "@/types/plantillas";
 import { resolverCamposEstudiante, resolverCamposDocumento, type ResultadoCampo } from "@/lib/plantillas/resolverCampos";
@@ -111,6 +113,7 @@ export default function EditorDocumento({
   // Para corregir algo hay que "Duplicar" desde la lista, nunca editar este.
   const bloqueado = Boolean(soloLectura) || documentoExistente?.estado === "finalizado";
   const [vistaPrevia, setVistaPrevia] = useState(bloqueado);
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [aviso, setAviso] = useState("");
@@ -170,6 +173,62 @@ export default function EditorDocumento({
       }
     }
     return undefined;
+  }
+
+  /**
+   * Un documento está completo cuando cumple sus DOS etapas: la plantilla
+   * redactada (texto y nombre) y los datos que se autocompletan al elegir
+   * al estudiante. Descargar el formato a medias no sirve: el liceo lo
+   * terminaría en Word y volvería con huecos.
+   */
+  const camposPendientes = useMemo(() => {
+    const faltan: string[] = [];
+    for (const parrafo of contenido) {
+      for (const seg of parrafo) {
+        if (seg.tipo !== "campo") continue;
+        const clave = seg.clave ?? "";
+        if (!resultadoCampos[clave]?.valor) faltan.push(etiquetaCampo(clave) || clave);
+      }
+    }
+    return Array.from(new Set(faltan));
+  }, [contenido, resultadoCampos]);
+
+  const motivoIncompleto = !nombre.trim()
+    ? "Ponle un nombre al documento."
+    : requiereEstudiante && !estudianteId
+      ? "Elige al estudiante: de ahí salen los datos que se autocompletan."
+      : camposPendientes.length > 0
+        ? `Faltan datos por completar: ${camposPendientes.slice(0, 3).join(", ")}${camposPendientes.length > 3 ? "…" : ""}`
+        : contenido.length === 0
+          ? "Esta plantilla no tiene contenido."
+          : "";
+
+  /** El documento tal como quedó, en párrafos para Word. */
+  function parrafosParaWord(): ParrafoWord[] {
+    return contenido.map((parrafo) => ({
+      runs: parrafo.map((seg) => {
+        if (seg.tipo === "campo") {
+          return { texto: resultadoCampos[seg.clave ?? ""]?.valor ?? "", negrita: false };
+        }
+        return { texto: seg.texto ?? "", negrita: seg.tipo === "protegido" };
+      }),
+    }));
+  }
+
+  async function descargarFormato() {
+    setMenuAbierto(false);
+    if (motivoIncompleto) { setError(motivoIncompleto); return; }
+    setError("");
+    try {
+      await descargarWord({
+        nombreArchivo: nombre.trim() || "documento",
+        titulo: nombre.trim(),
+        parrafos: parrafosParaWord(),
+      });
+      setAviso("Formato descargado. Ábrelo en Word para ponerle el logo y el formato de tu liceo.");
+    } catch {
+      setError("No se pudo generar el archivo de Word.");
+    }
   }
 
   async function guardar(estadoDestino: EstadoDocumentoGenerado) {
@@ -266,6 +325,45 @@ export default function EditorDocumento({
             </button>
           )}
           <BotonImprimir />
+
+          {/* Tres puntos: lo que no es del día a día pero hace falta. */}
+          <div className="relative no-imprimir">
+            <button
+              type="button"
+              onClick={() => setMenuAbierto((v) => !v)}
+              aria-label="Más opciones"
+              style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+              className="flex items-center justify-center w-10 h-10 rounded-xl hover:opacity-90 transition-opacity flex-shrink-0"
+            >
+              <MoreVertical size={16} />
+            </button>
+            {menuAbierto && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setMenuAbierto(false)} />
+                <div
+                  style={{ background: "var(--bg-card)", border: "1px solid var(--border-light)" }}
+                  className="absolute right-0 top-full mt-1 w-72 rounded-xl shadow-2xl overflow-hidden z-40 py-1"
+                >
+                  <button
+                    type="button"
+                    onClick={descargarFormato}
+                    disabled={Boolean(motivoIncompleto)}
+                    style={{ color: motivoIncompleto ? "var(--text-muted)" : "var(--text-primary)" }}
+                    className="flex items-start gap-2.5 px-4 py-3 text-sm w-full text-left hover:[background:var(--hover-overlay)] transition-colors disabled:cursor-not-allowed"
+                  >
+                    <FileDown size={15} className="flex-shrink-0 mt-0.5" />
+                    <span>
+                      Descargar formato (Word)
+                      <span style={{ color: "var(--text-muted)" }} className="block text-xs mt-0.5">
+                        {motivoIncompleto || "Para ponerle el logo y el formato de tu liceo."}
+                      </span>
+                    </span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
           <button
             onClick={onCancelar}
             style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
