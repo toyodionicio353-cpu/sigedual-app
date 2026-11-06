@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useFeedback } from "@/lib/preferencias/useFeedback";
 import { normalizarRut } from "@/lib/rut";
 import { sincronizarIndiceRunEstudiante } from "@/lib/estudiantes/indiceRun";
-import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { motivoDenegacion, detalleCuenta } from "@/lib/permisos/motivoDenegacion";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import EstudianteForm, { type EstudianteFormValues } from "../../_components/EstudianteForm";
 import Select from "@/components/ui/Select";
@@ -32,6 +32,7 @@ export default function EditarEstudiantePage() {
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [denegado, setDenegado] = useState(false);
+  const [motivo, setMotivo] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [errorSistema, setErrorSistema] = useState("");
   const [liceos, setLiceos] = useState<Liceo[]>([]);
@@ -41,33 +42,36 @@ export default function EditarEstudiantePage() {
 
   const puedeEditar = usuario?.rol === "desarrollador" || usuario?.rol === "profesor";
   const esAdministrador = usuario?.rol === "desarrollador";
-  const ambito = useAmbitoProfesor();
-
   useEffect(() => {
     if (!usuario || !id || !puedeEditar) return;
-    if (usuario.rol === "profesor" && ambito.cargando) return;
-    if (usuario.rol === "profesor" && !ambito.idsEstudiantes.includes(id)) {
-      setDenegado(true);
-      setLoading(false);
-      registrarEvento({
-        uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
-        accion: "editar_estudiante", recurso: "estudiantes", recursoId: id,
-        resultado: "denegado", detalle: "Estudiante fuera del ámbito autorizado del profesor.",
-      });
-      return;
-    }
     async function cargar() {
       setLoading(true);
-      const [snapEst, snapEsp, estudiantesParaRun] = await Promise.all([
-        getDoc(doc(db, "estudiantes", id)),
-        getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
+      // Quien decide si esta ficha se puede abrir es el servidor, no una
+      // lista de "mi ámbito" calculada en el cliente.
+      let snapEst;
+      try {
+        snapEst = await getDoc(doc(db, "estudiantes", id));
+      } catch (error) {
+        setDenegado(true);
+        setMotivo(motivoDenegacion(error, usuario!));
+        setLoading(false);
+        registrarEvento({
+          uid: usuario!.uid, nombre: usuario!.nombre, rol: usuario!.rol, liceoId: usuario!.liceoId,
+          accion: "editar_estudiante", recurso: "estudiantes", recursoId: id,
+          resultado: "denegado", detalle: "Las reglas de Firestore rechazaron la lectura de la ficha.",
+        });
+        return;
+      }
+      // El resto son apoyos del formulario: si fallan, se abre igual.
+      const [snapEsp, estudiantesParaRun] = await Promise.all([
+        getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId)))
+          .then((snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)))
+          .catch(() => [] as Especialidad[]),
         // Los RUN ya ocupados, para no duplicar uno. El profesor también lee
         // el liceo completo: si no, podría asignar un RUN que ya existe en
         // otro curso y el choque aparecería recién al guardar.
         getDocs(query(collection(db, "estudiantes"), where("liceoId", "==", usuario!.liceoId)))
           .then((snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() } as Estudiante)))
-          // Si el listado se deniega, el formulario abre igual: se pierde el
-          // aviso de RUN repetido, no la posibilidad de editar.
           .catch(() => [] as Estudiante[]),
       ]);
       if (!snapEst.exists()) {
@@ -98,7 +102,7 @@ export default function EditarEstudiantePage() {
       setOtrosMedicos(e.informacionMedicaAdicional ?? []);
       setRasgos(e.rasgos ?? []);
       setHabilidades(e.habilidades ?? []);
-      setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
+      setEspecialidades(snapEsp);
       setRunsOcupados(
         estudiantesParaRun
           .filter((est) => est.id !== id)
@@ -108,7 +112,7 @@ export default function EditarEstudiantePage() {
     }
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario, id, puedeEditar, ambito.cargando, ambito.idsEstudiantes]);
+  }, [usuario, id, puedeEditar]);
 
   useEffect(() => {
     if (!esAdministrador) return;
@@ -203,7 +207,8 @@ export default function EditarEstudiantePage() {
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
           <ShieldAlert size={22} style={{ color: "var(--text-muted)" }} className="mx-auto mb-3" />
           <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Acceso denegado</p>
-          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Este estudiante no está dentro de tu ámbito autorizado.</p>
+          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5 max-w-md mx-auto">{motivo || "Este estudiante no está dentro de tu ámbito autorizado."}</p>
+          {usuario && <p style={{ color: "var(--text-muted)" }} className="text-xs mb-5">{detalleCuenta(usuario)}</p>}
           <Link href="/dashboard/estudiantes" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
             <ArrowLeft size={16} />
             Volver al listado
