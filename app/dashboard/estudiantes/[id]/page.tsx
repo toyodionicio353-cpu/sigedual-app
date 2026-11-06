@@ -6,7 +6,7 @@ import { doc, getDoc, deleteDoc, collection, query, where, getDocs } from "fireb
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { formatearFecha } from "@/lib/fecha";
-import { useAmbitoProfesor } from "@/lib/permisos/useAmbitoProfesor";
+import { motivoDenegacion, detalleCuenta } from "@/lib/permisos/motivoDenegacion";
 import { registrarEvento } from "@/lib/auditoria/registrarEvento";
 import { estadoCanonico, fechaProgramadaDe, profesorSupervisorIdDe, ESTADO_VISITA_LABEL, ESTADO_VISITA_COLOR } from "@/lib/visitas/normalizar";
 import type { Estudiante, Especialidad, Visita, CentroDual, Usuario, Asignacion } from "@/types";
@@ -70,80 +70,88 @@ export default function FichaEstudiantePage() {
   const [loading, setLoading] = useState(true);
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [denegado, setDenegado] = useState(false);
+  const [motivo, setMotivo] = useState("");
   const [eliminando, setEliminando] = useState(false);
-  const ambito = useAmbitoProfesor();
 
   useEffect(() => {
     if (!usuario || !id) return;
-    if (usuario.rol === "profesor" && ambito.cargando) return;
-    if (usuario.rol === "profesor" && !ambito.idsEstudiantes.includes(id)) {
-      setDenegado(true);
-      setLoading(false);
-      registrarEvento({
-        uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol, liceoId: usuario.liceoId,
-        accion: "ver_estudiante", recurso: "estudiantes", recursoId: id,
-        resultado: "denegado", detalle: "Estudiante fuera del ámbito autorizado del profesor.",
-      });
-      return;
-    }
     async function cargar() {
       setLoading(true);
+
+      // Lo único imprescindible es la ficha, y quien decide si se puede leer
+      // es el servidor. Antes esto se adivinaba en el cliente comparando
+      // contra una lista de estudiantes "de mi ámbito": si esa lista fallaba
+      // por cualquier motivo, la ficha salía denegada aunque el permiso
+      // estuviera bien.
+      let snapEst;
       try {
-        const [snapEst, snapEsp] = await Promise.all([
-          getDoc(doc(db, "estudiantes", id)),
-          getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId))),
-        ]);
-        if (snapEst.exists()) {
-          setEstudiante({ id: snapEst.id, ...snapEst.data() } as Estudiante);
-        } else {
-          setNoEncontrado(true);
-        }
-        setEspecialidades(snapEsp.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad)));
-
-        if (snapEst.exists()) {
-          const [snapLegado, snapNuevas] = await Promise.all([
-            getDocs(query(collection(db, "visitas"), where("estudianteId", "==", id))),
-            getDocs(query(collection(db, "visitas"), where("estudianteIds", "array-contains", id))),
-          ]);
-          const porId = new Map<string, Visita>();
-          snapLegado.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita));
-          snapNuevas.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita));
-          const visitasData = Array.from(porId.values());
-          setVisitas(visitasData);
-          const idsCentro = Array.from(new Set(visitasData.map((v) => v.centroDualId)));
-          const idsProfesor = Array.from(new Set(visitasData.map(profesorSupervisorIdDe).filter(Boolean)));
-          // Datos de adorno: el nombre del centro y del profesor de cada
-          // visita. Si uno se deniega (un centro dual de otra especialidad,
-          // por ejemplo) la ficha se muestra igual sin ese nombre, en vez de
-          // caer entera en "Acceso denegado".
-          const [snapsCentro, snapsProfesor] = await Promise.all([
-            Promise.all(idsCentro.map((cid) => getDoc(doc(db, "centros_duales", cid)).catch(() => null))),
-            Promise.all(idsProfesor.map((pid) => getDoc(doc(db, "usuarios", pid)).catch(() => null))),
-          ]);
-          setCentros(snapsCentro.filter((s) => s?.exists()).map((s) => ({ id: s!.id, ...s!.data() } as CentroDual)));
-          setProfesores(snapsProfesor.filter((s) => s?.exists()).map((s) => s!.data() as Usuario));
-
-          // La asignación vigente para poder registrar faltas. Si no hay
-          // ninguna en curso, el centro de faltas lo dice y no deja
-          // registrar: una falta sin Centro Dual no significa nada.
-          const snapAsignaciones = await getDocs(query(collection(db, "asignaciones"), where("estudianteId", "==", id)));
-          const asignaciones = snapAsignaciones.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion));
-          setAsignacion(
-            asignaciones.find((a) => a.estado === "en_proceso" || a.estado === "asignada")
-            ?? asignaciones.sort((a, b) => (b.creadoEn ?? "").localeCompare(a.creadoEn ?? ""))[0]
-            ?? null
-          );
-        }
-      } catch {
-        // Las reglas de Firestore denegaron la lectura (fuera de ámbito/liceo).
+        snapEst = await getDoc(doc(db, "estudiantes", id));
+      } catch (error) {
         setDenegado(true);
-      } finally {
+        setMotivo(motivoDenegacion(error, usuario!));
         setLoading(false);
+        registrarEvento({
+          uid: usuario!.uid, nombre: usuario!.nombre, rol: usuario!.rol, liceoId: usuario!.liceoId,
+          accion: "ver_estudiante", recurso: "estudiantes", recursoId: id,
+          resultado: "denegado", detalle: "Las reglas de Firestore rechazaron la lectura de la ficha.",
+        });
+        return;
+      }
+      if (!snapEst.exists()) {
+        setNoEncontrado(true);
+        setLoading(false);
+        return;
+      }
+      setEstudiante({ id: snapEst.id, ...snapEst.data() } as Estudiante);
+      setLoading(false);
+
+      // Todo lo demás es complemento de la ficha. Cada bloque se cae solo:
+      // una visita antigua sin liceoId, o un centro dual de otra
+      // especialidad, no pueden tumbar la pantalla entera.
+      getDocs(query(collection(db, "especialidades"), where("liceoId", "==", usuario!.liceoId)))
+        .then((snap) => setEspecialidades(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Especialidad))))
+        .catch(() => {});
+
+      try {
+        const [snapLegado, snapNuevas] = await Promise.all([
+          getDocs(query(collection(db, "visitas"), where("estudianteId", "==", id))).catch(() => null),
+          getDocs(query(collection(db, "visitas"), where("estudianteIds", "array-contains", id))).catch(() => null),
+        ]);
+        const porId = new Map<string, Visita>();
+        snapLegado?.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita));
+        snapNuevas?.docs.forEach((d) => porId.set(d.id, { id: d.id, ...d.data() } as Visita));
+        const visitasData = Array.from(porId.values());
+        setVisitas(visitasData);
+        const idsCentro = Array.from(new Set(visitasData.map((v) => v.centroDualId)));
+        const idsProfesor = Array.from(new Set(visitasData.map(profesorSupervisorIdDe).filter(Boolean)));
+        const [snapsCentro, snapsProfesor] = await Promise.all([
+          Promise.all(idsCentro.map((cid) => getDoc(doc(db, "centros_duales", cid)).catch(() => null))),
+          Promise.all(idsProfesor.map((pid) => getDoc(doc(db, "usuarios", pid)).catch(() => null))),
+        ]);
+        setCentros(snapsCentro.filter((s) => s?.exists()).map((s) => ({ id: s!.id, ...s!.data() } as CentroDual)));
+        setProfesores(snapsProfesor.filter((s) => s?.exists()).map((s) => s!.data() as Usuario));
+      } catch {
+        // El historial de visitas no se pudo armar; la ficha sigue en pie.
+      }
+
+      // La asignación vigente para poder registrar faltas. Si no hay
+      // ninguna en curso, el centro de faltas lo dice y no deja
+      // registrar: una falta sin Centro Dual no significa nada.
+      try {
+        const snapAsignaciones = await getDocs(query(collection(db, "asignaciones"), where("estudianteId", "==", id)));
+        const asignaciones = snapAsignaciones.docs.map((d) => ({ id: d.id, ...d.data() } as Asignacion));
+        setAsignacion(
+          asignaciones.find((a) => a.estado === "en_proceso" || a.estado === "asignada")
+          ?? asignaciones.sort((a, b) => (b.creadoEn ?? "").localeCompare(a.creadoEn ?? ""))[0]
+          ?? null
+        );
+      } catch {
+        // Sin asignación visible no se registran faltas, y el panel lo avisa.
       }
     }
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario, id, ambito.cargando, ambito.idsEstudiantes]);
+  }, [usuario, id]);
 
   if (loading) {
     return (
@@ -159,7 +167,8 @@ export default function FichaEstudiantePage() {
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }} className="rounded-2xl p-12 text-center">
           <ShieldAlert size={22} style={{ color: "var(--text-muted)" }} className="mx-auto mb-3" />
           <p style={{ color: "var(--text-primary)" }} className="text-base font-semibold mb-1">Acceso denegado</p>
-          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5">Este estudiante no está dentro de tu ámbito autorizado.</p>
+          <p style={{ color: "var(--text-muted)" }} className="text-sm mb-5 max-w-md mx-auto">{motivo || "Este estudiante no está dentro de tu ámbito autorizado."}</p>
+          {usuario && <p style={{ color: "var(--text-muted)" }} className="text-xs mb-5">{detalleCuenta(usuario)}</p>}
           <Link href="/dashboard/estudiantes" style={{ background: "var(--accent)", color: "var(--text-on-accent)" }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity">
             <ArrowLeft size={16} />
             Volver al listado
